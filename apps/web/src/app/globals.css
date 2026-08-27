@@ -1,26 +1,40 @@
 @import "tailwindcss";
 
+/* Paleta oscura fija: la cartelera se consulta sobre todo de noche y el
+   contraste alto deja que los afiches de los eventos lleven el color. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0b0e;
+  --surface: #141419;
+  --surface-hover: #1c1c23;
+  --border: #26262f;
+  --foreground: #f2f2f4;
+  --muted: #9b9baa;
+  --accent: #ff4d3d;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* La franja lateral roja de cada tarjeta solo aparece al pasar el mouse. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
