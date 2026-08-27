@@ -253,13 +253,19 @@ Se corre aparte del scraping: `python -m bogota_music_intel.classify_cli [--dry-
 
 `HOMBRES A LA PLANCHA` es el caso que obliga a que exista la lista curada: es una obra de teatro en el Royal Center cuyo título se lee **exactamente igual que el nombre de una banda**, y esa fuente no publica categoría. No hay regla honesta que lo saque sin sacar también música.
 
-Del resto: **3 locales confirmados, 29 internacionales confirmados, 20 sin resolver.**
+### Resultado final (2026-08-27, tras la categoría fiesta y el arreglo de la limpieza)
+
+Sobre los mismos 58 eventos: **6 fuera de cartelera, 5 fiestas, 5 locales, 34 internacionales, 8 sin origen resuelto.** En pantalla quedan 44 conciertos y 3 fiestas próximas (más una sin fecha), tras unificar duplicados entre fuentes.
+
+Los "sin resolver" bajaron de 20 a 8, y casi todo ese rescate vino de **arreglar la limpieza de títulos, no de curar a mano**. Es el hallazgo de proceso más útil de esta fase: la primera lectura fue "hay 20 eventos que necesitan lista curada", y la mitad eran fallas de código que se repetían con cada evento futuro. Conviene agotar lo automatizable antes de empezar a curar, porque curar no escala.
+
+El caso que lo resume: `10 AÑOS Y NO AZARAN - LA MUCHACHA EN BOGOTÁ`. La búsqueda se quedaba con el primer tramo, que es el nombre de la gira, y perdía a La Muchacha — que MusicBrainz sí resuelve como colombiana. Ahora se prueban varios candidatos del título en orden, y solo se paga la petición extra cuando el primero no resolvió. Lo mismo recuperó a Sara Curruchich (GT), Shing02 (JP) y Rayos Láser (AR).
 
 ### El hallazgo incómodo: MusicBrainz cubre mal la escena local
 
-Solo 3 de 52 eventos musicales quedaron confirmados como locales (Jorge Celedón, Jhon Alex Castaño, Jhonny Rivera — los tres de música popular, con carrera larga y catálogo comercial).
+Aun después del arreglo, solo 5 eventos quedaron confirmados como locales, y 4 de los 5 son de música popular con catálogo comercial (Jorge Celedón, Jhon Alex Castaño, Jhonny Rivera) o se resolvieron a mano (Todo Copas). La quinta, La Muchacha, apareció solo porque se arregló la búsqueda.
 
-Varios de los 20 "sin resolver" son artistas colombianos reales: **El Kalvo** (existe en MusicBrainz pero **sin país**), **PABLOPABLO**, **LA MUCHACHA**, **MADE4RAP**, **Ancestral Beats**, **Mukangu / Atake Mapale / Los Yoryis**. Es decir: MusicBrainz resuelve bien al internacional consagrado y mal justamente al artista local emergente, que es a quien la plataforma existe para promover.
+De los 8 que siguen sin origen, **cinco existen en MusicBrainz pero sin país**: El Kalvo, PABLOPABLO, Ancestral Beats, Slaughter to Prevail y El plan de la mariposa. Es decir: MusicBrainz resuelve bien al internacional consagrado y mal justamente al artista local emergente, que es a quien la plataforma existe para promover.
 
 Consecuencia de diseño: **el `null` no se penaliza**. `is_local` tiene tres estados y los tres significan cosas distintas —`true` local, `false` internacional confirmado, `null` no se pudo resolver— y el ranking solo baja al `false`. Si lo desconocido contara como "no local", la cartelera hundiría los toques que debería destacar.
 
