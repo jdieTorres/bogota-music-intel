@@ -31,7 +31,18 @@ if (!getWorkerUrl()) {
 // OpenFreeMap sirve tiles de OpenStreetMap sin API key ni límite de uso.
 // El estilo no trae el campo `attribution`, así que la atribución a OSM
 // (obligatoria por la licencia ODbL) se agrega a mano más abajo.
-const ESTILO = "https://tiles.openfreemap.org/styles/dark";
+// OpenFreeMap publica cinco estilos y todos responden 200 (verificado
+// 2026-08-27): liberty y bright son claros y muy detallados (111 y 119
+// capas, prácticamente el mismo diseño con las capas renombradas),
+// positron es gris casi blanco y minimalista (55), dark es casi negro y
+// fiord un azul grisáceo oscuro.
+//
+// Elegido con Juan el 2026-08-27 mirando los cuatro en el navegador. El
+// mapa claro es deliberado y va contra la paleta oscura del resto del
+// sitio: un mapa casi negro leía como un hueco, no como un mapa. Es la
+// primera decisión del trabajo de look & feel, así que si más adelante la
+// paleta cambia, esto se revisa junto con ella y no por su cuenta.
+const ESTILO = "https://tiles.openfreemap.org/styles/liberty";
 const ATRIBUCION =
   '<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> · ' +
   '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>';
