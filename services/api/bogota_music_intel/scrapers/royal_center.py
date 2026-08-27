@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from bogota_music_intel.scrapers import http
 from bogota_music_intel.scrapers.dateparse import parse_spanish_date_infer_year
+from bogota_music_intel.scrapers.identity import build_event_id
 from bogota_music_intel.scrapers.models import ScrapedEvent
 
 SOURCE = "royal_center"
@@ -47,12 +48,12 @@ def scrape() -> list[ScrapedEvent]:
         if not title:
             continue  # sin título confiable, mejor omitir que guardar basura
 
-        source_event_id = re.sub(r"[?&].*$", "", ticket_url).rstrip("/").rsplit("/", 1)[-1]
+        starts_at = parse_spanish_date_infer_year(date_text) if date_text else None
+
+        source_event_id = build_event_id(title, starts_at)
         if source_event_id in seen_ids:
             continue
         seen_ids.add(source_event_id)
-
-        starts_at = parse_spanish_date_infer_year(date_text) if date_text else None
 
         events.append(
             ScrapedEvent(

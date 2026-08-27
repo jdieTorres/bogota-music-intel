@@ -15,7 +15,7 @@ _NEXT_DATA_RE = re.compile(
 def _parse_iso(value: str | None) -> datetime | None:
     if not value:
         return None
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return datetime.fromisoformat(value)
 
 
 def scrape() -> list[ScrapedEvent]:

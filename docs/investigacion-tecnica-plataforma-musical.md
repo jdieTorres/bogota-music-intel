@@ -124,15 +124,15 @@ El `robots.txt` de Tuboleta bloquea explícitamente por nombre a ClaudeBot, GPTB
 | Venue | Estado | Fuente recomendada |
 |---|---|---|
 | Movistar Arena | Sitio propio (movistararena.co), robots.txt abierto | Scraping directo |
-| Ace of Spades | Sitio propio (aceofspadesbogota.com.co), robots.txt estándar | Scraping directo |
+| Ace of Spades | ⚠️ **Corregido al implementar (2026-08-27):** el sitio redirige a `/new/`, un WordPress recién montado sin listado de eventos — solo el post "Hello world!" de ejemplo, un botón de reservas por WhatsApp y `wp-json` sin custom post types. No hay nada que scrapear. Difusión real: Instagram (@aceofspadesclub1) | Carga manual periódica hasta que publiquen cartelera |
 | Lourdes Music Hall | Sitio propio (lourdesmusichall.com), robots.txt estándar | Scraping directo |
 | Royal Center | Sitio propio (royalcenter.com.co), robots.txt permisivo — publica "Próximos Eventos" con fechas | Scraping directo |
-| Latino Power | Tienda de boletas propia (tickets.latinopower.com.co), robots.txt estándar | Scraping directo |
+| Latino Power | Tienda de boletas propia (tickets.latinopower.com.co), robots.txt estándar. **Hallazgo (2026-08-27):** corre el plugin *The Events Calendar*, que expone API REST pública y estructurada en `/wp-json/tribe/events/v1/events` (fechas con timezone, venue con dirección, costo). No requiere parsear HTML | API JSON — la mejor fuente de las seis |
 | Capital Live Concerts | No es venue suelto — es la sala de Rockal Live / ROCKAL SAS (promotor real, con sitio propio y presencia en X/FB/LinkedIn). Tiene página de vendedor activa en eTicketaBlanca con eventos reales | Página de vendedor Rockal Live en eTicketaBlanca (`tickets.eticketablanca.com/seller/rockal-live-dltt`) |
 | Boro Room | Sin sitio propio. Difusión casi 100% Instagram (@boro_room, activa). No tiene organizador fijo en eTicketaBlanca — cada show lo vende una productora distinta (ej. Sin Error Producciones tuvo solo 1 evento histórico ahí) | Sin fuente automatizable estable — carga manual periódica |
 | The Bonfire | Mismo patrón que Boro Room: sin sitio propio, difusión en TikTok/Instagram, sin organizador fijo identificado en eTicketaBlanca | Sin fuente automatizable estable — carga manual periódica |
 | Teatro Jorge Eliécer Gaitán *(nuevo, hallado vía investigación de exclusividad Tuboleta)* | Escenario público de Idartes, agenda propia en `idartes.gov.co/es/agenda/teatro-jeg` | Scraping directo (sitio institucional, sin bloqueo anti-IA conocido) |
-| Teatro Cafam *(nuevo, mismo hallazgo)* | Sitio propio cafam.com.co con sección editorial de programación, pero el ticketing transaccional corre sobre subdominio de Tuboleta | Scraping de cafam.com.co para agenda editorial; no depender de Tuboleta |
+| Teatro Cafam *(nuevo, mismo hallazgo)* | ⚠️ **Resuelto al implementar (2026-08-27):** cafam.com.co está detrás de Radware Bot Manager. **Todo** el dominio (no solo rutas admin) responde 302 a un challenge en `validate.perfdrive.com`, incluida la home y `wp-json`. Sortearlo iría contra la regla de no evadir bloqueos anti-bot | Carga manual periódica — queda descartado como pipeline automatizado |
 
 ### Plataformas de boletería auditadas
 - **Tuboleta** — bloquea bots de IA explícitamente (ver sección 3). Evitar. Confirmado no-exclusiva para Movistar Arena (ver arriba).
@@ -141,7 +141,14 @@ El `robots.txt` de Tuboleta bloquea explícitamente por nombre a ClaudeBot, GPTB
 - **Rockal Live** — confirmado como promotor real (organiza shows en Capital Live Concerts), no solo tienda de merch.
 
 ### Conclusión técnica clave
-Ningún sitio auditado publica `schema.org/Event` (JSON-LD) — hay que construir parsers de HTML a medida por sitio.
+Ningún sitio auditado publica `schema.org/Event` (JSON-LD) — hay que construir parsers de HTML a medida por sitio. **Matiz encontrado al implementar Fase 2:** dos de los seis sí exponen datos estructurados por otra vía — Latino Power vía la API REST de *The Events Calendar*, y Rockal Live vía el `__NEXT_DATA__` que eTicketaBlanca embebe en el HTML (es una app Next.js). Antes de escribir un parser de HTML conviene revisar si el sitio corre WordPress con plugin de eventos o un framework JS con estado embebido.
+
+### Trampas de datos encontradas al implementar los parsers (2026-08-27)
+Verificadas contra los sitios reales; hay tests de regresión en `services/api/tests/`.
+- **Idartes miente en la zona horaria.** El atributo `<time datetime="2026-08-27T20:00:00Z">` está marcado como UTC pero el valor es hora **local** de Bogotá — la misma tarjeta muestra "8:00 pm". Tomarlo como UTC guardaba cada evento 5 horas antes.
+- **Royal Center publica la fecha sin año** ("29 DE AGOSTO"). Inferir "la próxima ocurrencia futura" empuja los eventos ya pasados que siguen publicados un año hacia adelante, con una fecha falsa pero verosímil. Se resuelve con una ventana de tolerancia hacia el pasado.
+- **La URL de boletería no sirve como identidad del evento.** Los venues la editan y reutilizan: en Lourdes, dos shows distintos ("Todos tus muertos" y "Lucho Al Attaque") comparten el mismo link de Passline, y la tarjeta de Bloodbath apunta a otros dos artistas. Identificar por URL perdía un evento real y duplicaba otros. Se usa título + fecha.
+- **Las carteleras repiten eventos** (ej. el slider de destacados de Movistar Arena). Postgres rechaza un upsert con la misma clave dos veces en el mismo lote, así que hay que deduplicar antes de escribir.
 
 ---
 
@@ -168,4 +175,8 @@ Alcance: los 3 módulos priorizados — Mapa de escena en vivo, Calendario agreg
 ### Pendiente de definir
 - Nombre e identidad definitiva del proyecto (placeholder `bogota-music-intel` activo mientras tanto).
 - Probar Napster con queries reales de artistas colombianos antes de incluirlo en el módulo Scout de emergentes / Radar de tendencias (ver 2.1).
-- Confirmar si Teatro Cafam necesita fuente manual además de su sitio propio, una vez se audite su HTML real.
+- ~~Confirmar si Teatro Cafam necesita fuente manual~~ — **resuelto 2026-08-27:** sí, es manual. Todo el dominio está detrás de un WAF (ver sección 4).
+
+### Estado de ejecución
+- **Fase 1 y Fase 2 completadas** (2026-08-27). Seis scrapers en producción alimentando Supabase; cuatro venues quedan en carga manual con el motivo documentado en `services/api/bogota_music_intel/scrapers/registry.py`.
+- Siguiente: Fase 3 (calendario de eventos en el frontend).

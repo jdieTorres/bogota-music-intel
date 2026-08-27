@@ -32,8 +32,14 @@ Directorio/wiki y API pública quedan para fase 2/futura. Ritmo de dedicación: 
 
 ## Pendientes activos (no resueltos aún)
 - Probar Napster API con queries reales de artistas colombianos (Bomba Estéreo, Karol G, Andrés Cepeda) antes de meterlo al módulo Scout de emergentes — su cobertura LatAm no está documentada, hay que probarla a mano.
-- Confirmar si Teatro Cafam necesita fuente manual además de su sitio propio (cafam.com.co), dado que su ticketing corre sobre un subdominio de Tuboleta.
 - Nombre e identidad de marca definitiva del proyecto (el placeholder de arriba es solo de trabajo).
+
+## Estado de implementación
+- **Fase 1 (infraestructura) — hecha.** Monorepo con `apps/web` (Next.js) y `services/api` (FastAPI), Supabase conectado, GitHub Actions con cron diario.
+- **Fase 2 (scrapers) — hecha.** Seis fuentes activas en `services/api/bogota_music_intel/scrapers/`. `registry.py` es la fuente de verdad de qué venues son automatizables y cuáles requieren carga manual (con el motivo verificado de cada uno). Correr con `python -m bogota_music_intel.scrape_cli [--dry-run] [--source X]`.
+- **Siguiente: Fase 3** — calendario de eventos en el frontend.
+
+Antes de tocar un parser, leé la sección "Trampas de datos" de `docs/investigacion-tecnica-plataforma-musical.md`: varias suposiciones razonables (la zona horaria que declara el sitio, la URL como identidad del evento) resultaron falsas contra los sitios reales y ya tienen tests de regresión en `services/api/tests/`.
 
 ## Reglas duras (no negociables, ya decididas en investigación previa)
 - No evadir el bloqueo anti-bots-IA de Tuboleta (robots.txt bloquea explícitamente a ClaudeBot/GPTBot). No construir scraper para ese sitio.

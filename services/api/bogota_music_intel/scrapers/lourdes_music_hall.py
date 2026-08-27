@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 from bogota_music_intel.scrapers import http
 from bogota_music_intel.scrapers.dateparse import parse_spanish_date
+from bogota_music_intel.scrapers.identity import build_event_id
 from bogota_music_intel.scrapers.models import ScrapedEvent
 
 SOURCE = "lourdes_music_hall"
@@ -65,7 +66,7 @@ def scrape() -> list[ScrapedEvent]:
         starts_at = parse_spanish_date(date_text) if date_text else None
 
         img = container.find("img")
-        source_event_id = ticket_url.rstrip("/").rsplit("/", 1)[-1]
+        source_event_id = build_event_id(title, starts_at)
         if source_event_id in seen_ids:
             continue
         seen_ids.add(source_event_id)

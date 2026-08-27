@@ -40,12 +40,25 @@ _DATE_NO_YEAR_RE = re.compile(
     r"(\d{1,2})\s*(?:de)?\s*([a-zA-Záéíóúñ]+)\b", re.IGNORECASE
 )
 
+# Una cartelera suele dejar publicado un evento algunos días/semanas después
+# de que pasó. Dentro de esta ventana se asume "cartelera desactualizada"
+# (el evento fue este año) en vez de "próxima ocurrencia" (el año que viene).
+STALE_LISTING_DAYS = 60
 
-def parse_spanish_date_infer_year(text: str, reference: datetime | None = None) -> datetime | None:
-    """Parse 'DD DE MONTH' with no year (as seen on Royal Center's listing)
-    and infer the year: assumes the next upcoming occurrence relative to
-    `reference` (defaults to now in America/Bogota), since venue listings
-    only show future events.
+
+def parse_spanish_date_infer_year(
+    text: str,
+    reference: datetime | None = None,
+    stale_days: int = STALE_LISTING_DAYS,
+) -> datetime | None:
+    """Parsea 'DD DE MES' sin año (como en la cartelera de Royal Center) e
+    infiere el año.
+
+    No basta con "la próxima ocurrencia futura": un evento que ya pasó pero
+    sigue publicado (típico en Wix) quedaría guardado un año en el futuro,
+    con una fecha falsa pero verosímil. Por eso, si la fecha de este año cayó
+    hace poco (<= `stale_days`), se conserva ese año; solo las fechas ya
+    lejanas en el pasado se interpretan como la ocurrencia del año siguiente.
     """
     match = _DATE_NO_YEAR_RE.search(text)
     if not match:
@@ -56,11 +69,18 @@ def parse_spanish_date_infer_year(text: str, reference: datetime | None = None) 
         return None
 
     reference = reference or datetime.now(BOGOTA_TZ)
-    for year in (reference.year, reference.year + 1):
+    candidates: list[datetime] = []
+    for year in (reference.year - 1, reference.year, reference.year + 1):
         try:
-            candidate = datetime(year, month, int(day), tzinfo=BOGOTA_TZ)
+            candidates.append(datetime(year, month, int(day), tzinfo=BOGOTA_TZ))
         except ValueError:
-            continue
-        if candidate >= reference - timedelta(days=1):
-            return candidate
-    return None
+            continue  # ej. 29 de febrero en un año no bisiesto
+
+    recent_past = [
+        c for c in candidates if reference - timedelta(days=stale_days) <= c < reference
+    ]
+    if recent_past:
+        return max(recent_past)
+
+    future = [c for c in candidates if c >= reference]
+    return min(future) if future else None

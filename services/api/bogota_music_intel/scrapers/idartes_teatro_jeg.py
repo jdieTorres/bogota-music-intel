@@ -12,6 +12,28 @@ AGENDA_URL = f"{BASE_URL}/es/agenda/teatro-jeg"
 BOGOTA_TZ = ZoneInfo("America/Bogota")
 
 
+def _parse_agenda_datetime(value: str | None) -> datetime | None:
+    """Idartes marca el atributo como UTC ("...Z") pero el valor es hora
+    LOCAL de Bogotá: el atributo dice 20:00:00Z mientras la página muestra
+    "8:00 pm", y lo mismo en 18:00Z/"6:00 pm" y 19:00Z/"7:00 pm". Verificado
+    contra los 9 eventos de la agenda el 2026-08-27.
+
+    Por eso se ignora la "Z" y el valor se interpreta como America/Bogota.
+    Tomarlo como UTC de verdad guardaba cada evento 5 horas antes.
+    """
+    if not value:
+        return None
+    text = value.strip().removesuffix("Z")
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is not None:
+        # Trae un offset explícito distinto de "Z": ahí sí se le cree.
+        return parsed.astimezone(BOGOTA_TZ)
+    return parsed.replace(tzinfo=BOGOTA_TZ)
+
+
 def scrape() -> list[ScrapedEvent]:
     response = http.get(AGENDA_URL)
     soup = BeautifulSoup(response.text, "lxml")
@@ -31,11 +53,7 @@ def scrape() -> list[ScrapedEvent]:
         if source_url.startswith("/"):
             source_url = BASE_URL + source_url
 
-        starts_at = None
-        if time_tag and time_tag.get("datetime"):
-            starts_at = datetime.fromisoformat(
-                time_tag["datetime"].replace("Z", "+00:00")
-            ).astimezone(BOGOTA_TZ)
+        starts_at = _parse_agenda_datetime(time_tag.get("datetime") if time_tag else None)
 
         events.append(
             ScrapedEvent(
