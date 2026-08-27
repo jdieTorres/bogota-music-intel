@@ -42,11 +42,19 @@ jobs:
 
       - run: npm test
 
+      # Next genera los helpers PageProps/LayoutProps en .next/types; sin
+      # esto tsc no los encuentra en un checkout limpio.
+      - run: npx next typegen
+
       - run: npx tsc --noEmit
 
-      # El build necesita las variables para prerenderizar la cartelera.
+      # Si los secrets están configurados, el build prerenderiza contra la
+      # base real. Si no, corre con valores de relleno: la home cae en su
+      # estado "sin conexión" y el build sigue siendo una verificación
+      # válida de compilación y tipos, sin volver rojo el CI por una
+      # credencial que todavía no se cargó.
       - name: Build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.BMI_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.BMI_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.BMI_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.BMI_SUPABASE_PUBLISHABLE_KEY || 'placeholder-key' }}
         run: npm run build
