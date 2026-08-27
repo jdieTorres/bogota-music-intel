@@ -1,0 +1,29 @@
+name: Scraper cron
+
+on:
+  schedule:
+    # 09:00 America/Bogota (UTC-5) = 14:00 UTC, daily
+    - cron: "0 14 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  scrape-events:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install -e .
+
+      - name: Run event scrapers
+        env:
+          bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
+          bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Placeholder: scrapers de Fase 2 (Movistar Arena, Ace of Spades, Lourdes Music Hall, Royal Center, Latino Power, Rockal Live, Idartes, Cafam) se registran aquí."
