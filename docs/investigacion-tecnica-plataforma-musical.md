@@ -150,6 +150,11 @@ Verificadas contra los sitios reales; hay tests de regresión en `services/api/t
 - **La URL de boletería no sirve como identidad del evento.** Los venues la editan y reutilizan: en Lourdes, dos shows distintos ("Todos tus muertos" y "Lucho Al Attaque") comparten el mismo link de Passline, y la tarjeta de Bloodbath apunta a otros dos artistas. Identificar por URL perdía un evento real y duplicaba otros. Se usa título + fecha.
 - **Las carteleras repiten eventos** (ej. el slider de destacados de Movistar Arena). Postgres rechaza un upsert con la misma clave dos veces en el mismo lote, así que hay que deduplicar antes de escribir.
 
+### Trampas del frontend encontradas al implementar el mapa (2026-08-27)
+- **MapLibre GL 6 se queda sin worker bajo Turbopack, y falla en silencio.** La v6 dejó de inlinear su worker como blob: ahora lo resuelve con `new URL('./maplibre-gl-worker.mjs', import.meta.url)` y **descarta el resultado si `import.meta.url` no empieza por `http(s):`**. Turbopack no le da una URL http ni en `next dev` ni en `next build`, así que `getWorkerUrl()` devuelve `""`. El síntoma engaña: el canvas, los marcadores, los controles y la atribución se dibujan bien, no hay excepción ni advertencia en consola, y el estilo, el TileJSON y el sprite se descargan con 200 — pero **no se pide ni una sola tesela** y el mapa queda en negro. La pista que lo delata es esa: peticiones de estilo sí, de teselas ninguna. Se resuelve copiando `maplibre-gl-worker.mjs` y su hermano `maplibre-gl-shared.mjs` a `public/` (`apps/web/scripts/copiar-worker-maplibre.mjs`, enganchado a `predev`/`prebuild`) y llamando a `setWorkerUrl()`. Ojo: afecta también al build de producción, no es un problema solo de dev.
+- **La hoja de estilos de MapLibre pisa la del sitio.** Se importa desde el componente cliente, así que Next la inyecta *después* de `globals.css`: con la misma especificidad gana ella. El popup viene con `background:#fff` fijo y sobre la paleta oscura dejaba texto blanco sobre blanco. Los overrides en `globals.css` llevan una clase de más (`.maplibregl-popup .maplibregl-popup-content`) para ganar sin `!important`.
+- **Nominatim devuelve la calle cuando no encuentra el lugar.** "CARRERA 13 #66-80" resolvió a un punto de Usaquén a más de 7 km del Royal Center — dentro de Bogotá, así que el filtro por bounding box no lo detectaba. Hay que mirar `addresstype` y rechazar los resultados demasiado gruesos (`road`, `suburb`, `city`…). Ver `services/api/bogota_music_intel/geocode.py`.
+
 ---
 
 ## 5. Plan de ejecución del MVP
@@ -223,5 +228,6 @@ Cualquiera que se elija: **no perder el evento en la ingesta**. Mejor guardarlo 
 ---
 
 ### Estado de ejecución
-- **Fase 1 y Fase 2 completadas** (2026-08-27). Seis scrapers en producción alimentando Supabase; cuatro venues quedan en carga manual con el motivo documentado en `services/api/bogota_music_intel/scrapers/registry.py`.
-- Siguiente: Fase 3 (calendario de eventos en el frontend).
+- **Fases 1 a 4 completadas** (2026-08-27). Seis scrapers en producción alimentando Supabase; cuatro venues quedan en carga manual con el motivo documentado en `services/api/bogota_music_intel/scrapers/registry.py`. Calendario y mapa en `apps/web`.
+- Geocodificación: 5 de 9 salas ubicadas. Las otras cuatro (Auditorio Mayor, Capital Live Concerts, **Lourdes Music Hall — 7 eventos próximos**, Teatro Libre Sala Centro) no existen como POI en OpenStreetMap y se listan aparte bajo el mapa. Se prefiere no ubicarlas antes que poner un pin en el lugar equivocado: buscar "Lourdes, Chapinero" devuelve con toda confianza la iglesia, no la sala.
+- Siguiente: los dos pendientes acordados (filtrado editorial y look & feel) y la Fase 5 (radar de tendencias).

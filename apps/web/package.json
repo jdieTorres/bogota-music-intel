@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "maplibre:worker": "node scripts/copiar-worker-maplibre.mjs",
+    "predev": "npm run maplibre:worker",
+    "prebuild": "npm run maplibre:worker",
+    "pretest": "npm run maplibre:worker",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

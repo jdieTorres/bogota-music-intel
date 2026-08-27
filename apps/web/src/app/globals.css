@@ -29,6 +29,109 @@ body {
   color: var(--foreground);
 }
 
+/* --- Mapa de la escena ---------------------------------------------------
+   MapLibre trae su propia hoja de estilos pensada para mapas claros: el popup
+   viene con fondo blanco fijo. Sobre la paleta oscura del sitio eso dejaba el
+   texto blanco sobre blanco, ilegible. Se repinta aquí, con los tokens del
+   tema, en vez de con estilos en línea desde el componente.
+
+   Los selectores llevan `.maplibregl-popup` de más a propósito: su hoja se
+   importa desde el componente cliente, así que Next la inyecta *después* de
+   este archivo y con la misma especificidad ganaría ella. Sumar una clase
+   basta para que estas reglas manden, sin recurrir a !important. */
+
+.maplibregl-popup .maplibregl-popup-content {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+  padding: 12px 14px;
+  font-family: inherit;
+}
+
+/* La puntita del globo es un triángulo hecho con bordes: cada anclaje pinta
+   un lado distinto, así que hay que recorrerlos todos. */
+.maplibregl-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--surface);
+}
+.maplibregl-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--surface);
+}
+.maplibregl-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--surface);
+}
+.maplibregl-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--surface);
+}
+
+.maplibregl-popup .maplibregl-popup-close-button {
+  color: var(--muted);
+  padding: 2px 7px;
+  font-size: 15px;
+  line-height: 1;
+}
+.maplibregl-popup .maplibregl-popup-close-button:hover {
+  background-color: var(--surface-hover);
+  color: var(--foreground);
+}
+
+.marcador-sala {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+  cursor: pointer;
+}
+
+.popup-sala {
+  min-width: 190px;
+  max-width: 250px;
+}
+.popup-sala__nombre {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.popup-sala__direccion,
+.popup-sala__mas {
+  color: var(--muted);
+  font-size: 11px;
+}
+.popup-sala__direccion {
+  margin-bottom: 8px;
+}
+.popup-sala__mas {
+  margin-top: 6px;
+}
+.popup-sala__lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+}
+.popup-sala__lista li + li {
+  margin-top: 4px;
+}
+.popup-sala__lista a {
+  color: var(--foreground);
+  text-decoration: none;
+}
+.popup-sala__lista a:hover {
+  text-decoration: underline;
+}
+.popup-sala__fecha {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
+}
+
 /* La franja lateral roja de cada tarjeta solo aparece al pasar el mouse. */
 @media (prefers-reduced-motion: reduce) {
   *,

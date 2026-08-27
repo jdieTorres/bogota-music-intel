@@ -8,11 +8,25 @@ import {
   Marker,
   NavigationControl,
   Popup,
+  getWorkerUrl,
+  setWorkerUrl,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
 
 import type { SalaEnMapa } from "@/lib/venues";
+
+// maplibre-gl 6 resuelve su worker con `import.meta.url` y descarta el valor si
+// no es una URL http(s). Turbopack no le da una, así que el mapa se queda sin
+// worker: dibuja canvas, marcadores y controles, pero nunca pide una tesela y
+// queda en negro, sin error en consola. `scripts/copiar-worker-maplibre.mjs`
+// deja el worker en public/ y aquí se le indica dónde está.
+//
+// Se pregunta primero para no pisar una resolución nativa, si algún día
+// Turbopack o maplibre arreglan el caso.
+if (!getWorkerUrl()) {
+  setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+}
 
 // OpenFreeMap sirve tiles de OpenStreetMap sin API key ni límite de uso.
 // El estilo no trae el campo `attribution`, así que la atribución a OSM
@@ -49,20 +63,19 @@ function contenidoDelPopup(sala: SalaEnMapa): string {
             month: "short",
           }).format(new Date(evento.starts_at))
         : "";
-      return `<li style="margin-bottom:4px">
-        <a href="/evento/${evento.id}" style="color:#f2f2f4;text-decoration:none">
-          <span style="color:#9b9baa;font-variant-numeric:tabular-nums">${fecha}</span>
-          ${escaparHtml(evento.title)}
+      return `<li>
+        <a href="/evento/${evento.id}">
+          <span class="popup-sala__fecha">${fecha}</span>${escaparHtml(evento.title)}
         </a>
       </li>`;
     })
     .join("");
 
-  return `<div style="font-family:inherit;min-width:190px;max-width:250px">
-    <strong style="display:block;margin-bottom:2px">${escaparHtml(sala.name)}</strong>
-    ${sala.address ? `<div style="color:#9b9baa;font-size:11px;margin-bottom:8px">${escaparHtml(sala.address)}</div>` : ""}
-    <ul style="list-style:none;padding:0;margin:0;font-size:12px">${items}</ul>
-    ${restantes > 0 ? `<div style="color:#9b9baa;font-size:11px;margin-top:6px">y ${restantes} más</div>` : ""}
+  return `<div class="popup-sala">
+    <strong class="popup-sala__nombre">${escaparHtml(sala.name)}</strong>
+    ${sala.address ? `<div class="popup-sala__direccion">${escaparHtml(sala.address)}</div>` : ""}
+    <ul class="popup-sala__lista">${items}</ul>
+    ${restantes > 0 ? `<div class="popup-sala__mas">y ${restantes} más</div>` : ""}
   </div>`;
 }
 
@@ -88,15 +101,7 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
     const limites = new LngLatBounds();
     for (const sala of salas) {
       const marcador = document.createElement("div");
-      marcador.style.cssText = [
-        "width:14px",
-        "height:14px",
-        "border-radius:50%",
-        "background:#ff4d3d",
-        "border:2px solid #0b0b0e",
-        "box-shadow:0 0 0 1px rgba(255,77,61,.5)",
-        "cursor:pointer",
-      ].join(";");
+      marcador.className = "marcador-sala";
       marcador.setAttribute("role", "button");
       marcador.setAttribute("aria-label", `${sala.name}, ${sala.eventos.length} eventos`);
 
