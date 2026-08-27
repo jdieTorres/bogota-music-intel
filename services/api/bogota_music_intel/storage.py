@@ -36,15 +36,27 @@ def upsert_venues(client: Client, events: list[ScrapedEvent]) -> dict[str, str]:
         slug = slugify(event.venue_name_raw)
         if not slug:
             continue
-        rows[slug] = {
+        fila = {
             "slug": slug,
             "name": normalize_venue_name(event.venue_name_raw),
             "city": event.city,
         }
+        if event.venue_address:
+            fila["address"] = event.venue_address
+        rows[slug] = fila
     if not rows:
         return {}
 
-    client.table("venues").upsert(list(rows.values()), on_conflict="slug").execute()
+    # Se sube en dos lotes según traigan dirección o no, por dos motivos:
+    # PostgREST exige el mismo juego de claves en todas las filas de un
+    # lote, y mandar address=null para una fuente que no la publica
+    # borraría la dirección que sí guardó otra fuente para esa misma sala.
+    con_direccion = [f for f in rows.values() if "address" in f]
+    sin_direccion = [f for f in rows.values() if "address" not in f]
+    for lote in (con_direccion, sin_direccion):
+        if lote:
+            client.table("venues").upsert(lote, on_conflict="slug").execute()
+
     stored = client.table("venues").select("id,slug").in_("slug", list(rows)).execute()
     return {row["slug"]: row["id"] for row in stored.data}
 

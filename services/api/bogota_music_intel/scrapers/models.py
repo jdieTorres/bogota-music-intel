@@ -23,6 +23,10 @@ class ScrapedEvent:
     ticket_url: str | None = None
     image_url: str | None = None
     city: str = "Bogotá"
+    # Dirección de la sala tal como la publica la fuente. Solo algunas la
+    # traen; alimenta la geocodificación del mapa, que es mucho más precisa
+    # buscando por dirección que por nombre.
+    venue_address: str | None = None
     raw: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

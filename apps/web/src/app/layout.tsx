@@ -39,9 +39,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 escena en vivo
               </span>
             </Link>
-            <span className="font-mono text-[11px] uppercase tracking-widest text-muted">
-              Beta
-            </span>
+            <nav className="flex items-baseline gap-4 text-sm">
+              <Link
+                href="/"
+                className="text-muted transition-colors hover:text-foreground"
+              >
+                Cartelera
+              </Link>
+              <Link
+                href="/mapa"
+                className="text-muted transition-colors hover:text-foreground"
+              >
+                Mapa
+              </Link>
+            </nav>
           </div>
         </header>
 

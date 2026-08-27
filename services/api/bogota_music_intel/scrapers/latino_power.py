@@ -58,6 +58,7 @@ def scrape() -> list[ScrapedEvent]:
                         price_text=_clean(item.get("cost")),
                         image_url=(item.get("image") or {}).get("url"),
                         city=venue.get("city") or "Bogotá",
+                        venue_address=_clean(venue.get("address")),
                         raw={"venue_address": venue.get("address")},
                     )
                 )

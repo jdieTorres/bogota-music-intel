@@ -50,6 +50,7 @@ def scrape() -> list[ScrapedEvent]:
                 category=item.get("subCategory") or item.get("category"),
                 image_url=item.get("image"),
                 city="Bogotá",
+                venue_address=(item.get("locationStreet") or "").strip() or None,
                 raw={"locationStreet": item.get("locationStreet")},
             )
         )
