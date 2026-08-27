@@ -25,5 +25,4 @@ jobs:
         env:
           bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
           bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "Placeholder: scrapers de Fase 2 (Movistar Arena, Ace of Spades, Lourdes Music Hall, Royal Center, Latino Power, Rockal Live, Idartes, Cafam) se registran aquí."
+        run: python -m bogota_music_intel.scrape_cli
