@@ -48,8 +48,10 @@ COORDENADAS_CURADAS: dict[str, CoordenadaCurada] = {
             "POI 'Teatro Libre' en OpenStreetMap (amenity), ubicado en "
             "Calle 62 9A-84, Chapinero. Coincide con la dirección que publica "
             "la fuente para esta sala (CALLE 62 # 9A-65): misma calle y misma "
-            "cuadra. La búsqueda automática no lo encuentra porque el nombre "
-            "guardado incluye 'de Bogotá Sala Chapinero'. Verificado 2026-08-27."
+            "cuadra. La búsqueda automática no la resuelve: el POI de OSM se "
+            "llama solo 'Teatro Libre', y por dirección tampoco, porque "
+            "OpenStreetMap no tiene numeración de casas en Bogotá. "
+            "Verificado 2026-08-27."
         ),
     ),
     "lourdes-music-hall": CoordenadaCurada(

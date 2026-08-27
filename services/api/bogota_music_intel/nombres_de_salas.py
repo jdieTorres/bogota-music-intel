@@ -18,5 +18,8 @@ no que el nombre "se vea raro".
 # Clave: slug de la sala (derivado del nombre que publica la fuente).
 # Valor: el nombre que se muestra.
 NOMBRES_CORREGIDOS: dict[str, str] = {
+    # Rockal Live publica las dos sedes del Teatro Libre como "Sala X"; el
+    # teatro las llama "Sede X". Confirmado con Juan el 2026-08-27.
     "teatro-libre-de-bogota-sala-centro": "Teatro Libre Sede Centro",
+    "teatro-libre-de-bogota-sala-chapinero": "Teatro Libre Sede Chapinero",
 }
