@@ -8,6 +8,9 @@
  * 2. Los artistas internacionales sí entran, pero en segundo plano: un show
  *    de Robbie Williams en el Movistar es parte de la escena en vivo de
  *    Bogotá aunque no sea un toque local.
+ * 3. Las fiestas y ciclos de sala van en su propia pestaña. No compiten con
+ *    los conciertos por el mismo lugar en la lista, porque ordenar una
+ *    noche de club junto a un show del Movistar no compara nada.
  *
  * Vive aparte de `events.ts` porque es política, no acceso a datos: acá no
  * se abre conexión a Supabase, así que se puede probar sin credenciales y
@@ -18,14 +21,28 @@
  */
 
 /**
- * Filtro de PostgREST para dejar fuera lo que no es música.
+ * Los tres filtros de PostgREST, que son tres preguntas distintas.
  *
- * Se pide "es música O todavía no se sabe" en vez de "distinto de
- * not_music" porque en SQL una comparación contra null da null, y eso
- * dejaría fuera justamente los eventos sin clasificar todavía. Ante la duda
- * el evento se muestra: esconderlo no deja ningún rastro visible.
+ * Todos se escriben en positivo ("es esto O es aquello") y no como una
+ * negación: en SQL una comparación contra null da null, así que pedir
+ * "distinto de not_music" dejaría fuera justamente los eventos que todavía
+ * no se clasificaron. Ante la duda el evento se muestra — esconderlo no
+ * deja ningún rastro visible para nadie.
  */
-export const SOLO_MUSICA = "event_type.is.null,event_type.eq.music";
+
+/** Conciertos: un artista de cartel, más lo que aún no se clasificó. */
+export const SOLO_CONCIERTOS = "event_type.is.null,event_type.eq.music";
+
+/** Fiestas y ciclos: la sala programándose a sí misma. */
+export const SOLO_FIESTAS = "event_type.eq.fiesta";
+
+/**
+ * Todo lo que es escena, sin separar. Lo usa el mapa: una sala con fiesta
+ * está tan activa como una con concierto, y separarlas ahí no ayudaría a
+ * nadie a saber dónde hay música esta noche.
+ */
+export const EN_CARTELERA =
+  "event_type.is.null,event_type.eq.music,event_type.eq.fiesta";
 
 /** Lo mínimo que hace falta para ordenar por criterio editorial. */
 type ConOrigen = { is_local: boolean | null };

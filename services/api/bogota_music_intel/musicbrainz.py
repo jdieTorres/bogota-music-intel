@@ -97,8 +97,25 @@ class ArtistaResuelto:
 # El guion exige espacios alrededor para no partir nombres como "Jay-Z".
 _SEPARADORES = re.compile(r"\s*[|:/]\s*|\s+[-–—]+\s+")
 
-# "Festival Orígenes presenta Sara Curruchich": el artista va después.
-_PRESENTA = re.compile(r"\bpresenta\b\s*", re.IGNORECASE)
+# "X presenta Y" y "Z por W". El artista puede estar de cualquiera de los
+# dos lados —"Festival Orígenes presenta Sara Curruchich" (después) contra
+# "Ancestral Beats presenta 'Human Design'" (antes)—, así que se prueban los
+# dos en vez de apostar a uno.
+_PRESENTA = re.compile(r"\b(?:presenta|presentan|por)\b", re.IGNORECASE)
+
+# Listas de artistas dentro de un mismo título: "Sara Curruchich y
+# Humazapas", "Shing02, SPIN MASTER A-1 y Sam Nakamura". Alcanza con
+# resolver el primero para saber de dónde es el cartel.
+_ENUMERACION = re.compile(r"\s*,\s*|\s+y\s+|\s+&\s+", re.IGNORECASE)
+
+# Formatos de show que la sala pega al nombre de la banda. "RAYOS LASER
+# ACÚSTICO" no existe en MusicBrainz; "Rayos Láser" sí. Es una lista corta y
+# explícita a propósito: borrar la última palabra a ciegas mutila nombres
+# reales.
+_FORMATOS = re.compile(
+    r"\s+\b(?:ac[uú]stico|unplugged|sinf[oó]nico|en\s+concierto|live\s+session)\b.*$",
+    re.IGNORECASE,
+)
 
 # Coletillas de cartelera que no son parte del nombre del artista. El orden
 # importa: las que cortan hasta el final van antes que las que solo borran
@@ -116,26 +133,75 @@ _RUIDO = [
 _COMILLAS = "\"'“”‘’«»¡!¿?.,"
 
 
-def limpiar_titulo(title: str) -> str:
-    """Saca del título del evento algo parecido al nombre del artista.
+MAX_CANDIDATOS = 3
 
-    Los sitios titulan el evento, no al artista: "PABLOPABLO EN BOGOTÁ",
-    "HELLOWEEN | 40 YEARS ANNIVERSARY TOUR", "Gustavo Santaolalla llega a
-    Bogotá con el Ronroco Tour". Sin limpiar esto, la búsqueda no acierta.
 
-    Devuelve "" cuando no queda nada consultable; el llamador debe tratarlo
-    como "no resuelto", no como un artista sin nombre.
-    """
-    texto = _SEPARADORES.split(title.strip(), maxsplit=1)[0]
-
-    if _PRESENTA.search(texto):
-        texto = _PRESENTA.split(texto, maxsplit=1)[-1]
-
+def _pulir(texto: str) -> str:
     for patron in _RUIDO:
         texto = patron.sub(" ", texto)
+    texto = _FORMATOS.sub("", texto)
+    return re.sub(r"\s+", " ", texto).strip().strip(_COMILLAS).strip()
 
-    texto = re.sub(r"\s+", " ", texto).strip().strip(_COMILLAS).strip()
-    return texto
+
+def candidatos_de_titulo(title: str) -> list[str]:
+    """Nombres de artista plausibles dentro del título, del más probable al
+    menos, sin repetir.
+
+    Por qué varios y no uno: el trozo que va primero **no siempre** es el
+    artista. "ROBBIE WILLIAMS | BRITPOP" abre con el artista, pero "10 AÑOS
+    Y NO AZARAN - LA MUCHACHA EN BOGOTÁ" abre con el nombre de la gira, y
+    quedarse con el primero perdía a La Muchacha —una artista colombiana,
+    justo lo que la cartelera existe para destacar—. Probar el siguiente
+    cuesta una petición más y solo se paga cuando el primero no resolvió.
+
+    Se corta en MAX_CANDIDATOS: más allá de eso no se está buscando al
+    artista, se está tirando la red a ver qué cae.
+    """
+    candidatos: list[str] = []
+
+    def agregar(texto: str) -> None:
+        limpio = _pulir(texto)
+        # Menos de 3 caracteres no identifica a nadie y hace ruido en la
+        # búsqueda difusa de MusicBrainz.
+        if len(limpio) >= 3 and limpio not in candidatos:
+            candidatos.append(limpio)
+
+    for tramo in _SEPARADORES.split(title.strip()):
+        if not tramo.strip():
+            continue
+        # "X presenta Y": el artista puede estar de cualquier lado.
+        lados = [t for t in _PRESENTA.split(tramo) if t.strip()]
+        for lado in lados:
+            agregar(lado)
+            # "Sara Curruchich y Humazapas" -> alcanza con el primero.
+            primero = _ENUMERACION.split(lado.strip())[0]
+            if primero != lado.strip():
+                agregar(primero)
+
+    # Caso real: lourdesmusichall.com publica "<p>BloodbathBloodbath</p>".
+    # No es un error del scraper —la sala lo escribió así— y por eso el
+    # título se guarda tal cual: la cartelera muestra lo que publicó la
+    # fuente. Pero para buscar al artista sí conviene ofrecer la mitad.
+    # Se calculan todas antes de agregarlas: `agregar` escribe sobre
+    # `candidatos`, y recorrer la misma lista que se está modificando
+    # terminaría revisando los nombres que la propia vuelta acaba de meter.
+    mitades = [mitad for c in candidatos if (mitad := _sin_duplicar(c))]
+    for mitad in mitades:
+        agregar(mitad)
+
+    return candidatos[:MAX_CANDIDATOS]
+
+
+def _sin_duplicar(texto: str) -> str | None:
+    """"BloodbathBloodbath" -> "Bloodbath". Solo cuando la cadena es
+    exactamente la misma dos veces pegadas; cualquier cosa más floja que eso
+    empieza a mutilar nombres legítimos."""
+    limpio = texto.strip()
+    largo = len(limpio)
+    if largo < 6 or largo % 2 != 0:
+        return None
+    mitad = limpio[: largo // 2]
+    return mitad if limpio == mitad * 2 else None
 
 
 def _normalizar(texto: str) -> str:

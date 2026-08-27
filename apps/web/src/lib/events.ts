@@ -1,4 +1,4 @@
-import { SOLO_MUSICA } from "@/lib/editorial";
+import { SOLO_CONCIERTOS, SOLO_FIESTAS } from "@/lib/editorial";
 import { supabase } from "@/lib/supabase";
 
 export type DatePrecision = "day" | "month" | "unknown";
@@ -11,7 +11,7 @@ export type EventoVenue = {
 
 /** null = todavía sin clasificar. No es lo mismo que "no es música": un
  *  evento sin clasificar se sigue mostrando. */
-export type TipoEvento = "music" | "not_music" | null;
+export type TipoEvento = "music" | "fiesta" | "not_music" | null;
 
 export type Evento = {
   id: string;
@@ -56,11 +56,13 @@ function inicioDeHoyEnBogota(): string {
   return `${partes}T00:00:00-05:00`;
 }
 
-export async function getEventosProximos(): Promise<Evento[]> {
+/** Lo próximo de una pestaña, en orden cronológico. El filtro editorial es
+ *  lo único que cambia entre conciertos y fiestas. */
+async function proximos(filtroEditorial: string): Promise<Evento[]> {
   const { data, error } = await supabase
     .from("events")
     .select(CAMPOS)
-    .or(SOLO_MUSICA)
+    .or(filtroEditorial)
     .gte("starts_at", inicioDeHoyEnBogota())
     .order("starts_at", { ascending: true });
 
@@ -68,19 +70,24 @@ export async function getEventosProximos(): Promise<Evento[]> {
   return (data ?? []) as unknown as Evento[];
 }
 
-/** Eventos que la fuente publicó sin fecha reconocible. Se muestran aparte
- *  en vez de descartarlos: existen, solo que hay que confirmar cuándo son. */
-export async function getEventosSinFecha(): Promise<Evento[]> {
+/** Los que la fuente publicó sin fecha reconocible. Se muestran aparte en
+ *  vez de descartarlos: existen, solo que hay que confirmar cuándo son. */
+async function sinFecha(filtroEditorial: string): Promise<Evento[]> {
   const { data, error } = await supabase
     .from("events")
     .select(CAMPOS)
-    .or(SOLO_MUSICA)
+    .or(filtroEditorial)
     .is("starts_at", null)
     .order("title", { ascending: true });
 
   if (error) throw new Error(`No se pudieron cargar los eventos: ${error.message}`);
   return (data ?? []) as unknown as Evento[];
 }
+
+export const getEventosProximos = () => proximos(SOLO_CONCIERTOS);
+export const getEventosSinFecha = () => sinFecha(SOLO_CONCIERTOS);
+export const getFiestasProximas = () => proximos(SOLO_FIESTAS);
+export const getFiestasSinFecha = () => sinFecha(SOLO_FIESTAS);
 
 export async function getEvento(id: string): Promise<Evento | null> {
   const { data, error } = await supabase

@@ -12,13 +12,68 @@ import pytest
 from bogota_music_intel.musicbrainz import (
     ArtistaResuelto,
     MusicBrainzNoDisponible,
+    candidatos_de_titulo,
     coincide,
-    limpiar_titulo,
     resolver_artista,
 )
 
 
-class TestLimpiarTitulo:
+def primer_candidato(titulo: str) -> str:
+    """El nombre más probable, o "" si el título no deja nada consultable."""
+    candidatos = candidatos_de_titulo(titulo)
+    return candidatos[0] if candidatos else ""
+
+
+class TestCandidatosDeTitulo:
+    """El artista no siempre está en el primer trozo del título."""
+
+    def test_ofrece_el_segundo_tramo_cuando_el_primero_es_la_gira(self):
+        # El caso que lo motivó: quedarse con el primer tramo perdía a La
+        # Muchacha, artista colombiana, por buscar el nombre de la gira.
+        candidatos = candidatos_de_titulo("10 AÑOS Y NO AZARAN - LA MUCHACHA EN BOGOTÁ")
+        assert "LA MUCHACHA" in candidatos
+        assert candidatos.index("10 AÑOS Y NO AZARAN") < candidatos.index("LA MUCHACHA")
+
+    def test_ofrece_los_dos_lados_de_presenta(self):
+        # A veces el artista va antes ("Ancestral Beats presenta 'Human
+        # Design'") y a veces después ("Festival Orígenes presenta Sara
+        # Curruchich"). No se puede apostar a uno solo.
+        assert "Ancestral Beats" in candidatos_de_titulo(
+            "Gaitán al Aire Vol. 57: Ancestral Beats presenta 'Human Design'"
+        )
+        assert "Sara Curruchich" in candidatos_de_titulo(
+            "Festival Orígenes presenta Sara Curruchich y Humazapas"
+        )
+
+    def test_corta_la_enumeracion_en_el_primer_artista(self):
+        assert "Shing02" in candidatos_de_titulo(
+            "Shing02, SPIN MASTER A-1 y Sam Nakamura en vivo en  Bogota"
+        )
+
+    def test_saca_el_formato_del_show(self):
+        # "RAYOS LASER ACÚSTICO" no existe en MusicBrainz; "Rayos Láser" sí.
+        assert "RAYOS LASER" in candidatos_de_titulo("RAYOS LASER ACÚSTICO EN BOGOTÁ")
+
+    def test_parte_un_nombre_duplicado_por_la_fuente(self):
+        # lourdesmusichall.com publica "<p>BloodbathBloodbath</p>". El
+        # título se guarda tal cual —es lo que publicó la sala—, pero para
+        # buscar al artista se ofrece la mitad.
+        assert "Bloodbath" in candidatos_de_titulo("BloodbathBloodbath")
+
+    def test_no_parte_un_nombre_que_solo_se_parece_a_duplicado(self):
+        # Duplicar tiene que ser exacto y sin espacio en medio: aflojar esto
+        # convertiría a Duran Duran en Duran.
+        assert candidatos_de_titulo("Duran Duran") == ["Duran Duran"]
+
+    def test_no_se_desborda(self):
+        largo = "A y B, C: D presenta E - F / G y H, I"
+        assert len(candidatos_de_titulo(largo)) <= 3
+
+    def test_un_titulo_limpio_da_un_solo_candidato(self):
+        assert candidatos_de_titulo("OPETH") == ["OPETH"]
+
+
+class TestPrimerCandidato:
     """Las salas titulan el evento, no al artista."""
 
     @pytest.mark.parametrize(
@@ -35,13 +90,13 @@ class TestLimpiarTitulo:
         ],
     )
     def test_corta_en_el_separador(self, titulo, esperado):
-        assert limpiar_titulo(titulo) == esperado
+        assert primer_candidato(titulo) == esperado
 
     def test_corta_con_espacio_duro_como_separador(self):
         # Caso real: Royal Center publica "AKRIILA -\xa0 TOUR LUCY", con un
         # espacio de no separación en vez de uno normal. Se ve idéntico en
         # pantalla y rompe cualquier split ingenuo por " - ".
-        assert limpiar_titulo("AKRIILA -\xa0 TOUR LUCY") == "AKRIILA"
+        assert primer_candidato("AKRIILA -\xa0 TOUR LUCY") == "AKRIILA"
 
     @pytest.mark.parametrize(
         "titulo,esperado",
@@ -56,23 +111,25 @@ class TestLimpiarTitulo:
         ],
     )
     def test_saca_las_coletillas_de_cartelera(self, titulo, esperado):
-        assert limpiar_titulo(titulo) == esperado
+        assert primer_candidato(titulo) == esperado
 
-    def test_se_queda_con_lo_que_va_despues_de_presenta(self):
-        assert (
-            limpiar_titulo("Festival Orígenes presenta Sara Curruchich y Humazapas")
-            == "Sara Curruchich y Humazapas"
-        )
+    def test_el_primer_candidato_no_siempre_es_el_artista(self):
+        # Y está bien que así sea: acá el ciclo ("Festival Orígenes") abre el
+        # título y la artista viene después. Por eso el clasificador prueba
+        # todos los candidatos y no solo este.
+        titulo = "Festival Orígenes presenta Sara Curruchich y Humazapas"
+        assert primer_candidato(titulo) == "Festival Orígenes"
+        assert "Sara Curruchich" in candidatos_de_titulo(titulo)
 
     def test_un_nombre_limpio_no_se_toca(self):
         for titulo in ("OPETH", "Los Mirlos", "Ky Mani Marley", "Todos tus muertos"):
-            assert limpiar_titulo(titulo) == titulo
+            assert primer_candidato(titulo) == titulo
 
     def test_devuelve_vacio_cuando_no_queda_nada_consultable(self):
         # El llamador tiene que tratarlo como "sin resolver", no como un
         # artista sin nombre.
-        assert limpiar_titulo("EN BOGOTÁ") == ""
-        assert limpiar_titulo("2026") == ""
+        assert primer_candidato("EN BOGOTÁ") == ""
+        assert primer_candidato("2026") == ""
 
 
 class TestCoincide:

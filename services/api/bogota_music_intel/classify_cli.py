@@ -20,7 +20,7 @@ import httpx
 from bogota_music_intel.classify import clasificar
 from bogota_music_intel.musicbrainz import USER_AGENT, MusicBrainzNoDisponible
 from bogota_music_intel.storage import get_client
-from bogota_music_intel.tipos_evento import NO_MUSICA
+from bogota_music_intel.tipos_evento import FIESTA, NO_MUSICA
 
 CAMPOS = "id,source,source_event_id,title,category"
 
@@ -64,6 +64,7 @@ def main() -> int:
         return 0
 
     excluidos = 0
+    fiestas = 0
     locales = 0
     internacionales = 0
     sin_resolver = 0
@@ -96,6 +97,9 @@ def main() -> int:
             if resultado.event_type == NO_MUSICA:
                 excluidos += 1
                 marca = "FUERA"
+            elif resultado.event_type == FIESTA:
+                fiestas += 1
+                marca = "FIESTA"
             elif resultado.is_local is True:
                 locales += 1
                 marca = "LOCAL"
@@ -120,8 +124,8 @@ def main() -> int:
 
     print(
         f"\n{len(eventos)} eventos: {excluidos} fuera de cartelera, "
-        f"{locales} locales, {internacionales} internacionales, "
-        f"{sin_resolver} sin resolver."
+        f"{fiestas} fiestas, {locales} locales, "
+        f"{internacionales} internacionales, {sin_resolver} sin resolver."
     )
     if sin_preguntar:
         print(

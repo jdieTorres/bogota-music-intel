@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { SOLO_MUSICA, priorizarLocales } from "@/lib/editorial";
+import {
+  EN_CARTELERA,
+  SOLO_CONCIERTOS,
+  SOLO_FIESTAS,
+  priorizarLocales,
+} from "@/lib/editorial";
 
 /** Lo único que mira `priorizarLocales`, más un nombre para poder afirmar. */
 function evento(title: string, is_local: boolean | null) {
@@ -66,13 +71,28 @@ describe("priorizarLocales", () => {
   });
 });
 
-describe("SOLO_MUSICA", () => {
-  it("deja pasar los eventos todavía sin clasificar", () => {
+describe("filtros editoriales", () => {
+  it("los conciertos dejan pasar lo que todavía no se clasificó", () => {
     // El filtro tiene que ser "es música O es null". Pedir sólo
     // "distinto de not_music" haría que PostgREST descartara los null,
     // porque en SQL comparar contra null da null — y la cartelera se
     // vaciaría hasta que el clasificador corra.
-    expect(SOLO_MUSICA).toContain("event_type.is.null");
-    expect(SOLO_MUSICA).toContain("event_type.eq.music");
+    expect(SOLO_CONCIERTOS).toContain("event_type.is.null");
+    expect(SOLO_CONCIERTOS).toContain("event_type.eq.music");
+  });
+
+  it("las dos pestañas no muestran lo mismo", () => {
+    // Si los conciertos dejaran pasar las fiestas, cada evento saldría en
+    // las dos pestañas y separarlas no habría servido de nada.
+    expect(SOLO_CONCIERTOS).not.toContain("fiesta");
+    expect(SOLO_FIESTAS).toContain("event_type.eq.fiesta");
+    expect(SOLO_FIESTAS).not.toContain("event_type.eq.music");
+  });
+
+  it("el mapa muestra las dos cosas, pero nunca lo que no es música", () => {
+    expect(EN_CARTELERA).toContain("event_type.eq.music");
+    expect(EN_CARTELERA).toContain("event_type.eq.fiesta");
+    expect(EN_CARTELERA).toContain("event_type.is.null");
+    expect(EN_CARTELERA).not.toContain("not_music");
   });
 });

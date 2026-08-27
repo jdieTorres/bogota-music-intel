@@ -11,6 +11,8 @@ con una señal fuerte; ante la duda el evento se muestra.
 import httpx
 import pytest
 
+from bogota_music_intel.artistas_locales import ARTISTAS
+from bogota_music_intel.ciclos_curados import CICLOS
 from bogota_music_intel.clasificacion_manual import CLASIFICACION_MANUAL
 from bogota_music_intel.classify import clasificar
 from bogota_music_intel.exclusion_patterns import (
@@ -18,8 +20,11 @@ from bogota_music_intel.exclusion_patterns import (
     patron_no_musical,
 )
 from bogota_music_intel.tipos_evento import (
+    FIESTA,
+    FUENTE_ARTISTA_CURADO,
     FUENTE_ASUMIDO,
     FUENTE_CATEGORIA,
+    FUENTE_CICLO,
     FUENTE_MANUAL,
     FUENTE_MUSICBRAINZ,
     FUENTE_PATRON,
@@ -169,6 +174,71 @@ class TestPrecedencia:
         assert resultado.consulto_red is False
 
 
+class TestFiestasYCiclos:
+    """La tercera categoría: la noche o el ciclo que programa la sala.
+
+    No es un concierto con el artista sin identificar — es que no hay
+    artista que identificar. Se muestra en la cartelera, en su pestaña."""
+
+    def test_una_fiesta_no_se_excluye_ni_gasta_una_peticion(self):
+        def handler(request):
+            raise AssertionError("no debería consultar MusicBrainz")
+
+        with _cliente_falso(handler) as cliente:
+            resultado = clasificar(_evento(title="Que Chimba Puñeta Vol. 4"), client=cliente)
+
+        assert resultado.event_type == FIESTA
+        assert resultado.classification_source == FUENTE_CICLO
+        assert resultado.consulto_red is False
+
+    def test_la_edicion_siguiente_entra_sola(self):
+        # La razón de curar por nombre de ciclo y no por id del evento.
+        with _cliente_falso(_responde([])) as cliente:
+            resultado = clasificar(_evento(title="QUE CHIMBA PUNETA VOL 5"), client=cliente)
+        assert resultado.event_type == FIESTA
+
+    def test_una_fiesta_no_afirma_nada_sobre_el_origen(self):
+        # is_local es sobre el artista, y acá no hay uno.
+        with _cliente_falso(_responde([])) as cliente:
+            resultado = clasificar(_evento(title="THE JAZZ ROOM"), client=cliente)
+        assert resultado.is_local is None
+
+    def test_un_concierto_en_la_misma_sala_no_se_vuelve_fiesta(self):
+        # "Todo copas en Latino Power Bogota 20 Años" parecía una fiesta por
+        # el título y es una banda de hip hop colombiana. La sala no decide.
+        handler = _responde([])
+        with _cliente_falso(handler) as cliente:
+            resultado = clasificar(
+                _evento(source="latino_power", title="Todo copas en Latino Power Bogota 20 Años"),
+                client=cliente,
+            )
+        assert resultado.event_type == MUSICA
+        assert resultado.is_local is True
+        assert resultado.classification_source == FUENTE_ARTISTA_CURADO
+
+
+class TestArtistasCurados:
+    def test_toda_entrada_documenta_su_evidencia(self):
+        for artista in ARTISTAS:
+            assert len(artista.evidencia) > 40, artista.nombre
+
+    def test_todo_ciclo_documenta_su_evidencia(self):
+        for ciclo in CICLOS:
+            assert len(ciclo.evidencia) > 40, ciclo.nombre
+
+    def test_la_lista_curada_gana_sobre_musicbrainz(self):
+        # Sirve para cubrir lo que MusicBrainz no tiene y para corregirlo
+        # cuando se equivoca, así que va antes y sin gastar petición.
+        def handler(request):
+            raise AssertionError("no debería consultar MusicBrainz")
+
+        with _cliente_falso(handler) as cliente:
+            resultado = clasificar(_evento(title="Todo Copas"), client=cliente)
+
+        assert resultado.is_local is True
+        assert resultado.consulto_red is False
+
+
 class TestOrigenDelArtista:
     def test_un_internacional_se_marca_pero_no_se_excluye(self):
         # La decisión editorial: los internacionales van en segundo plano,
@@ -195,7 +265,7 @@ class TestOrigenDelArtista:
         # is_local None no es lo mismo que False: la cartelera no lo
         # penaliza, solo no lo destaca.
         with _cliente_falso(_responde([])) as cliente:
-            resultado = clasificar(_evento(title="MADE4RAP BOGOTÁ"), client=cliente)
+            resultado = clasificar(_evento(title="Laura & Brenda"), client=cliente)
 
         assert resultado.event_type == MUSICA
         assert resultado.is_local is None
