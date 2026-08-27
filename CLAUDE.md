@@ -10,6 +10,8 @@ Documentación completa en `docs/`:
 - `docs/proyecto-plataforma-musical-bogota.md` — diseño de producto: los 9 módulos, capas del mapa interactivo, ideas evaluadas y descartadas, priorización del MVP.
 - `docs/investigacion-tecnica-plataforma-musical.md` — investigación técnica: stack, estado real de APIs de música probadas una por una, legalidad de scraping de eventos/venues, auditoría de venues candidatos, plan de ejecución del MVP.
 
+Hay además una skill del proyecto en `.claude/skills/`: **`/actualizar-estado`** pone al día este archivo y `docs/` con el estado real —lo que quedó a medias, el siguiente paso y las decisiones aún sin registrar—. Correrla al cerrar una fase o una sesión de trabajo. Es la vía preferida para actualizar este archivo: trae el procedimiento de verificación (qué mirar en el repo en vez de fiarse de la memoria de la conversación) y las reglas de redacción.
+
 **Antes de tomar decisiones de arquitectura o de fuentes de datos, lee esos dos archivos.** Contienen hallazgos ya verificados (ej. qué APIs de música sirven de verdad, cuáles están muertas o bloqueadas para proyectos hobby/educativos, qué venues tienen scraping viable y cuáles no) — no los repitas desde cero ni asumas que Spotify API sigue teniendo audio-features (fue deprecado).
 
 ## Stack técnico decidido
@@ -42,7 +44,7 @@ Directorio/wiki y API pública quedan para fase 2/futura. Ritmo de dedicación: 
 2. **Look & feel / personalidad de la web.** Juan quiere trabajarlo en conjunto y con calma; se estima varias sesiones, no un retoque puntual. Alcance y punto de partida en `docs/proyecto-plataforma-musical-bogota.md`, sección 8.
 
 ## Estado de implementación
-- **Fase 1 (infraestructura) — hecha.** Monorepo con `apps/web` (Next.js) y `services/api` (FastAPI), Supabase conectado, GitHub Actions con cron diario.
+- **Fase 1 (infraestructura) — hecha.** Monorepo con `apps/web` (Next.js) y `services/api` (FastAPI), Supabase conectado, GitHub Actions con cron diario **configurado pero nunca ejecutado** (ver "Lo que quedó a medias").
 - **Fase 2 (scrapers) — hecha.** Seis fuentes activas en `services/api/bogota_music_intel/scrapers/`. `registry.py` es la fuente de verdad de qué venues son automatizables y cuáles requieren carga manual (con el motivo verificado de cada uno). Correr con `python -m bogota_music_intel.scrape_cli [--dry-run] [--source X]`.
 - **Fase 3 (calendario) — hecha.** Listado por día y detalle en `apps/web` (Next.js 16, App Router). El frontend lee Supabase directo con la publishable key (RLS deja SELECT público); FastAPI queda como capa de ingesta y base de la API pública futura, no en el camino de lectura del calendario.
 - **Fase 4 (mapa) — hecha** (verificada en navegador real, dev y producción). `/mapa` con MapLibre GL 6 + tiles de OpenFreeMap (sin API key). La geocodificación es un paso aparte del scraping: `python -m bogota_music_intel.geocode_cli`. 5 de 9 salas ubicadas; las que Nominatim no encuentra se listan sin ubicar antes que inventarles un pin.
@@ -51,7 +53,7 @@ Datos en base al 2026-08-27: **58 eventos, 9 salas** (52 eventos en la cartelera
 
 ### Lo que quedó a medias (pendientes operativos, ninguno bloquea el desarrollo)
 - **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen falta las variables `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en el proyecto de Vercel. Vercel corre `npm run build`, así que el `prebuild` que copia el worker de MapLibre se dispara solo.
-- **El cron diario de scraping nunca ha llegado a ejecutarse** (dispara a las 9:00 de Bogotá). Todos los datos en base vienen de corridas manuales. Se puede lanzar a mano desde la pestaña Actions para comprobar que funciona en CI y no solo en la máquina de Juan.
+- **El cron diario de scraping nunca ha llegado a ejecutarse.** Verificado el 2026-08-27: de las 9 corridas del repo, las 9 son del workflow `Tests` disparadas por `push`; `scraper.yml` tiene 0. Todos los datos en base vienen de corridas manuales en la máquina de Juan. Consecuencia no obvia: **los secrets `BMI_SUPABASE_URL` y `BMI_SUPABASE_SERVICE_ROLE_KEY` nunca se han ejercitado** — si un nombre no coincide, nadie se ha enterado todavía. `scraper.yml` declara `workflow_dispatch`, así que se puede lanzar a mano desde la pestaña Actions sin esperar a las 9:00.
 - **4 salas sin geocodificar**: Auditorio Mayor (2 eventos), Capital Live Concerts (1), **Lourdes Music Hall (7 — el hueco más grande)** y Teatro Libre Sala Centro (1). Ninguna existe como POI en OpenStreetMap. La vía para resolverlas es `services/api/bogota_music_intel/coordenadas_curadas.py`, que **exige un campo `evidencia`** por coordenada; no relajar la búsqueda de Nominatim para forzarlas (buscar "Lourdes, Chapinero" devuelve con toda confianza la iglesia, no la sala).
 - **Rotar la secret key de Supabase.** Juan la pegó en el chat el 2026-08-27; el repo es público. Recomendado, sin confirmar que se haya hecho.
 - Opcional: añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para que el CI prerenderice contra la base real en vez de contra placeholders.
