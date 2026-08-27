@@ -6,6 +6,7 @@ from slugify import slugify
 from supabase import Client, create_client
 
 from bogota_music_intel.config import settings
+from bogota_music_intel.nombres_de_salas import NOMBRES_CORREGIDOS
 from bogota_music_intel.scrapers.models import ScrapedEvent, dedupe_events
 from bogota_music_intel.scrapers.text import normalize_venue_name
 
@@ -38,7 +39,11 @@ def upsert_venues(client: Client, events: list[ScrapedEvent]) -> dict[str, str]:
             continue
         fila = {
             "slug": slug,
-            "name": normalize_venue_name(event.venue_name_raw),
+            # La corrección se aplica al nombre visible y nunca al slug, que
+            # es la identidad de la sala en toda la base.
+            "name": NOMBRES_CORREGIDOS.get(
+                slug, normalize_venue_name(event.venue_name_raw)
+            ),
             "city": event.city,
         }
         if event.venue_address:
