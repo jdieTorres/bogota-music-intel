@@ -177,6 +177,51 @@ Alcance: los 3 módulos priorizados — Mapa de escena en vivo, Calendario agreg
 - Probar Napster con queries reales de artistas colombianos antes de incluirlo en el módulo Scout de emergentes / Radar de tendencias (ver 2.1).
 - ~~Confirmar si Teatro Cafam necesita fuente manual~~ — **resuelto 2026-08-27:** sí, es manual. Todo el dominio está detrás de un WAF (ver sección 4).
 
+---
+
+## 6. Filtrado editorial — pendiente para después de Fase 4
+
+Definido con Juan el 2026-08-27, tras revisar la cartelera ya poblada. **La plataforma prioriza y promueve los toques de artistas locales**, y hoy el pipeline mete todo lo que publica cada sala.
+
+### Qué se está colando (medido sobre los 58 eventos reales en base)
+
+**No es música:**
+- `THE JUANPIS LIVE SHOW: "SI NOS ORGANIZAMOS CABEMOS TODOS"` — comedia/late night (Movistar Arena)
+- `WWE Bogota 2026` — lucha libre (Movistar Arena)
+- `HOMBRES A LA PLANCHA` — teatro (Royal Center)
+- `'CONTINENTAL'`, `'Ella' de Luisa Fernanda Hoyos` — teatro (Teatro JEG)
+- `Einstein on the Beach` — ópera/multidisciplinar (Teatro JEG)
+
+**Es música pero no es artista local:** Robbie Williams, Helloween, 5 Seconds of Summer, Opeth, Of Monsters and Men, Blonde Redhead, Jorge Drexler, Gustavo Santaolalla, Cosculluela, Tini, Los Mirlos, Todos tus muertos, Inspector, Ky Mani Marley… (mayoría de la cartelera de Movistar Arena y buena parte de Royal Center).
+
+### El obstáculo: la categoría de la fuente no alcanza
+Solo **17 de 58** eventos traen `category`, y viene únicamente de dos fuentes:
+
+| Fuente | Con categoría | Valores |
+|---|---|---|
+| Idartes Teatro JEG | 9/9 | Música, Teatro, Multidisciplinar |
+| Rockal Live | 8/8 | Pop, Hip Hop/Rap, Reggaeton, Rock/Punk/Metal, Otro |
+| Movistar Arena | 0/12 | — |
+| Royal Center | 0/12 | — |
+| Lourdes Music Hall | 0/9 | — |
+| Latino Power | 0/8 | — |
+
+Las dos salas que más ruido meten (Movistar Arena y Royal Center) son justamente las que no publican categoría. Filtrar por `category` resolvería el teatro de Idartes y poco más.
+
+### Dos decisiones distintas, no una
+Conviene separarlas antes de implementar:
+1. **¿Es música en vivo?** WWE y una obra de teatro claramente no van. Esto es exclusión.
+2. **¿Es artista local?** Un show de Robbie Williams en el Movistar *sí* es parte de la escena en vivo de Bogotá, aunque no sea local. Acá la pregunta es si se excluye o se muestra en segundo plano, destacando lo local. **Sin resolver — es decisión de producto de Juan.**
+
+### Caminos técnicos a evaluar (ninguno elegido aún)
+- **Resolver el artista contra MusicBrainz** (ya validada como API viable, sección 2): da país de origen del artista, que es exactamente el dato que falta. Ojo con su límite de 1 req/seg y con que el título del evento trae ruido a limpiar antes de consultar (`| BRITPOP`, `EN BOGOTÁ`, `2026`, `TOUR`).
+- **Lista de exclusión por patrones** para lo obviamente no-musical (WWE, stand-up, obra de teatro). Barato y efectivo para los casos duros, pero no escala solo.
+- **Marcar en vez de borrar:** guardar todo con una bandera (`es_local`, `tipo`) y decidir en la vista. Preserva el dato crudo y permite cambiar el criterio sin re-scrapear — coherente con cómo se resolvió la unificación de duplicados.
+
+Cualquiera que se elija: **no perder el evento en la ingesta**. Mejor guardarlo clasificado y filtrarlo al mostrar, para poder revisar qué se está descartando.
+
+---
+
 ### Estado de ejecución
 - **Fase 1 y Fase 2 completadas** (2026-08-27). Seis scrapers en producción alimentando Supabase; cuatro venues quedan en carga manual con el motivo documentado en `services/api/bogota_music_intel/scrapers/registry.py`.
 - Siguiente: Fase 3 (calendario de eventos en el frontend).

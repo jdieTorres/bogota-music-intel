@@ -4,6 +4,8 @@ Plataforma de inteligencia musical enfocada en la escena de Bogotá/Colombia. Pr
 
 Slug de trabajo (placeholder, nombre final sin definir): **`bogota-music-intel`**.
 
+**Principio editorial (definido por Juan, 2026-08-27):** la plataforma prioriza y promueve **los toques de artistas locales**. No es una cartelera genérica de eventos de la ciudad: si algo entra al producto, tiene que servir a ese propósito. Esto es criterio de diseño, no solo de filtrado — aplica al scraping, al ranking de la cartelera y a cómo se presenta cada evento.
+
 Documentación completa en `docs/`:
 - `docs/proyecto-plataforma-musical-bogota.md` — diseño de producto: los 9 módulos, capas del mapa interactivo, ideas evaluadas y descartadas, priorización del MVP.
 - `docs/investigacion-tecnica-plataforma-musical.md` — investigación técnica: stack, estado real de APIs de música probadas una por una, legalidad de scraping de eventos/venues, auditoría de venues candidatos, plan de ejecución del MVP.
@@ -32,7 +34,11 @@ Directorio/wiki y API pública quedan para fase 2/futura. Ritmo de dedicación: 
 
 ## Pendientes activos (no resueltos aún)
 - Probar Napster API con queries reales de artistas colombianos (Bomba Estéreo, Karol G, Andrés Cepeda) antes de meterlo al módulo Scout de emergentes — su cobertura LatAm no está documentada, hay que probarla a mano.
-- Nombre e identidad de marca definitiva del proyecto (el placeholder de arriba es solo de trabajo).
+- Nombre e identidad de marca definitiva del proyecto (el placeholder de arriba es solo de trabajo). Ligado al trabajo de look & feel de abajo.
+
+### Acordados con Juan para después de Fase 4
+1. **Filtrar lo que no son toques de artistas locales.** Hoy se cuela de todo: "THE JUANPIS LIVE SHOW" (comedia), "WWE Bogota 2026" (lucha libre), obras de teatro ("HOMBRES A LA PLANCHA", "'CONTINENTAL'"). Detalle técnico y opciones evaluadas en `docs/investigacion-tecnica-plataforma-musical.md`, sección "Filtrado editorial".
+2. **Look & feel / personalidad de la web.** Juan quiere trabajarlo en conjunto y con calma; se estima varias sesiones, no un retoque puntual. Alcance y punto de partida en `docs/proyecto-plataforma-musical-bogota.md`, sección 8.
 
 ## Estado de implementación
 - **Fase 1 (infraestructura) — hecha.** Monorepo con `apps/web` (Next.js) y `services/api` (FastAPI), Supabase conectado, GitHub Actions con cron diario.

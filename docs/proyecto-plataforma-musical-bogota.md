@@ -78,3 +78,23 @@ Diseño modular desde el día uno: cada módulo como pipeline independiente (ing
 - [x] Plan de ejecución del MVP (por fases, ritmo medio tiempo) — ver `investigacion-tecnica-plataforma-musical.md` sección 5
 - [x] Fuentes de datos concretas y validación de legalidad de scraping por fuente — ver `investigacion-tecnica-plataforma-musical.md` secciones 2-4
 - [ ] Estrategia de distribución/pitch a medios para la pieza insignia
+- [ ] Identidad visual y personalidad de la web — ver sección 8
+
+---
+
+## 8. Identidad visual y personalidad — pendiente para después de Fase 4
+
+Definido con Juan el 2026-08-27. Quiere trabajarlo **en conjunto y sin apuro**: no es un retoque de colores, es darle carácter propio a la web. Se estima que toma varias sesiones.
+
+### Punto de partida (lo que hay hoy)
+La Fase 3 dejó una base deliberadamente sobria, pensada para no estorbar mientras se definía el resto: fondo oscuro casi neutro, un rojo (`#ff4d3d`) como único acento, tipografía Geist por defecto del scaffold, tarjetas de listado con el afiche a la izquierda. Funciona, pero es genérica — podría ser la cartelera de cualquier ciudad.
+
+### Preguntas abiertas a resolver juntos
+- **Qué debe transmitir.** ¿Fanzine de escena, publicación editorial seria, archivo/base de datos, cartel de concierto? Esto decide todo lo demás.
+- **Nombre y marca.** Sigue siendo `bogota-music-intel` de placeholder. El nombre y el look se definen mejor a la vez que por separado.
+- **Tipografía.** Es lo que más personalidad da y hoy es la del scaffold.
+- **El rol del afiche.** Cada evento trae su arte, con estéticas muy dispares entre salas. Decidir si la interfaz se hace neutra para dejarlos brillar, o si impone una identidad fuerte por encima.
+- **Cómo se ve la prioridad de lo local** (ver principio editorial en `CLAUDE.md`): si los toques de artistas locales se destacan, eso debe notarse en el diseño, no solo en el orden de la lista.
+
+### Nota de alcance
+Este trabajo depende de decisiones de gusto de Juan, no de criterios técnicos. Conviene abordarlo con propuestas visuales concretas para reaccionar sobre ellas, en vez de preguntar en abstracto.
