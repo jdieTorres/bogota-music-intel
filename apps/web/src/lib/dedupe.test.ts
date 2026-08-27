@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { unificarDuplicados } from "@/lib/dedupe";
+import { unificarDuplicados, unificarEnUnaSala } from "@/lib/dedupe";
 import type { Evento } from "@/lib/events";
 
 function evento(parcial: Partial<Evento> & { title: string }): Evento {
@@ -98,5 +98,40 @@ describe("unificarDuplicados", () => {
 
   it("lista vacía", () => {
     expect(unificarDuplicados([])).toEqual([]);
+  });
+});
+
+describe("unificarEnUnaSala", () => {
+  // Lo que usa el popup de cada pin del mapa: ya se sabe que son de la
+  // misma sala, así que solo compara título y día.
+  //
+  // Ojo con las horas de estos datos, que son las reales de producción:
+  // T05:00:00Z es medianoche en Bogotá (sin hora publicada) y T00:00:00Z
+  // son las 7 p. m. del día anterior (hora real). Ambos caen el 29 de agosto
+  // en Bogotá.
+  const conHora = { title: "MADE4RAP BOGOTÁ", starts_at: "2026-08-30T00:00:00+00:00" };
+  const sinHora = { title: "MADE4RAP", starts_at: "2026-08-29T05:00:00+00:00" };
+
+  it("une el mismo show publicado por la sala y por el promotor", () => {
+    expect(unificarEnUnaSala([sinHora, conHora])).toHaveLength(1);
+  });
+
+  it("prefiere el registro que trae hora real", () => {
+    // Regresión: comparar el texto ISO contra "T00:00:00" daba la respuesta
+    // invertida, porque en Bogotá medianoche es T05:00:00Z.
+    expect(unificarEnUnaSala([sinHora, conHora])[0]).toBe(conHora);
+    expect(unificarEnUnaSala([conHora, sinHora])[0]).toBe(conHora);
+  });
+
+  it("NO une dos shows distintos el mismo día", () => {
+    const uno = { title: "Noche de Salsa", starts_at: "2026-09-04T01:00:00+00:00" };
+    const otro = { title: "Noche Electrónica", starts_at: "2026-09-04T01:00:00+00:00" };
+    expect(unificarEnUnaSala([uno, otro])).toHaveLength(2);
+  });
+
+  it("NO une funciones del mismo ciclo en días distintos", () => {
+    const semana1 = { title: "The Jazz Room", starts_at: "2026-09-04T01:00:00+00:00" };
+    const semana2 = { title: "The Jazz Room", starts_at: "2026-09-11T01:00:00+00:00" };
+    expect(unificarEnUnaSala([semana1, semana2])).toHaveLength(2);
   });
 });

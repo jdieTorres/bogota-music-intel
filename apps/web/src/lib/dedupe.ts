@@ -1,4 +1,5 @@
 import type { Evento } from "@/lib/events";
+import { tieneHoraPublicada } from "@/lib/fechas";
 
 /**
  * Un mismo concierto llega por dos fuentes cuando el promotor y la sala
@@ -36,7 +37,10 @@ function tokens(titulo: string): Set<string> {
     : new Set(normalizado.split(/\s+/).filter(Boolean));
 }
 
-function esMismoEvento(a: Evento, b: Evento): boolean {
+/** Lo mínimo que hace falta para decidir si dos filas son el mismo show. */
+type ConTituloYFecha = { title: string; starts_at: string | null };
+
+function tituloEquivalente(a: ConTituloYFecha, b: ConTituloYFecha): boolean {
   const ta = tokens(a.title);
   const tb = tokens(b.title);
   if (ta.size === 0 || tb.size === 0) return false;
@@ -55,14 +59,12 @@ function esMismoEvento(a: Evento, b: Evento): boolean {
 
 /** Cuenta qué tan completo es un registro, para quedarse con el mejor. */
 function riqueza(evento: Evento): number {
-  const conHora =
-    evento.starts_at !== null && !evento.starts_at.includes("T00:00:00");
   return [
     evento.price_text,
     evento.category,
     evento.description,
     evento.image_url,
-    conHora ? "hora" : null,
+    tieneHoraPublicada(evento.starts_at) ? "hora" : null,
   ].filter(Boolean).length;
 }
 
@@ -75,37 +77,59 @@ function claveDeDia(iso: string): string {
   }).format(new Date(iso));
 }
 
+function mismoDia(a: ConTituloYFecha, b: ConTituloYFecha): boolean {
+  if (!a.starts_at || !b.starts_at) return false;
+  return claveDeDia(a.starts_at) === claveDeDia(b.starts_at);
+}
+
+/** Agrupa por el criterio dado y se queda con un representante por grupo,
+ *  conservando el orden de entrada. */
+function unificar<T>(
+  items: T[],
+  mismoGrupo: (referencia: T, candidato: T) => boolean,
+  puntaje: (item: T) => number,
+): T[] {
+  const grupos: T[][] = [];
+  for (const item of items) {
+    const grupo = grupos.find((candidatos) => mismoGrupo(candidatos[0], item));
+    if (grupo) grupo.push(item);
+    else grupos.push([item]);
+  }
+  return grupos.map((grupo) =>
+    grupo.reduce((mejor, actual) =>
+      puntaje(actual) > puntaje(mejor) ? actual : mejor,
+    ),
+  );
+}
+
 /**
  * Une los eventos que son el mismo show visto por dos fuentes: misma sala,
  * mismo día y títulos equivalentes. De cada grupo se conserva el registro
  * más completo. Respeta el orden de entrada.
  */
 export function unificarDuplicados(eventos: Evento[]): Evento[] {
-  const grupos: Evento[][] = [];
+  return unificar(
+    eventos,
+    (referencia, evento) =>
+      referencia.venue_name_raw.toLowerCase() ===
+        evento.venue_name_raw.toLowerCase() &&
+      mismoDia(referencia, evento) &&
+      tituloEquivalente(referencia, evento),
+    riqueza,
+  );
+}
 
-  for (const evento of eventos) {
-    const grupo = grupos.find((candidatos) => {
-      const referencia = candidatos[0];
-      if (
-        referencia.venue_name_raw.toLowerCase() !==
-        evento.venue_name_raw.toLowerCase()
-      ) {
-        return false;
-      }
-      if (!referencia.starts_at || !evento.starts_at) return false;
-      if (claveDeDia(referencia.starts_at) !== claveDeDia(evento.starts_at)) {
-        return false;
-      }
-      return esMismoEvento(referencia, evento);
-    });
-
-    if (grupo) grupo.push(evento);
-    else grupos.push([evento]);
-  }
-
-  return grupos.map((grupo) =>
-    grupo.reduce((mejor, actual) =>
-      riqueza(actual) > riqueza(mejor) ? actual : mejor,
-    ),
+/**
+ * Misma unificación para una lista que ya se sabe de una sola sala (los
+ * eventos de un pin del mapa). Sin datos de precio o género para comparar,
+ * se prefiere el registro que sí trae hora real sobre el que quedó a
+ * medianoche por no haberla publicado.
+ */
+export function unificarEnUnaSala<T extends ConTituloYFecha>(eventos: T[]): T[] {
+  return unificar(
+    eventos,
+    (referencia, evento) =>
+      mismoDia(referencia, evento) && tituloEquivalente(referencia, evento),
+    (evento) => (tieneHoraPublicada(evento.starts_at) ? 1 : 0),
   );
 }

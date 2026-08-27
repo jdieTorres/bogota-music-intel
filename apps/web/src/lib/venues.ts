@@ -1,3 +1,4 @@
+import { unificarEnUnaSala } from "@/lib/dedupe";
 import { supabase } from "@/lib/supabase";
 
 export type SalaEnMapa = {
@@ -53,9 +54,13 @@ export async function getEscena(): Promise<EscenaEnMapa> {
   const sinUbicar: SalaSinUbicar[] = [];
 
   for (const fila of data ?? []) {
-    const eventos = ((fila.events ?? []) as SalaEnMapa["eventos"])
-      .slice()
-      .sort((a, b) => (a.starts_at ?? "").localeCompare(b.starts_at ?? ""));
+    // Sin unificar, el popup de Royal Center muestra dos veces el mismo
+    // show: la sala y el promotor lo publican por separado.
+    const eventos = unificarEnUnaSala(
+      ((fila.events ?? []) as SalaEnMapa["eventos"])
+        .slice()
+        .sort((a, b) => (a.starts_at ?? "").localeCompare(b.starts_at ?? "")),
+    );
 
     // Una sala sin eventos próximos no aporta al mapa de escena activa.
     if (eventos.length === 0) continue;
