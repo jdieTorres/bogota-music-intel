@@ -32,6 +32,26 @@ horas. Buscá los hechos:
   (`gh` no está instalado en esta máquina.)
 - Si hay datos en juego, contá los reales en vez de citar los de la última vez.
 
+### Si la verificación contradice lo que está escrito
+
+Pasa, y es el hallazgo más valioso de todos: significa que alguien viene
+tomando decisiones sobre una foto vieja. Cuando ocurra:
+
+- **Corregí el documento y decíselo a Juan explícitamente**, con las dos
+  versiones —lo que decía, lo que resultó ser— y desde cuándo estaba mal si se
+  puede saber. Nunca ajustes una cifra o un estado en silencio: el hecho de que
+  la documentación se desviara es en sí mismo información sobre el proyecto.
+- Preguntate **por qué se desvió**. Si un dato envejece solo (un conteo, una
+  cobertura), la línea debería decir cómo recalcularlo o llevar su fecha, no
+  solo el número. Si se desvió porque nadie actualizó tras un cambio, mirá si
+  el resto de esa sección envejeció igual.
+- Si lo escrito resultó ser **una suposición nunca comprobada** en vez de un
+  hecho —cosa fácil de heredar de una sesión anterior—, marcá en el texto qué
+  quedó verificado y en qué fecha, para que la próxima no lo vuelva a dar por
+  bueno.
+- Si la contradicción toca una decisión que Juan tomó, **no la revoques por tu
+  cuenta**: corregí el hecho, dejá la decisión, y planteásela.
+
 ## 2. Encontrar lo que quedó a medias
 
 Es la parte que más se escapa, porque nada falla. Buscá específicamente:
@@ -103,4 +123,7 @@ Secciones de `CLAUDE.md` que suelen tocarse:
   docs".
 - En la respuesta a Juan, contá qué quedó registrado y **por qué eso valía la
   pena escribirlo**. Si algo no lo pudiste verificar, decilo en vez de darlo
-  por bueno.
+  por bueno, y si algo resultó estar mal escrito, decilo primero.
+- Que el repo esté limpio y no haya cambios grandes no es motivo para no correr
+  esto: verificar lo ya escrito vale por sí solo, y un informe corto y honesto
+  es mejor que texto nuevo inventado para justificar la corrida.
