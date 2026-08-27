@@ -65,6 +65,11 @@ function riqueza(evento: Evento): number {
     evento.description,
     evento.image_url,
     tieneHoraPublicada(evento.starts_at) ? "hora" : null,
+    evento.event_type,
+    // Se compara contra null a propósito: `is_local` es false para un
+    // internacional confirmado, que es un dato tan bueno como true, y un
+    // filter(Boolean) sobre el valor crudo lo descartaría.
+    evento.is_local === null ? null : "origen",
   ].filter(Boolean).length;
 }
 

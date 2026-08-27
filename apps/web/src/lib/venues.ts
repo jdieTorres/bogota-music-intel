@@ -1,4 +1,5 @@
 import { unificarEnUnaSala } from "@/lib/dedupe";
+import { SOLO_MUSICA } from "@/lib/editorial";
 import { supabase } from "@/lib/supabase";
 
 export type SalaEnMapa = {
@@ -45,6 +46,9 @@ export async function getEscena(): Promise<EscenaEnMapa> {
       `slug, name, address, latitude, longitude,
        events ( id, title, starts_at )`,
     )
+    // El mismo criterio editorial que la cartelera: sin esto el popup de una
+    // sala sigue anunciando la obra de teatro que la home ya no muestra.
+    .or(SOLO_MUSICA, { referencedTable: "events" })
     .gte("events.starts_at", inicioDeHoyEnBogota())
     .order("name");
 

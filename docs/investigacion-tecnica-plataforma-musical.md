@@ -184,13 +184,22 @@ Alcance: los 3 módulos priorizados — Mapa de escena en vivo, Calendario agreg
 
 ---
 
-## 6. Filtrado editorial — pendiente para después de Fase 4
+## 6. Filtrado editorial — implementado el 2026-08-27
 
-Definido con Juan el 2026-08-27, tras revisar la cartelera ya poblada. **La plataforma prioriza y promueve los toques de artistas locales**, y hoy el pipeline mete todo lo que publica cada sala.
+Definido con Juan el 2026-08-27, tras revisar la cartelera ya poblada. **La plataforma prioriza y promueve los toques de artistas locales**, y hasta ese momento el pipeline metía todo lo que publica cada sala.
 
-### Qué se está colando (medido sobre los 58 eventos reales en base)
+### Las dos decisiones de producto (tomadas por Juan, 2026-08-27)
 
-**No es música:**
+Estaban trabadas porque son dos preguntas distintas y solo Juan podía contestarlas:
+
+1. **Lo que no es música en vivo se excluye siempre** de la cartelera visible: comedia, lucha libre, teatro, ópera. No son el producto.
+2. **Los artistas internacionales NO se excluyen**: se muestran, pero en segundo plano respecto a los locales. Un show de Robbie Williams en el Movistar es parte de la escena en vivo de Bogotá aunque no sea un toque local.
+
+La segunda decisión es la que evita convertir el filtro en una tijera: excluir todo lo internacional habría borrado media cartelera y con ella el contexto de la escena.
+
+### El problema que se resolvió (medido sobre los 58 eventos reales en base)
+
+**No es música** — estos seis son los que hoy quedan fuera de la cartelera:
 - `THE JUANPIS LIVE SHOW: "SI NOS ORGANIZAMOS CABEMOS TODOS"` — comedia/late night (Movistar Arena)
 - `WWE Bogota 2026` — lucha libre (Movistar Arena)
 - `HOMBRES A LA PLANCHA` — teatro (Royal Center)
@@ -199,7 +208,7 @@ Definido con Juan el 2026-08-27, tras revisar la cartelera ya poblada. **La plat
 
 **Es música pero no es artista local:** Robbie Williams, Helloween, 5 Seconds of Summer, Opeth, Of Monsters and Men, Blonde Redhead, Jorge Drexler, Gustavo Santaolalla, Cosculluela, Tini, Los Mirlos, Todos tus muertos, Inspector, Ky Mani Marley… (mayoría de la cartelera de Movistar Arena y buena parte de Royal Center).
 
-### El obstáculo: la categoría de la fuente no alcanza
+### El obstáculo: la categoría de la fuente no alcanza (por eso hacen falta las otras tres señales)
 Solo **17 de 58** eventos traen `category`, y viene únicamente de dos fuentes:
 
 | Fuente | Con categoría | Valores |
@@ -213,21 +222,66 @@ Solo **17 de 58** eventos traen `category`, y viene únicamente de dos fuentes:
 
 Las dos salas que más ruido meten (Movistar Arena y Royal Center) son justamente las que no publican categoría. Filtrar por `category` resolvería el teatro de Idartes y poco más.
 
-### Dos decisiones distintas, no una
-Conviene separarlas antes de implementar:
-1. **¿Es música en vivo?** WWE y una obra de teatro claramente no van. Esto es exclusión.
-2. **¿Es artista local?** Un show de Robbie Williams en el Movistar *sí* es parte de la escena en vivo de Bogotá, aunque no sea local. Acá la pregunta es si se excluye o se muestra en segundo plano, destacando lo local. **Sin resolver — es decisión de producto de Juan.**
+### Cómo quedó implementado
 
-### Caminos técnicos a evaluar (ninguno elegido aún)
-- **Resolver el artista contra MusicBrainz** (ya validada como API viable, sección 2): da país de origen del artista, que es exactamente el dato que falta. Ojo con su límite de 1 req/seg y con que el título del evento trae ruido a limpiar antes de consultar (`| BRITPOP`, `EN BOGOTÁ`, `2026`, `TOUR`).
-- **Lista de exclusión por patrones** para lo obviamente no-musical (WWE, stand-up, obra de teatro). Barato y efectivo para los casos duros, pero no escala solo.
-- **Marcar en vez de borrar:** guardar todo con una bandera (`es_local`, `tipo`) y decidir en la vista. Preserva el dato crudo y permite cambiar el criterio sin re-scrapear — coherente con cómo se resolvió la unificación de duplicados.
+Se marca, no se borra: la ingesta sigue guardando todo crudo y la clasificación se escribe encima, en cuatro columnas nuevas de `events` (`event_type`, `is_local`, `classification_source`, `classified_at` — migración `supabase/migrations/20260828000000_clasificacion_editorial.sql`). Cambiar el criterio no obliga a volver a scrapear el pasado.
 
-Cualquiera que se elija: **no perder el evento en la ingesta**. Mejor guardarlo clasificado y filtrarlo al mostrar, para poder revisar qué se está descartando.
+El clasificador vive en `services/api/bogota_music_intel/classify.py` y aplica cuatro señales, **de la más confiable a la más frágil, ganando la primera que contesta**:
+
+| Orden | Señal | Dónde | Por qué en ese lugar |
+|---|---|---|---|
+| 1 | Lista curada a mano | `clasificacion_manual.py` | Alguien lo verificó en la fuente. Exige `evidencia`, igual que `coordenadas_curadas.py` |
+| 2 | Categoría de la fuente | `exclusion_patterns.py` | La publicó la sala; no la inventamos nosotros |
+| 3 | Patrón en el título | `exclusion_patterns.py` | Heurística nuestra, para las fuentes sin categoría |
+| 4 | MusicBrainz | `musicbrainz.py` | Solo para el origen del artista |
+
+Se corre aparte del scraping: `python -m bogota_music_intel.classify_cli [--dry-run] [--todas]`. Por defecto solo toca lo que llegó sin clasificar, así que es incremental. A diferencia de la geocodificación —que se deja a mano porque la política de Nominatim pide no automatizarla— este paso sí corre en el cron: MusicBrainz solo limita el ritmo.
+
+**Los patrones se mantienen deliberadamente pocos y estrechos.** La tentación es ensancharlos hasta atrapar todo, pero el costo es asimétrico: un patrón ancho saca un toque real de la cartelera y nadie se entera nunca. Por eso no hay patrón para `live show` —esa frase también aparece en títulos de conciertos— y "THE JUANPIS LIVE SHOW" se cura a mano.
+
+### Resultado medido sobre los 58 eventos reales (2026-08-27)
+
+**6 fuera de cartelera**, que son exactamente los seis que se estaban colando:
+
+| Evento | Cómo se detectó |
+|---|---|
+| `'CONTINENTAL'`, `'Ella'` | categoría `Teatro` de Idartes |
+| `Einstein on the Beach` | categoría `Multidisciplinar` de Idartes |
+| `WWE Bogota 2026` | patrón `\bwwe\b` |
+| `THE JUANPIS LIVE SHOW` | curado a mano |
+| `HOMBRES A LA PLANCHA` | curado a mano |
+
+`HOMBRES A LA PLANCHA` es el caso que obliga a que exista la lista curada: es una obra de teatro en el Royal Center cuyo título se lee **exactamente igual que el nombre de una banda**, y esa fuente no publica categoría. No hay regla honesta que lo saque sin sacar también música.
+
+Del resto: **3 locales confirmados, 29 internacionales confirmados, 20 sin resolver.**
+
+### El hallazgo incómodo: MusicBrainz cubre mal la escena local
+
+Solo 3 de 52 eventos musicales quedaron confirmados como locales (Jorge Celedón, Jhon Alex Castaño, Jhonny Rivera — los tres de música popular, con carrera larga y catálogo comercial).
+
+Varios de los 20 "sin resolver" son artistas colombianos reales: **El Kalvo** (existe en MusicBrainz pero **sin país**), **PABLOPABLO**, **LA MUCHACHA**, **MADE4RAP**, **Ancestral Beats**, **Mukangu / Atake Mapale / Los Yoryis**. Es decir: MusicBrainz resuelve bien al internacional consagrado y mal justamente al artista local emergente, que es a quien la plataforma existe para promover.
+
+Consecuencia de diseño: **el `null` no se penaliza**. `is_local` tiene tres estados y los tres significan cosas distintas —`true` local, `false` internacional confirmado, `null` no se pudo resolver— y el ranking solo baja al `false`. Si lo desconocido contara como "no local", la cartelera hundiría los toques que debería destacar.
+
+Para cerrar ese hueco hace falta una **lista curada de artistas locales**, mismo patrón que las coordenadas curadas. Es trabajo de conocimiento de escena, no técnico.
+
+### Trampas encontradas al implementarlo (verificadas contra el servicio real)
+
+- **El límite de peticiones tiene que vivir dentro del módulo que consulta la API, no en el llamador.** La primera versión espaciaba desde el CLI y dejaba escapar dos peticiones pegadas al arrancar; MusicBrainz devolvió **503 en la cuarta consulta** y tumbó la corrida entera. Con el control adentro (`musicbrainz.py`), las 52 consultas pasaron sin un solo 503.
+- **MusicBrainz también corta con `ReadTimeout`, no solo con 503.** Apareció en la primera corrida real contra la base, ya con el 503 resuelto: un timeout suelto volvió a tumbar el proceso entero. Se atrapa `httpx.TransportError` (cubre timeouts y cortes de conexión) con el mismo reintento. Moraleja: al integrar una API externa no alcanza con manejar el código de error que devuelve, hay que manejar también que no devuelva nada.
+- **`503` y los timeouts no son "no encontrado".** Hay que distinguir "no pude preguntar" de "pregunté y no está": si se guarda "origen desconocido" cuando el servicio estaba caído, el evento queda dado por resuelto para siempre, porque el CLI solo mira lo que está sin clasificar. Por eso existe `MusicBrainzNoDisponible` y esos eventos se dejan sin escribir. Esto ya se pagó solo: cuando el timeout cortó la corrida a mitad, volver a lanzar el CLI retomó exactamente donde había quedado.
+- **Un match de puntaje alto no alcanza.** MusicBrainz siempre contesta algo. Sin un segundo filtro de parecido del nombre, `Laura & Brenda` resolvía a la artista `Laura` y heredaba su país. Se exige `score >= 90` **y** parecido `>= 0.88` sobre el nombre normalizado.
+- **Royal Center separa con un espacio duro:** el título real es `AKRIILA -\xa0 TOUR LUCY`, con `\xa0` (no-break space). Se ve idéntico en pantalla y rompe cualquier `split(" - ")` ingenuo. Hay test de regresión.
+- Limpiar el título antes de consultar es obligatorio: las salas titulan el evento, no al artista (`ROBBIE WILLIAMS | BRITPOP`, `PABLOPABLO EN BOGOTÁ`, `Gustavo Santaolalla llega a Bogotá con el Ronroco Tour`).
+
+### Limitación conocida
+
+La clasificación es por fila, y la deduplicación entre fuentes ocurre después, en el frontend. Si un mismo evento no-musical lo publicaran dos fuentes, harían falta dos entradas curadas. Hoy no pasa, pero desaparece solo cuando la deduplicación se mueva a la ingesta (ver deuda técnica registrada en `CLAUDE.md`).
 
 ---
 
 ### Estado de ejecución
 - **Fases 1 a 4 completadas** (2026-08-27). Seis scrapers en producción alimentando Supabase; cuatro venues quedan en carga manual con el motivo documentado en `services/api/bogota_music_intel/scrapers/registry.py`. Calendario y mapa en `apps/web`.
-- Geocodificación: 5 de 9 salas ubicadas. Las otras cuatro (Auditorio Mayor, Capital Live Concerts, **Lourdes Music Hall — 7 eventos próximos**, Teatro Libre Sala Centro) no existen como POI en OpenStreetMap y se listan aparte bajo el mapa. Se prefiere no ubicarlas antes que poner un pin en el lugar equivocado: buscar "Lourdes, Chapinero" devuelve con toda confianza la iglesia, no la sala.
-- Siguiente: los dos pendientes acordados (filtrado editorial y look & feel) y la Fase 5 (radar de tendencias).
+- Geocodificación: 5 de 9 salas ubicadas (verificado contra la base el 2026-08-27). Las otras cuatro (Auditorio Mayor, Capital Live Concerts, **Lourdes Music Hall — 7 eventos próximos**, Teatro Libre Sala Centro) no existen como POI en OpenStreetMap y se listan aparte bajo el mapa. Se prefiere no ubicarlas antes que poner un pin en el lugar equivocado: buscar "Lourdes, Chapinero" devuelve con toda confianza la iglesia, no la sala.
+- **Filtrado editorial aplicado en la base el 2026-08-27** (sección 6). Los 58 eventos quedaron clasificados y la cartelera muestra 48. Verificado contra el servidor de desarrollo: la home y `/mapa` renderizan, ninguno de los 6 no-musicales aparece, y en los 6 días que mezclan local con internacional el orden es el correcto en los 6.
+- Siguiente: el look & feel (el otro pendiente acordado), la lista curada de artistas locales, y la Fase 5 (radar de tendencias).

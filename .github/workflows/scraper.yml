@@ -26,3 +26,20 @@ jobs:
           bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
           bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
         run: python -m bogota_music_intel.scrape_cli
+
+      # Filtro editorial: marca qué es música y qué artista es local. Va
+      # aparte del scraping y solo mira lo que llegó sin clasificar, así que
+      # es incremental y barato.
+      #
+      # A diferencia de la geocodificación —que se deja a mano porque la
+      # política de Nominatim pide no automatizarla— MusicBrainz solo limita
+      # el ritmo, y el módulo ya lo respeta.
+      #
+      # Corre aunque el scraping haya fallado en alguna fuente: las que sí
+      # entraron merecen quedar clasificadas igual.
+      - name: Classify events
+        if: '!cancelled()'
+        env:
+          bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
+          bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
+        run: python -m bogota_music_intel.classify_cli

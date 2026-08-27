@@ -1,0 +1,78 @@
+import { describe, expect, it } from "vitest";
+
+import { SOLO_MUSICA, priorizarLocales } from "@/lib/editorial";
+
+/** Lo único que mira `priorizarLocales`, más un nombre para poder afirmar. */
+function evento(title: string, is_local: boolean | null) {
+  return { title, is_local };
+}
+
+describe("priorizarLocales", () => {
+  it("baja al internacional confirmado", () => {
+    const resultado = priorizarLocales([
+      evento("ROBBIE WILLIAMS", false),
+      evento("El Kalvo", true),
+    ]);
+    expect(resultado.map((e) => e.title)).toEqual(["El Kalvo", "ROBBIE WILLIAMS"]);
+  });
+
+  it("NO penaliza al artista que no se pudo resolver", () => {
+    // La mayoría de los artistas locales pequeños no están en MusicBrainz.
+    // Si "no sé" contara como "no es local", la cartelera hundiría
+    // justamente los toques que existe para promover.
+    const resultado = priorizarLocales([
+      evento("MADE4RAP", null),
+      evento("ROBBIE WILLIAMS", false),
+    ]);
+    expect(resultado.map((e) => e.title)).toEqual(["MADE4RAP", "ROBBIE WILLIAMS"]);
+  });
+
+  it("no reordena entre un local y uno sin resolver", () => {
+    // Ninguno de los dos se degrada, así que manda el orden de entrada,
+    // que viene cronológico.
+    const resultado = priorizarLocales([
+      evento("Sin resolver, más temprano", null),
+      evento("Local, más tarde", true),
+    ]);
+    expect(resultado.map((e) => e.title)).toEqual([
+      "Sin resolver, más temprano",
+      "Local, más tarde",
+    ]);
+  });
+
+  it("conserva el orden cronológico dentro de cada bloque", () => {
+    const resultado = priorizarLocales([
+      evento("Intl 1", false),
+      evento("Local 1", true),
+      evento("Intl 2", false),
+      evento("Local 2", true),
+    ]);
+    expect(resultado.map((e) => e.title)).toEqual([
+      "Local 1",
+      "Local 2",
+      "Intl 1",
+      "Intl 2",
+    ]);
+  });
+
+  it("no muta la lista que recibe", () => {
+    const original = [evento("Intl", false), evento("Local", true)];
+    priorizarLocales(original);
+    expect(original.map((e) => e.title)).toEqual(["Intl", "Local"]);
+  });
+
+  it("lista vacía", () => {
+    expect(priorizarLocales([])).toEqual([]);
+  });
+});
+
+describe("SOLO_MUSICA", () => {
+  it("deja pasar los eventos todavía sin clasificar", () => {
+    // El filtro tiene que ser "es música O es null". Pedir sólo
+    // "distinto de not_music" haría que PostgREST descartara los null,
+    // porque en SQL comparar contra null da null — y la cartelera se
+    // vaciaría hasta que el clasificador corra.
+    expect(SOLO_MUSICA).toContain("event_type.is.null");
+    expect(SOLO_MUSICA).toContain("event_type.eq.music");
+  });
+});

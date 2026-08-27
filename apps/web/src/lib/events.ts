@@ -1,3 +1,4 @@
+import { SOLO_MUSICA } from "@/lib/editorial";
 import { supabase } from "@/lib/supabase";
 
 export type DatePrecision = "day" | "month" | "unknown";
@@ -7,6 +8,10 @@ export type EventoVenue = {
   name: string;
   city: string;
 };
+
+/** null = todavía sin clasificar. No es lo mismo que "no es música": un
+ *  evento sin clasificar se sigue mostrando. */
+export type TipoEvento = "music" | "not_music" | null;
 
 export type Evento = {
   id: string;
@@ -22,14 +27,20 @@ export type Evento = {
   source_url: string;
   image_url: string | null;
   venue_name_raw: string;
+  event_type: TipoEvento;
+  /** null = no se pudo resolver el origen del artista. Distinto de false,
+   *  que es un internacional confirmado. */
+  is_local: boolean | null;
   venues: EventoVenue | null;
 };
 
 const CAMPOS = `
   id, source, title, starts_at, ends_at, date_precision, description,
   price_text, category, ticket_url, source_url, image_url, venue_name_raw,
+  event_type, is_local,
   venues ( slug, name, city )
 `;
+
 
 /** Inicio del día de hoy en Bogotá, en UTC. Un evento que empieza a las 8pm
  *  sigue siendo "de hoy" a las 11pm, así que se corta por día y no por hora. */
@@ -49,6 +60,7 @@ export async function getEventosProximos(): Promise<Evento[]> {
   const { data, error } = await supabase
     .from("events")
     .select(CAMPOS)
+    .or(SOLO_MUSICA)
     .gte("starts_at", inicioDeHoyEnBogota())
     .order("starts_at", { ascending: true });
 
@@ -62,6 +74,7 @@ export async function getEventosSinFecha(): Promise<Evento[]> {
   const { data, error } = await supabase
     .from("events")
     .select(CAMPOS)
+    .or(SOLO_MUSICA)
     .is("starts_at", null)
     .order("title", { ascending: true });
 

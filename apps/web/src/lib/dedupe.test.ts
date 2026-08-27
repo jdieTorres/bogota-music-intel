@@ -17,6 +17,8 @@ function evento(parcial: Partial<Evento> & { title: string }): Evento {
     source_url: "https://ejemplo.co",
     image_url: null,
     venue_name_raw: "Royal Center",
+    event_type: null,
+    is_local: null,
     venues: null,
     ...parcial,
   };
@@ -54,6 +56,34 @@ describe("unificarDuplicados", () => {
     expect(unificarDuplicados([pobre, rico])[0]).toBe(rico);
     // El orden de entrada no debe cambiar cuál gana.
     expect(unificarDuplicados([rico, pobre])[0]).toBe(rico);
+  });
+
+  it("conserva la versión ya clasificada sobre la que no lo está", () => {
+    // Las dos fuentes se clasifican por separado, así que al unificar hay
+    // que quedarse con la que trae el criterio editorial resuelto; si no,
+    // el evento pierde el dato y vuelve a aparecer como sin clasificar.
+    const sinClasificar = evento({ title: "MADE4RAP" });
+    const clasificado = evento({
+      title: "MADE4RAP BOGOTÁ",
+      event_type: "music",
+      is_local: true,
+    });
+
+    expect(unificarDuplicados([sinClasificar, clasificado])[0]).toBe(clasificado);
+    expect(unificarDuplicados([clasificado, sinClasificar])[0]).toBe(clasificado);
+  });
+
+  it("un internacional confirmado cuenta como dato, no como dato faltante", () => {
+    // is_local === false es una respuesta, no un hueco. Contarlo como
+    // falsy haría perder la clasificación al unificar.
+    const sinClasificar = evento({ title: "OPETH" });
+    const internacional = evento({
+      title: "OPETH EN BOGOTÁ",
+      event_type: "music",
+      is_local: false,
+    });
+
+    expect(unificarDuplicados([sinClasificar, internacional])[0]).toBe(internacional);
   });
 
   it("NO une dos shows distintos de la misma sala el mismo día", () => {

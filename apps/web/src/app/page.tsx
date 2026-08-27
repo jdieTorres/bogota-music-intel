@@ -1,5 +1,6 @@
 import { EventoCard } from "@/components/EventoCard";
 import { unificarDuplicados } from "@/lib/dedupe";
+import { priorizarLocales } from "@/lib/editorial";
 import {
   type Evento,
   agruparPorDia,
@@ -72,7 +73,8 @@ export default async function Page() {
                 )}
               </h2>
               <ul className="space-y-2">
-                {eventos.map((evento) => (
+                {/* Dentro del día, los toques locales van primero. */}
+                {priorizarLocales(eventos).map((evento) => (
                   <EventoCard key={evento.id} evento={evento} />
                 ))}
               </ul>
@@ -86,7 +88,7 @@ export default async function Page() {
                 La sala anunció estos eventos sin fecha publicada.
               </p>
               <ul className="space-y-2">
-                {sinFecha.map((evento) => (
+                {priorizarLocales(sinFecha).map((evento) => (
                   <EventoCard key={evento.id} evento={evento} />
                 ))}
               </ul>
