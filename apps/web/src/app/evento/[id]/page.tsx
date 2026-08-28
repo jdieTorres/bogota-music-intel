@@ -40,7 +40,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
       </Link>
 
       <header className="mt-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
           {evento.title}
         </h1>
         <p className="mt-3 text-lg text-muted">{venue}</p>

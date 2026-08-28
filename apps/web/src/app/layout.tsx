@@ -1,11 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
+import { Caveat, Fredoka, Geist_Mono, Work_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+import { BrandMark } from "@/components/icons";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
+const workSans = Work_Sans({
+  variable: "--font-work-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -22,24 +39,51 @@ export const metadata: Metadata = {
     "Los conciertos de la escena bogotana en un solo lugar, recogidos directamente de las carteleras de cada sala.",
 };
 
+// Fija `data-theme` antes de que React hidrate, para que el modo guardado
+// (o "claro" por defecto) se pinte en el primer frame sin parpadeo y sin
+// que el toggle choque con el render del servidor. `suppressHydrationWarning`
+// en <html> es necesario porque este atributo lo pone este script, no React.
+const SCRIPT_TEMA = `
+(function () {
+  try {
+    var guardado = window.localStorage.getItem("bmi-theme");
+    document.documentElement.setAttribute(
+      "data-theme",
+      guardado === "oscuro" ? "oscuro" : "claro",
+    );
+  } catch (error) {
+    document.documentElement.setAttribute("data-theme", "claro");
+  }
+})();
+`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es-CO"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${workSans.variable} ${fredoka.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <head>
+        <Script id="tema-inicial" strategy="beforeInteractive">
+          {SCRIPT_TEMA}
+        </Script>
+      </head>
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <header className="border-b border-border">
-          <div className="mx-auto flex max-w-5xl items-baseline justify-between gap-4 px-5 py-5">
-            <Link href="/" className="group flex items-baseline gap-2">
-              <span className="text-lg font-semibold tracking-tight">
-                Cartelera de Bogotá
-              </span>
-              <span className="hidden text-xs text-muted sm:inline">
-                escena en vivo
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5">
+            <Link href="/" className="group flex items-center gap-3">
+              <BrandMark className="h-9 w-9 shrink-0" />
+              <span className="flex items-baseline gap-2">
+                <span className="font-display text-lg font-semibold tracking-tight">
+                  Cartelera de Bogotá
+                </span>
+                <span className="hidden font-hand text-lg text-accent-2 sm:inline">
+                  escena en vivo
+                </span>
               </span>
             </Link>
-            <nav className="flex items-baseline gap-4 text-sm">
+            <nav className="flex items-center gap-4 text-sm">
               <Link
                 href="/"
                 className="text-muted transition-colors hover:text-foreground"
@@ -52,6 +96,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               >
                 Mapa
               </Link>
+              <ThemeToggle />
             </nav>
           </div>
         </header>

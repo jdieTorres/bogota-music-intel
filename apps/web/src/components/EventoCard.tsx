@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { IconNota } from "@/components/icons";
 import { type Evento, nombreDelVenue } from "@/lib/events";
 import { horaDeEvento } from "@/lib/fechas";
 
@@ -24,8 +25,8 @@ export function EventoCard({ evento }: { evento: Evento }) {
               className="object-cover"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-xl text-muted">
-              ♪
+            <div className="flex h-full items-center justify-center text-muted">
+              <IconNota className="h-7 w-7" />
             </div>
           )}
         </div>

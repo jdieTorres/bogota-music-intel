@@ -1,0 +1,51 @@
+/**
+ * Verde Neón — tokens de referencia (look & feel, 2026-08-28).
+ *
+ * Esta es la copia de referencia, para consultar sin abrir el CSS de la
+ * app. La fuente de verdad que realmente corre en el sitio es
+ * `apps/web/src/app/globals.css` — si algún día difieren, ese archivo
+ * manda y este se actualiza para que lo vuelva a reflejar.
+ */
+
+:root {
+  /* Claro — modo por defecto */
+  --background: #c8f0b8;
+  --surface: #d9f6cc;
+  --surface-hover: #c0edae;
+  --border: #a9dd93;
+  --foreground: #0d2a10;
+  --muted: #3f5c3a;
+  --accent: #128a0a;    /* color de marca */
+  --accent-2: #0e8fae;  /* acento "salvaje" — teal */
+  --accent-3: #d81b73;  /* acento "salvaje" — magenta */
+
+  /* Mapa y popup: fijos, no cambian con el toggle (el mapa siempre es
+     claro, ver look&feel/README.md). */
+  --popup-surface: #eef9e6;
+  --popup-surface-hover: #e0f2d4;
+  --popup-border: #cdeab8;
+  --popup-foreground: #123018;
+  --popup-muted: #4a6a44;
+}
+
+:root[data-theme="oscuro"] {
+  --background: #091d0d;
+  --surface: #102a15;
+  --surface-hover: #17351c;
+  --border: #1f4527;
+  --foreground: #eaf7e6;
+  --muted: #8fb389;
+  --accent: #3ddc2e;
+  --accent-2: #3fd0ee;
+  --accent-3: #ff4fae;
+  /* --popup-* no se repiten aquí a propósito: se quedan con el valor de
+     :root en los dos modos. */
+}
+
+/*
+ * Tipografía (next/font/google en apps/web/src/app/layout.tsx):
+ *   --font-fredoka  -> font-display  (titulares, 500/600/700)
+ *   --font-caveat   -> font-hand     (acentos manuscritos, 600/700)
+ *   --font-work-sans -> font-sans   (cuerpo de texto, 400/500/600/700)
+ *   --font-geist-mono -> font-mono  (sin cambios: datos tabulares)
+ */

@@ -35,7 +35,7 @@ export default async function Page() {
   return (
     <div className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
       <section className="mb-8 sm:mb-10">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
           Qué suena en Bogotá
         </h1>
         <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-muted">

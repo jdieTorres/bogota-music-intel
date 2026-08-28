@@ -1,15 +1,49 @@
 @import "tailwindcss";
 
-/* Paleta oscura fija: la cartelera se consulta sobre todo de noche y el
-   contraste alto deja que los afiches de los eventos lleven el color. */
+/* Verde Neón — decidido con Juan el 2026-08-28 en la sesión de look & feel.
+   Reemplaza la paleta oscura fija original. Claro es el modo por defecto
+   (el que se sirve en el primer render, antes de que cualquier script
+   corra); oscuro se activa con `data-theme="oscuro"` en <html>, que pone
+   `ThemeToggle.tsx` — ver ese componente y el script inline en
+   `layout.tsx` para cómo se decide el valor inicial sin parpadeo. */
 :root {
-  --background: #0b0b0e;
-  --surface: #141419;
-  --surface-hover: #1c1c23;
-  --border: #26262f;
-  --foreground: #f2f2f4;
-  --muted: #9b9baa;
-  --accent: #ff4d3d;
+  --background: #c8f0b8;
+  --surface: #d9f6cc;
+  --surface-hover: #c0edae;
+  --border: #a9dd93;
+  --foreground: #0d2a10;
+  --muted: #3f5c3a;
+  --accent: #128a0a;
+  --accent-2: #0e8fae; /* acento "salvaje" — teal, para chips y detalles */
+  --accent-3: #d81b73; /* acento "salvaje" — magenta, para detalles puntuales */
+
+  /* Tokens del mapa y sus popups: el mapa (`/mapa`) es MapLibre con el
+     estilo `liberty`, que es claro y no cambia con el toggle — esa
+     decisión es de antes del look & feel actual y sigue en pie. Por eso
+     estos tokens NO se sobreescriben en `[data-theme="oscuro"]` más abajo:
+     el mapa y sus popups se quedan siempre en su propio "papel" claro,
+     tenga la página el modo que tenga. */
+  --popup-surface: #eef9e6;
+  --popup-surface-hover: #e0f2d4;
+  --popup-border: #cdeab8;
+  --popup-foreground: #123018;
+  --popup-muted: #4a6a44;
+}
+
+/* Modo oscuro: mismo Verde Neón, mismo rol de cada token, valores propios
+   para que el contraste siga funcionando (no son los tokens claros con el
+   brillo invertido a lo bruto — el acento y los dos "salvajes" se aclaran
+   para seguir contrastando sobre un fondo casi negro). */
+:root[data-theme="oscuro"] {
+  --background: #091d0d;
+  --surface: #102a15;
+  --surface-hover: #17351c;
+  --border: #1f4527;
+  --foreground: #eaf7e6;
+  --muted: #8fb389;
+  --accent: #3ddc2e;
+  --accent-2: #3fd0ee;
+  --accent-3: #ff4fae;
 }
 
 @theme inline {
@@ -20,32 +54,35 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
-  --font-sans: var(--font-geist-sans);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
+
+  /* Work Sans para cuerpo de texto: mantiene fecha/sala/precio legibles
+     sin competir con los titulares. Fredoka (titulares) y Caveat (acentos
+     manuscritos, uso puntual) generan `font-display` y `font-hand` por la
+     misma convención de Tailwind 4 que ya daba `font-mono` más abajo. */
+  --font-sans: var(--font-work-sans);
+  --font-display: var(--font-fredoka);
+  --font-hand: var(--font-caveat);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* --- Mapa de la escena ---------------------------------------------------
-   MapLibre trae su propia hoja de estilos pensada para mapas claros: el popup
-   viene con fondo blanco fijo. Sobre la paleta oscura del sitio eso dejaba el
-   texto blanco sobre blanco, ilegible. Se repinta aquí, con los tokens del
-   tema, en vez de con estilos en línea desde el componente.
-
-   Los selectores llevan `.maplibregl-popup` de más a propósito: su hoja se
-   importa desde el componente cliente, así que Next la inyecta *después* de
-   este archivo y con la misma especificidad ganaría ella. Sumar una clase
-   basta para que estas reglas manden, sin recurrir a !important. */
+   El popup y el fondo del mapa usan los tokens `--popup-*`, fijos
+   independientemente del modo (ver el comentario en `:root` arriba). */
 
 .maplibregl-popup .maplibregl-popup-content {
-  background: var(--surface);
-  color: var(--foreground);
-  border: 1px solid var(--border);
+  background: var(--popup-surface);
+  color: var(--popup-foreground);
+  border: 1px solid var(--popup-border);
   border-radius: 6px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
   padding: 12px 14px;
   font-family: inherit;
 }
@@ -55,29 +92,29 @@ body {
 .maplibregl-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
 .maplibregl-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
 .maplibregl-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
-  border-bottom-color: var(--surface);
+  border-bottom-color: var(--popup-surface);
 }
 .maplibregl-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
 .maplibregl-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
 .maplibregl-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
-  border-top-color: var(--surface);
+  border-top-color: var(--popup-surface);
 }
 .maplibregl-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: var(--surface);
+  border-right-color: var(--popup-surface);
 }
 .maplibregl-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: var(--surface);
+  border-left-color: var(--popup-surface);
 }
 
 .maplibregl-popup .maplibregl-popup-close-button {
-  color: var(--muted);
+  color: var(--popup-muted);
   padding: 2px 7px;
   font-size: 15px;
   line-height: 1;
 }
 .maplibregl-popup .maplibregl-popup-close-button:hover {
-  background-color: var(--surface-hover);
-  color: var(--foreground);
+  background-color: var(--popup-surface-hover);
+  color: var(--popup-foreground);
 }
 
 .marcador-sala {
@@ -85,7 +122,12 @@ body {
   height: 14px;
   border-radius: 50%;
   background: var(--accent);
-  border: 2px solid var(--background);
+  /* El aro es del tono "papel" del popup, no de `--background`: el mapa es
+     siempre claro sin importar el modo de la página, así que un aro que
+     tomara `--background` se volvería oscuro en modo oscuro y se perdería
+     contra el mapa (que sigue siendo claro). Con `--popup-surface` el
+     marcador se ve igual en los dos modos. */
+  border: 2px solid var(--popup-surface);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
   cursor: pointer;
 }
@@ -101,7 +143,7 @@ body {
 }
 .popup-sala__direccion,
 .popup-sala__mas {
-  color: var(--muted);
+  color: var(--popup-muted);
   font-size: 11px;
 }
 .popup-sala__direccion {
@@ -120,14 +162,14 @@ body {
   margin-top: 4px;
 }
 .popup-sala__lista a {
-  color: var(--foreground);
+  color: var(--popup-foreground);
   text-decoration: none;
 }
 .popup-sala__lista a:hover {
   text-decoration: underline;
 }
 .popup-sala__fecha {
-  color: var(--muted);
+  color: var(--popup-muted);
   font-variant-numeric: tabular-nums;
   margin-right: 4px;
 }
