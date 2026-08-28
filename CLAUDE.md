@@ -43,12 +43,13 @@ Directorio/wiki y API pública quedan para fase 2/futura. Ritmo de dedicación: 
 - Prefijo de variables de entorno: `BOGOTA_MUSIC_INTEL_` o `bmi_`
 
 ## Pendientes activos (no resueltos aún)
+- **Pasada final de look & feel antes del deploy** (decidido por Juan el 2026-08-28). La identidad Verde Neón queda como está y el trabajo sigue con ella, pero Juan quiere **cambiar cosas al final, justo antes de desplegar** — o sea dentro de la Fase 6, no antes. Consecuencia para quien retome: **no rediseñar por iniciativa propia en el medio**, y tampoco dar el look & feel por cerrado al llegar al deploy. Lo que ya está identificado para esa pasada: el tratamiento ilustrado que quedó fuera de la primera ronda (marco del mapa con textura y "cinta", squiggles junto a los títulos, chips tipo boleta), listado en `look&feel/README.md` § "Qué quedó fuera de esta ronda".
 - Probar Napster API con queries reales de artistas colombianos (Bomba Estéreo, Karol G, Andrés Cepeda) antes de meterlo al módulo Scout de emergentes — su cobertura LatAm no está documentada, hay que probarla a mano.
-- Nombre e identidad de marca definitiva del proyecto (el placeholder de arriba es solo de trabajo). Ligado al trabajo de look & feel de abajo.
+- Nombre e identidad de marca definitiva del proyecto (el placeholder de arriba es solo de trabajo). Entra en la misma pasada final de arriba.
 
 ### Acordados con Juan para después de Fase 4
 1. ~~**Filtrar lo que no son toques de artistas locales.**~~ **Hecho y en la base el 2026-08-27.** Las dos decisiones de producto que lo bloqueaban las tomó Juan: lo que no es música se excluye siempre; los internacionales no se excluyen, van en segundo plano. Cómo quedó y qué se midió: `docs/investigacion-tecnica-plataforma-musical.md`, sección 6.
-2. **Look & feel / personalidad de la web — en curso desde el 2026-08-27, paleta y tipografía decididas el 2026-08-28.** Juan lo quiere trabajar en conjunto y con calma; se estima varias sesiones, no un retoque puntual. Alcance y punto de partida en `docs/proyecto-plataforma-musical-bogota.md`, sección 8. Arrancó por el mapa (ver "Verde Neón" en decisiones transversales, que reemplaza lo que ahí se llamaba "Paleta oscura fija") y sigue en `look&feel/README.md`, que trae el registro completo: las 7 direcciones de paleta exploradas, por qué se descartaron las otras 6, y el detalle de tipografía e iconografía. El siguiente paso concreto está más abajo.
+2. **Look & feel / personalidad de la web — primera ronda cerrada el 2026-08-28** (arrancó el 2026-08-27). Verificada en navegador y aceptada por Juan, con una **pasada final pendiente antes del deploy** (ver "Pendientes activos"). Juan lo quiere trabajar en conjunto y con calma; se estima varias sesiones, no un retoque puntual. Alcance y punto de partida en `docs/proyecto-plataforma-musical-bogota.md`, sección 8. Arrancó por el mapa (ver "Verde Neón" en decisiones transversales, que reemplaza lo que ahí se llamaba "Paleta oscura fija") y sigue en `look&feel/README.md`, que trae el registro completo: las 7 direcciones de paleta exploradas, por qué se descartaron las otras 6, y el detalle de tipografía e iconografía. El siguiente paso concreto está más abajo.
 
 ### Las tres listas curadas (crecen con el conocimiento de escena de Juan)
 MusicBrainz resuelve bien al internacional consagrado y mal al local emergente, que es lo contrario de lo que esta plataforma necesita. El mecanismo para cerrar ese hueco ya está; lo que falta es contenido, y decidir quién entra le toca a Juan.
@@ -80,21 +81,13 @@ Datos en base al 2026-08-27 (recontar con una consulta, no citar de memoria): **
 - Opcional: añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para que el CI prerenderice contra la base real en vez de contra placeholders.
 
 ### Siguiente paso concreto
-**Hay cambios sin commitear** de la sesión de look & feel del 2026-08-28 (paleta, tipografía, iconografía y el toggle claro/oscuro — ver `look&feel/README.md` para el detalle completo). Son cambios reales de código, no solo mockups:
-- `apps/web/src/app/globals.css` — tokens de Verde Neón (claro por defecto, `[data-theme="oscuro"]` para el oscuro) reemplazando la paleta oscura fija; el mapa y sus popups se quedan con su propio "papel" claro fijo, sin importar el modo (así ya funcionaba, ver más abajo).
-- `apps/web/src/app/layout.tsx` — tipografía nueva (Fredoka/Caveat/Work Sans en vez de Geist Sans; Geist Mono se queda igual), el ícono de marca (`BrandMark`), y el script que fija `data-theme` antes de hidratar para que el toggle no parpadee.
-- `apps/web/src/components/ThemeToggle.tsx` y `apps/web/src/components/icons.tsx` — nuevos.
-- `font-display` (Fredoka) agregado a los `<h1>` de cartelera, fiestas, evento y mapa; el resto del texto de datos (tarjetas, pestañas, popups) se queda en Work Sans a propósito — el criterio acordado es caos en portada/headers, calma en la lista densa.
+El look & feel del 2026-08-28 (Verde Neón, tipografía, iconografía, toggle claro/oscuro) está **commiteado, verificado y aceptado**: 34 tests de frontend, 132 de backend, `tsc` y build en verde, y Juan lo miró en el navegador el 2026-08-28 — "se ve bien". Eso cierra la verificación que la sesión original no pudo hacer, porque corría en la nube sin shell.
 
-**Esta sesión de Claude corrió en la nube y no tiene shell en tu máquina, así que ninguno de estos cambios pasó por `npm run build`, `tsc` ni los tests.** Antes de commitear: correr el dev server y mirarlo en un navegador de verdad (la propia regla del proyecto — el mapa ya se quedó en negro una vez con CI en verde y build limpio), correr la suite de tests y `tsc`, y probar el toggle en los dos modos.
+**Queda congelado a propósito, no terminado.** Juan decidió el 2026-08-28 seguir adelante con esta identidad tal como está y **hacer una pasada de ajustes al final, antes del deploy** (Fase 6). Registrado como pendiente abajo. La diferencia importa: no hay que rediseñar por iniciativa propia en el medio, ni dar el look & feel por cerrado cuando llegue el deploy.
 
-Lo que sigue abierto en look & feel, sin decidir aún:
-- Nombre e identidad de marca definitiva (sigue en placeholder).
-- El tratamiento ilustrado más fuerte que se ve en el mockup interactivo (marco del mapa con textura y "cinta", squiggles decorativos, chips tipo boleta) — hoy solo vive en el canvas de diseño, no se llevó al código real. Se decide si se implementa y hasta dónde en una próxima sesión.
+Lo que más mueve la aguja del principio editorial sigue siendo la **lista curada de artistas locales**: solo 5 de 47 conciertos están confirmados como locales, y 5 de los 8 sin resolver existen en MusicBrainz sin país.
 
-En paralelo, lo que más mueve la aguja del principio editorial sigue siendo la **lista curada de artistas locales**: solo 5 de 47 conciertos están confirmados como locales, y 5 de los 8 sin resolver existen en MusicBrainz sin país.
-
-Después viene la Fase 5 (radar de tendencias: Deezer charts + Last.fm) y la Fase 6 (pulido y deploy).
+Después viene la Fase 5 (radar de tendencias: Deezer charts + Last.fm) y la Fase 6 (pulido y deploy), que **incluye la pasada final de look & feel** — no se despliega sin ella.
 
 ⚠️ `apps/web` corre **Next.js 16**, que cambió convenciones respecto a versiones anteriores: `params`/`searchParams` son Promises, existen los helpers globales `PageProps<'/ruta'>` y `LayoutProps<'/ruta'>`, y Turbopack es el default. Antes de escribir código de frontend, leé la guía correspondiente en `apps/web/node_modules/next/dist/docs/` (así lo pide `apps/web/AGENTS.md`).
 
