@@ -21,6 +21,8 @@ Spotify deprecó (27 nov 2024) para apps nuevas: `audio-features`, `audio-analys
 
 ## 2. Estado verificado de APIs de música (documentación oficial revisada una por una)
 
+> ⚠️ **Lo de abajo se verificó leyendo documentación, no llamando a las APIs.** El 2026-08-28 se llamaron de verdad las que importan para los módulos actuales y para la Fase 5, y **cuatro entradas resultaron inexactas** — ver 2.2. Antes de construir sobre cualquier fila de estas listas, probala.
+
 ### Funcionan bien (self-service, sin aprobación manual)
 - **MusicBrainz** — gratis, sin key para consultas básicas. Límite estricto: 1 req/segundo (banean IP si te pasas), requiere User-Agent identificable. Artistas, releases, labels, works.
 - **Discogs** — gratis, requiere registrar app (no aprobación manual). 25 req/min sin auth, 60 req/min autenticado.
@@ -63,15 +65,45 @@ Spotify deprecó (27 nov 2024) para apps nuevas: `audio-features`, `audio-analys
 - **Sunor (Suno)** — es generación de música por IA, no detección. Uso indirecto posible: generar datasets etiquetados "IA" para entrenar el Detector de música generada por IA.
 - **Ticketmaster Discovery API / International Discovery API** — Colombia NO está en la lista de países soportados de ninguna de las dos. Ticketmaster opera en Colombia desde 2025 (compró La Tiquetera) pero esa operación no está integrada a su API pública.
 
-### 2.1 Napster — investigación de cobertura LatAm (resuelta, resultado: no concluyente por vía documental)
+### 2.2 Verificación por uso (2026-08-28) — qué pasó al llamarlas de verdad
+
+Se llamaron con `httpx` desde la máquina de Juan. Cuatro correcciones a las listas de arriba:
+
+| Entrada | Decía | Es |
+|---|---|---|
+| **Napster** | "funciona bien, self-service, 500 req/seg" | **Muerta.** `api.napster.com`, `developer.napster.com` y `developer.prod.napster.com` **no resuelven DNS**. Solo responde `www.napster.com`, que hoy es otro producto. Esto cierra el pendiente 2.1 sin necesidad de probar catálogo. |
+| **Deezer** | "incluye endpoint de charts por país (`/chart`)" | **`/chart/{id}` es por género/editorial, no por país.** `/chart/0` es el global. No hay chart de Colombia como país. |
+| **Songlink / Odesli** | "aviso de cierre, fecha ya pasada" | Confirmado cerrada: devuelve `401 PUBLIC_API_ACCESS_DEPRECATED`. |
+| **Discogs** | "requiere registrar app" | La **búsqueda básica funciona sin token** (`/database/search?type=artist` devuelve 200). El registro hace falta para el resto y para subir el límite. |
+
+Confirmadas vivas y respondiendo: MusicBrainz, Deezer, iTunes Search, Radio Browser, Lyrics.ovh, Openwhyd, Mixcloud, Discogs. Con key y vivas (responden el error de credencial, o sea que el servicio existe y el alta es self-service): Last.fm, Jamendo, Genius, Musixmatch.
+
+#### El hallazgo que sí sirve para la Fase 5
+Deezer no tiene charts por país, **pero sí una editorial "Música colombiana" (id 498)**, y funciona: `GET /editorial/498/charts` devuelve tracks y artistas reales de la escena (Systema Solar, Kraken, Junior Jein, Totó La Momposina; KAROL G, Ryan Castro, Feid). Para esta plataforma es **mejor** que un chart de país, que estaría lleno de pop global.
+
+Ojo con un detalle editorial ya conocido: esa lista es de *género*, no de nacionalidad — entre los artistas aparece Bad Bunny. Es el mismo problema que ya se resolvió en la cartelera, así que conviene anticipar que va a hacer falta el mismo tipo de filtro.
+
+**Last.fm aporta el eje que a Deezer le falta**: tiene `geo.gettopartists?country=colombia`, o sea popularidad por país. Las dos son complementarias, no redundantes. Requiere una key gratuita que todavía **nadie sacó**.
+
+#### La pregunta que se fue a responder: ¿alguna API cubre el hueco de MusicBrainz?
+El problema conocido es que MusicBrainz conoce a los artistas locales pero **sin país**, y por eso hay ocho curados a mano. Se probó con esos ocho:
+
+- **Deezer: no expone país del artista.** Ni siquiera de Karol G o Bomba Estéreo. No sirve para esto.
+- **iTunes Search: tampoco.** Encuentra a los seis locales, pero sus campos son `artistId`, `artistName`, `artistType`, `primaryGenre…` — no hay país. Sirve para confirmar que un artista existe, no de dónde es.
+- **Wikidata** (que no estaba en el doc) **es la única con datos de país estructurados**, y aun así falla acá: de los seis locales solo tiene entidad para Todo Copas —que resuelve bien, "Colombian hip-hop group" → Colombia—. El Kalvo, Atake Mapalé, Los Yoryis y Ancestral Beats no existen. Y **"Mukangu" devuelve un lugar de Kenia**: el mismo falso positivo que ya obligó al guardia de parecido en MusicBrainz.
+
+**Conclusión: ninguna API resuelve el origen del artista local emergente.** No es un problema de elegir mal la fuente; es que estos artistas no están en las bases globales. La lista curada a mano no es un parche temporal, es la respuesta. Se cierra la búsqueda.
+
+### 2.1 Napster — investigación de cobertura LatAm (cerrada el 2026-08-28: la API ya no existe)
 Se revisaron developer.prod.napster.com, developer-beta.napster.com y páginas de terceros (jentic.com, publicapis.io/rapidapi). **Ninguna fuente documental publica una lista de países/territorios cubiertos por el catálogo.** La documentación solo describe capacidades funcionales (búsqueda, metadata, top artists, historial de escucha), sin mencionar Latinoamérica, Colombia ni restricciones geográficas.
-- **Conclusión:** esto no se puede confirmar sin probar la API directamente (registrar API key gratuita y hacer una búsqueda real de artistas colombianos/latinoamericanos conocidos).
-- **Siguiente paso recomendado:** registrar key gratis en developer.prod.napster.com y correr 3-5 queries de prueba (ej. buscar "Bomba Estéreo", "Andrés Cepeda", "Karol G") antes de construir el pipeline del módulo Scout de emergentes sobre Napster. Si el catálogo no responde bien para artistas colombianos, se cae de la lista de fuentes para ese módulo sin afectar el resto (Jamendo + Openwhyd siguen siendo la base).
+- **Resuelto de otra forma el 2026-08-28: la pregunta ya no aplica.** Al ir a registrar la key se encontró que **los tres dominios están caídos a nivel DNS** (`api.napster.com`, `developer.napster.com`, `developer.prod.napster.com`). No hay catálogo que probar. Napster sale de la lista de fuentes.
+- Consecuencia para el **Scout de emergentes**: se queda con Jamendo + Openwhyd, que era el plan si la prueba salía mal. No hace falta buscar reemplazo ahora.
+- Vale como recordatorio del método: la investigación documental dejó esto abierto meses; **un `GET` lo cerró en un segundo**. Cuando una duda se pueda contestar llamando a la API, llamarla antes que seguir leyendo.
 
 ### Mapa recomendado por módulo (fuentes gratuitas apiladas)
 - **Directorio/wiki de la escena local:** MusicBrainz (principal) + Discogs + Genius.
-- **Scout de emergentes:** Jamendo (principal) + Openwhyd (señal social) + Napster (si se confirma catálogo LatAm con prueba directa, ver 2.1).
-- **Radar de tendencias:** Deezer charts + Last.fm (reemplaza a Spotify audio-features) + Openwhyd como señal cruzada.
+- **Scout de emergentes:** Jamendo (principal) + Openwhyd (señal social). ~~Napster~~ sale: la API dejó de existir (ver 2.1).
+- **Radar de tendencias (Fase 5):** **Deezer editorial "Música colombiana" (id 498)** para el eje de género —no hay chart por país, ver 2.2— **+ Last.fm `geo.gettopartists?country=colombia`** para el eje de popularidad local + Openwhyd como señal cruzada. Falta sacar la key gratuita de Last.fm.
 - **Mapa de escena en vivo / Calendario de eventos:** ninguna API gratuita lo cubre — depende 100% de scraping (ver sección 3).
 - **Motor de similitud sonora:** Essentia (pipeline propio) + Jamendo como fuente de audio legal.
 - **Detector de música generada por IA:** clasificador propio; Jamendo (audio humano) + Sunor/Suno (ejemplos IA) como datasets.
