@@ -8,6 +8,7 @@ Uso:
 import argparse
 import sys
 
+from bogota_music_intel.eventos_excluidos import esta_excluido
 from bogota_music_intel.scrapers.models import dedupe_events
 from bogota_music_intel.scrapers.registry import SCRAPERS
 from bogota_music_intel.storage import get_client, save_events
@@ -35,7 +36,14 @@ def main() -> int:
         try:
             events = dedupe_events(SCRAPERS[source]())
             if args.dry_run:
-                print(f"[{source}] {len(events)} eventos encontrados (dry-run, no guardado)")
+                # Se descuenta lo bloqueado para que el dry-run informe lo
+                # que se guardaría y no lo que se encontró: el filtro vive
+                # en save_events, que acá no se llama.
+                guardables = [e for e in events if not esta_excluido(e.source, e.source_event_id)]
+                detalle = f"{len(guardables)} eventos"
+                if len(guardables) != len(events):
+                    detalle += f" ({len(events) - len(guardables)} bloqueados a mano)"
+                print(f"[{source}] {detalle} (dry-run, no guardado)")
                 continue
             result = save_events(client, events)
             detalle = f"{result.saved} eventos guardados"

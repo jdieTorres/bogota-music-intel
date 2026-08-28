@@ -6,6 +6,7 @@ from slugify import slugify
 from supabase import Client, create_client
 
 from bogota_music_intel.config import settings
+from bogota_music_intel.eventos_excluidos import esta_excluido
 from bogota_music_intel.nombres_de_salas import NOMBRES_CORREGIDOS
 from bogota_music_intel.scrapers.models import ScrapedEvent, dedupe_events
 from bogota_music_intel.scrapers.text import normalize_venue_name
@@ -91,6 +92,10 @@ def _prune_missing_events(client: Client, source: str, keep_ids: list[str]) -> i
 
 def save_events(client: Client, events: list[ScrapedEvent]) -> SaveResult:
     events = dedupe_events(events)
+    # Lo que Juan sacó a mano no vuelve a entrar. Se filtra antes de guardar
+    # y no después: en una fuente activa, borrar la fila dura hasta la
+    # próxima corrida del cron.
+    events = [e for e in events if not esta_excluido(e.source, e.source_event_id)]
     if not events:
         return SaveResult(saved=0, pruned=0)
 

@@ -55,3 +55,8 @@ CLASIFICACION_MANUAL: dict[tuple[str, str], ClasificacionManual] = {
         )
     ),
 }
+# No hace falta curar "'Fuera de sí'" (danza que Idartes lista como
+# «Música»): desde el 2026-08-28 el scraper de esa fuente solo toma lo que
+# está bajo /agenda/concierto/, así que ese evento ya no entra. El detalle
+# de por qué no se confía en la etiqueta del listado quedó en
+# `scrapers/idartes_teatro_jeg.py`.

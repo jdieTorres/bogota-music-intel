@@ -222,6 +222,27 @@ class TestArtistasCurados:
         for artista in ARTISTAS:
             assert len(artista.evidencia) > 40, artista.nombre
 
+    def test_encuentra_al_artista_aunque_la_sala_lo_escriba_mal(self):
+        # Royal Center publica "SLAUHGTER TO PREVAIL". El emparejamiento es
+        # exacto a propósito, así que la errata se declara como grafía
+        # alternativa en vez de aflojar la comparación.
+        with _cliente_falso(_responde([])) as cliente:
+            resultado = clasificar(_evento(title="SLAUHGTER TO PREVAIL"), client=cliente)
+
+        assert resultado.is_local is False
+        assert resultado.classification_source == FUENTE_ARTISTA_CURADO
+        assert resultado.consulto_red is False
+
+    def test_el_artista_curado_puede_estar_en_un_candidato_posterior(self):
+        # "Gaitán al Aire Vol. 57" abre el título y el artista viene
+        # después: la lista curada se revisa entera antes de salir a la red.
+        titulo = "Gaitán al Aire Vol. 57: Ancestral Beats presenta 'Human Design'"
+        with _cliente_falso(_responde([])) as cliente:
+            resultado = clasificar(_evento(title=titulo, category="Música"), client=cliente)
+
+        assert resultado.is_local is True
+        assert resultado.consulto_red is False
+
     def test_todo_ciclo_documenta_su_evidencia(self):
         for ciclo in CICLOS:
             assert len(ciclo.evidencia) > 40, ciclo.nombre

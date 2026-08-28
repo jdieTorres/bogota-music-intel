@@ -34,6 +34,30 @@ def _parse_agenda_datetime(value: str | None) -> datetime | None:
     return parsed.replace(tzinfo=BOGOTA_TZ)
 
 
+# La agenda del Teatro Jorge Eliécer Gaitán es distrital y programa de todo:
+# teatro, danza, ópera. Juan pidió el 2026-08-28 que de esta fuente entren
+# solo conciertos.
+#
+# El filtro va por la **URL de la ficha**, no por la etiqueta de categoría
+# del listado, porque esa etiqueta se contradice con la propia ficha: a
+# "'Fuera de sí'" la lista como «Música» y su ficha está en
+# /agenda/presentacion-de-danza/, y a "'Ella'" la lista como «Teatro» siendo
+# también danza. La ruta viene del enrutamiento del sitio y acertó en los
+# nueve eventos revisados.
+RUTA_CONCIERTO = "/agenda/concierto/"
+
+
+def es_concierto(source_url: str) -> bool:
+    """Solo lo que Idartes publica bajo /agenda/concierto/.
+
+    Deja fuera `obra-de-teatro`, `presentacion-de-danza` y el genérico
+    `presentacion` —donde caen la ópera y los cruces interdisciplinares—.
+    Es deliberadamente estricto: ante una ruta nueva que no conozcamos, el
+    evento no entra, y eso es preferible a colar teatro en una cartelera de
+    toques."""
+    return RUTA_CONCIERTO in source_url
+
+
 def scrape() -> list[ScrapedEvent]:
     response = http.get(AGENDA_URL)
     soup = BeautifulSoup(response.text, "lxml")
@@ -52,6 +76,9 @@ def scrape() -> list[ScrapedEvent]:
         source_url = link["href"]
         if source_url.startswith("/"):
             source_url = BASE_URL + source_url
+
+        if not es_concierto(source_url):
+            continue
 
         starts_at = _parse_agenda_datetime(time_tag.get("datetime") if time_tag else None)
 

@@ -123,7 +123,7 @@ def main() -> int:
                 ).eq("id", evento["id"]).execute()
 
     print(
-        f"\n{len(eventos)} eventos: {excluidos} fuera de cartelera, "
+        f"\n{len(eventos)} eventos: {excluidos} no son música, "
         f"{fiestas} fiestas, {locales} locales, "
         f"{internacionales} internacionales, {sin_resolver} sin resolver."
     )
