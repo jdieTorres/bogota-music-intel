@@ -120,6 +120,16 @@ ARTISTAS: list[ArtistaCurado] = [
         ),
     ),
     ArtistaCurado(
+        nombre="El Plan de la Mariposa",
+        es_local=False,
+        evidencia=(
+            "Banda argentina; lo confirmó Juan el 2026-08-28. MusicBrainz la "
+            "tiene pero sin país. Concuerda con cómo la anuncia Latino "
+            "Power —«regresa a Colombia»—, que sugería banda de afuera pero "
+            "no alcanzaba para afirmarlo."
+        ),
+    ),
+    ArtistaCurado(
         nombre="Slaughter to Prevail",
         es_local=False,
         tambien_como=("SLAUHGTER TO PREVAIL",),
