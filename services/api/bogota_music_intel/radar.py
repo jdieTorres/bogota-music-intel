@@ -1,13 +1,10 @@
-"""Arma el radar de tendencias: trae los artistas de las dos fuentes
-(`deezer.py`, `lastfm.py`) y ofrece cómo resolver de dónde es cada uno.
+"""Arma el radar de tendencias: trae los artistas de Last.fm y ofrece cómo
+resolver de dónde es cada uno.
 
-La editorial de Deezer mezcla nacionalidades a propósito —"Música
-colombiana" trae también a Bad Bunny— y el top de Last.fm es directamente
-lo más escuchado sin filtrar por origen. Las dos necesitan el mismo criterio
-"no sé" vs. "confirmado que no" que ya tiene la cartelera (`classify.py`),
-así que se resuelve con las mismas fuentes: primero la lista curada, porque
-además de cubrir lo que MusicBrainz no tiene sirve para corregirlo cuando
-se equivoca, y después MusicBrainz.
+Necesita el mismo criterio "no sé" vs. "confirmado que no" que ya tiene la
+cartelera (`classify.py`), así que se resuelve con las mismas fuentes:
+primero la lista curada, porque además de cubrir lo que MusicBrainz no
+tiene sirve para corregirlo cuando se equivoca, y después MusicBrainz.
 
 A diferencia de `classify.py`, acá no hay título de evento que trocear: el
 nombre del artista ya viene limpio de la API, así que no hace falta
@@ -17,18 +14,28 @@ El llamador (`radar_cli.py`) es quien decide qué hacer si MusicBrainz no
 responde, igual que `classify_cli.py` decide por los eventos: acá no se
 atrapa `MusicBrainzNoDisponible`, para no confundir "no se pudo preguntar"
 con "se preguntó y no se supo".
+
+⚠️ **Deezer (`deezer.py`) está parado, no borrado.** La editorial "Música
+colombiana" (id 498) geolocaliza la respuesta por la IP de quien pregunta,
+no solo por el id que se pide: llamada desde Bogotá devuelve el chart
+colombiano, pero la misma URL llamada desde un runner de GitHub Actions
+devolvió un chart genérico (Dolly Parton, Drake, Taylor Swift, The
+Beatles) — sin ningún error que lo delate. Verificado el 2026-08-28
+comparando ambas corridas. Como la ingesta corre en GitHub Actions y no
+desde Colombia, Deezer no sirve para producción hasta encontrar un
+workaround real (no alcanzó con params `country=CO` / `relation=CO`,
+probados sin poder confirmar el efecto desde una IP no colombiana). El
+módulo se deja intacto por si aparece una solución; no se llama desde acá.
 """
 from dataclasses import dataclass
 
 import httpx
 
 from bogota_music_intel.artistas_locales import artista_curado
-from bogota_music_intel.deezer import ArtistaDeezer, top_artistas as deezer_top_artistas
 from bogota_music_intel.lastfm import ArtistaLastfm, top_artistas_colombia
 from bogota_music_intel.musicbrainz import resolver_artista
 from bogota_music_intel.tipos_evento import FUENTE_ARTISTA_CURADO, FUENTE_MUSICBRAINZ
 
-FUENTE_DEEZER = "deezer_editorial"
 FUENTE_LASTFM = "lastfm_geo"
 
 
@@ -57,18 +64,7 @@ class FilaTendencia:
 
 
 def obtener_candidatos(limit: int = 50) -> list[Candidato]:
-    candidatos = [
-        Candidato(
-            source=FUENTE_DEEZER,
-            rank=a.rank,
-            artist_name=a.name,
-            external_id=a.external_id,
-            image_url=a.image_url,
-            metric=None,
-        )
-        for a in deezer_top_artistas(limit=limit)
-    ]
-    candidatos += [
+    return [
         Candidato(
             source=FUENTE_LASTFM,
             rank=a.rank,
@@ -79,7 +75,6 @@ def obtener_candidatos(limit: int = 50) -> list[Candidato]:
         )
         for a in top_artistas_colombia(limit=limit)
     ]
-    return candidatos
 
 
 def resolver_origen(

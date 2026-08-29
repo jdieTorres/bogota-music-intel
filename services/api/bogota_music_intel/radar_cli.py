@@ -34,7 +34,7 @@ def main() -> int:
 
     try:
         candidatos = obtener_candidatos(limit=args.limit)
-    except Exception as exc:  # noqa: BLE001 - Deezer o Last.fm caídos no deben tumbar todo
+    except Exception as exc:  # noqa: BLE001 - Last.fm caído no debe tumbar todo
         print(f"FALLÓ trayendo las fuentes: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
