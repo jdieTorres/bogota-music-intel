@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.idartes.gov.co" },
       { protocol: "https", hostname: "static.wixstatic.com" },
       { protocol: "https", hostname: "s3.eu-central-1.amazonaws.com" },
+      // Radar de tendencias: imágenes de artista de Deezer y Last.fm.
+      { protocol: "https", hostname: "cdn-images.dzcdn.net" },
+      { protocol: "https", hostname: "lastfm-img.freetls.fastly.net" },
     ],
   },
 };

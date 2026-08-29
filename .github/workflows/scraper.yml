@@ -43,3 +43,13 @@ jobs:
           bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
           bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
         run: python -m bogota_music_intel.classify_cli
+
+      # Radar de tendencias (Fase 5): una foto nueva por corrida, no
+      # depende de los eventos ni de los pasos anteriores.
+      - name: Update trending radar
+        if: '!cancelled()'
+        env:
+          bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
+          bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
+          bmi_lastfm_api_key: ${{ secrets.BMI_LASTFM_API_KEY }}
+        run: python -m bogota_music_intel.radar_cli

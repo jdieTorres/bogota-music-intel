@@ -96,6 +96,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               >
                 Mapa
               </Link>
+              <Link
+                href="/tendencias"
+                className="text-muted transition-colors hover:text-foreground"
+              >
+                Tendencias
+              </Link>
               <ThemeToggle />
             </nav>
           </div>
