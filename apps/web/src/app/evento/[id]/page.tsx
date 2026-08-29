@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { getEvento, nombreDelVenue } from "@/lib/events";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
+import { tituloParaMostrar } from "@/lib/tituloEvento";
 
 export const revalidate = 1800;
 
@@ -15,10 +16,10 @@ export async function generateMetadata(
   const evento = await getEvento(id);
   if (!evento) return { title: "Evento no encontrado" };
 
+  const titulo = tituloParaMostrar(evento);
   return {
-    title: evento.title,
-    description:
-      evento.description ?? `${evento.title} en ${nombreDelVenue(evento)}, Bogotá.`,
+    title: titulo,
+    description: evento.description ?? `${titulo} en ${nombreDelVenue(evento)}, Bogotá.`,
   };
 }
 
@@ -41,7 +42,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
 
       <header className="mt-6">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {evento.title}
+          {tituloParaMostrar(evento)}
         </h1>
         <p className="mt-3 text-lg text-muted">{venue}</p>
       </header>

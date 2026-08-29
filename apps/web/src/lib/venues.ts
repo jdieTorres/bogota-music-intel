@@ -2,14 +2,22 @@ import { unificarEnUnaSala } from "@/lib/dedupe";
 import { EN_CARTELERA } from "@/lib/editorial";
 import { supabase } from "@/lib/supabase";
 
+export type EventoEnSala = {
+  id: string;
+  title: string;
+  starts_at: string | null;
+  event_type: "music" | "fiesta" | "not_music" | null;
+};
+
 export type SalaEnMapa = {
   slug: string;
   name: string;
   address: string | null;
+  photo_url: string | null;
   latitude: number;
   longitude: number;
   /** Eventos próximos en esta sala, ya ordenados por fecha. */
-  eventos: { id: string; title: string; starts_at: string | null }[];
+  eventos: EventoEnSala[];
 };
 
 export type SalaSinUbicar = {
@@ -43,8 +51,8 @@ export async function getEscena(): Promise<EscenaEnMapa> {
   const { data, error } = await supabase
     .from("venues")
     .select(
-      `slug, name, address, latitude, longitude,
-       events ( id, title, starts_at )`,
+      `slug, name, address, photo_url, latitude, longitude,
+       events ( id, title, starts_at, event_type )`,
     )
     // El mismo criterio editorial que la cartelera: sin esto el popup de una
     // sala sigue anunciando la obra de teatro que la home ya no muestra. Las
@@ -63,7 +71,7 @@ export async function getEscena(): Promise<EscenaEnMapa> {
     // Sin unificar, el popup de Royal Center muestra dos veces el mismo
     // show: la sala y el promotor lo publican por separado.
     const eventos = unificarEnUnaSala(
-      ((fila.events ?? []) as SalaEnMapa["eventos"])
+      ((fila.events ?? []) as EventoEnSala[])
         .slice()
         .sort((a, b) => (a.starts_at ?? "").localeCompare(b.starts_at ?? "")),
     );
@@ -84,6 +92,7 @@ export async function getEscena(): Promise<EscenaEnMapa> {
       slug: fila.slug,
       name: fila.name,
       address: fila.address,
+      photo_url: fila.photo_url,
       latitude: fila.latitude,
       longitude: fila.longitude,
       eventos,

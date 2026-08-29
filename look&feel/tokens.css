@@ -19,13 +19,12 @@
   --accent-2: #0e8fae;  /* acento "salvaje" — teal */
   --accent-3: #d81b73;  /* acento "salvaje" — magenta */
 
-  /* Mapa y popup: fijos, no cambian con el toggle (el mapa siempre es
-     claro, ver look&feel/README.md). */
+  /* Aro del marcador del mapa: fijo, no cambia con el toggle (el mapa
+     siempre es claro, ver look&feel/README.md). Hasta el 2026-08-29
+     acompañaban a este token otros cuatro para el popup de MapLibre;
+     salieron al reemplazar el popup por un panel debajo del mapa que sí
+     sigue el tema normal del sitio (ver apps/web/src/components/MapaEscena.tsx). */
   --popup-surface: #eef9e6;
-  --popup-surface-hover: #e0f2d4;
-  --popup-border: #cdeab8;
-  --popup-foreground: #123018;
-  --popup-muted: #4a6a44;
 }
 
 :root[data-theme="oscuro"] {

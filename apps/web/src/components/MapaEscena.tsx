@@ -7,14 +7,17 @@ import {
   Map as MapLibreMap,
   Marker,
   NavigationControl,
-  Popup,
   getWorkerUrl,
   setWorkerUrl,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useEffect, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
+import { IconNota } from "@/components/icons";
 import type { SalaEnMapa } from "@/lib/venues";
+import { tituloParaMostrar } from "@/lib/tituloEvento";
 
 // maplibre-gl 6 resuelve su worker con `import.meta.url` y descarta el valor si
 // no es una URL http(s). Turbopack no le da una, así que el mapa se queda sin
@@ -47,51 +50,69 @@ const ATRIBUCION =
   '<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> · ' +
   '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>';
 
-function escaparHtml(texto: string): string {
-  return texto.replace(
-    /[&<>"']/g,
-    (caracter) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[caracter] as string,
-  );
+function fechaCorta(iso: string | null): string {
+  if (!iso) return "Fecha por confirmar";
+  return new Intl.DateTimeFormat("es-CO", {
+    timeZone: "America/Bogota",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(iso));
 }
 
-function contenidoDelPopup(sala: SalaEnMapa): string {
-  const proximos = sala.eventos.slice(0, 3);
-  const restantes = sala.eventos.length - proximos.length;
+/**
+ * Panel debajo del mapa con el detalle de la sala tocada: foto, dirección
+ * y sus eventos. Reemplaza al popup de MapLibre que había antes —un popup
+ * flotante compite por espacio en pantallas chicas, y acá se pidió
+ * explícitamente el panel debajo del mapa.
+ */
+function PanelSala({ sala }: { sala: SalaEnMapa }) {
+  return (
+    <div className="mt-4 overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="relative aspect-[16/9] w-full bg-background sm:aspect-[21/9]">
+        {sala.photo_url ? (
+          <Image
+            src={sala.photo_url}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, 1024px"
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted">
+            <IconNota className="h-10 w-10" />
+          </div>
+        )}
+      </div>
 
-  const items = proximos
-    .map((evento) => {
-      const fecha = evento.starts_at
-        ? new Intl.DateTimeFormat("es-CO", {
-            timeZone: "America/Bogota",
-            day: "numeric",
-            month: "short",
-          }).format(new Date(evento.starts_at))
-        : "";
-      return `<li>
-        <a href="/evento/${evento.id}">
-          <span class="popup-sala__fecha">${fecha}</span>${escaparHtml(evento.title)}
-        </a>
-      </li>`;
-    })
-    .join("");
+      <div className="p-4 sm:p-5">
+        <h2 className="font-display text-xl font-semibold tracking-tight">
+          {sala.name}
+        </h2>
+        {sala.address && <p className="mt-1 text-sm text-muted">{sala.address}</p>}
 
-  return `<div class="popup-sala">
-    <strong class="popup-sala__nombre">${escaparHtml(sala.name)}</strong>
-    ${sala.address ? `<div class="popup-sala__direccion">${escaparHtml(sala.address)}</div>` : ""}
-    <ul class="popup-sala__lista">${items}</ul>
-    ${restantes > 0 ? `<div class="popup-sala__mas">y ${restantes} más</div>` : ""}
-  </div>`;
+        <ul className="mt-4 space-y-1 border-t border-border pt-4">
+          {sala.eventos.map((evento) => (
+            <li key={evento.id}>
+              <Link
+                href={`/evento/${evento.id}`}
+                className="flex items-baseline gap-3 rounded-md px-2 py-1.5 -mx-2 transition-colors hover:bg-surface-hover"
+              >
+                <span className="shrink-0 font-mono text-xs text-muted">
+                  {fechaCorta(evento.starts_at)}
+                </span>
+                <span className="truncate text-sm">{tituloParaMostrar(evento)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
   const contenedor = useRef<HTMLDivElement>(null);
+  const [salaSeleccionada, setSalaSeleccionada] = useState<SalaEnMapa | null>(null);
 
   useEffect(() => {
     if (!contenedor.current || salas.length === 0) return;
@@ -115,10 +136,12 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
       marcador.className = "marcador-sala";
       marcador.setAttribute("role", "button");
       marcador.setAttribute("aria-label", `${sala.name}, ${sala.eventos.length} eventos`);
+      // El panel debajo del mapa es la única forma de ver el detalle: el
+      // click reemplaza al popup flotante que había antes.
+      marcador.addEventListener("click", () => setSalaSeleccionada(sala));
 
       new Marker({ element: marcador })
         .setLngLat([sala.longitude, sala.latitude])
-        .setPopup(new Popup({ offset: 14 }).setHTML(contenidoDelPopup(sala)))
         .addTo(mapa);
 
       limites.extend([sala.longitude, sala.latitude]);
@@ -137,9 +160,12 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
   }, [salas]);
 
   return (
-    <div
-      ref={contenedor}
-      className="h-[60vh] min-h-[380px] w-full overflow-hidden rounded-lg border border-border bg-surface"
-    />
+    <div>
+      <div
+        ref={contenedor}
+        className="h-[60vh] min-h-[380px] w-full overflow-hidden rounded-lg border border-border bg-surface"
+      />
+      {salaSeleccionada && <PanelSala sala={salaSeleccionada} />}
+    </div>
   );
 }

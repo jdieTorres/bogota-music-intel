@@ -17,17 +17,16 @@
   --accent-2: #0e8fae; /* acento "salvaje" — teal, para chips y detalles */
   --accent-3: #d81b73; /* acento "salvaje" — magenta, para detalles puntuales */
 
-  /* Tokens del mapa y sus popups: el mapa (`/mapa`) es MapLibre con el
-     estilo `liberty`, que es claro y no cambia con el toggle — esa
-     decisión es de antes del look & feel actual y sigue en pie. Por eso
-     estos tokens NO se sobreescriben en `[data-theme="oscuro"]` más abajo:
-     el mapa y sus popups se quedan siempre en su propio "papel" claro,
-     tenga la página el modo que tenga. */
+  /* Tono del mapa: el mapa (`/mapa`) es MapLibre con el estilo `liberty`,
+     que es claro y no cambia con el toggle — esa decisión es de antes del
+     look & feel actual y sigue en pie. Por eso este token NO se
+     sobreescribe en `[data-theme="oscuro"]` más abajo: el aro del
+     marcador se queda siempre en su propio "papel" claro, tenga la
+     página el modo que tenga. (Hasta el 2026-08-29 acompañaban a este
+     token otros cuatro para el popup de MapLibre; salieron al reemplazar
+     el popup por el panel debajo del mapa, que sí sigue el tema normal
+     del sitio.) */
   --popup-surface: #eef9e6;
-  --popup-surface-hover: #e0f2d4;
-  --popup-border: #cdeab8;
-  --popup-foreground: #123018;
-  --popup-muted: #4a6a44;
 }
 
 /* Modo oscuro: mismo Verde Neón, mismo rol de cada token, valores propios
@@ -74,48 +73,12 @@ body {
 }
 
 /* --- Mapa de la escena ---------------------------------------------------
-   El popup y el fondo del mapa usan los tokens `--popup-*`, fijos
-   independientemente del modo (ver el comentario en `:root` arriba). */
-
-.maplibregl-popup .maplibregl-popup-content {
-  background: var(--popup-surface);
-  color: var(--popup-foreground);
-  border: 1px solid var(--popup-border);
-  border-radius: 6px;
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
-  padding: 12px 14px;
-  font-family: inherit;
-}
-
-/* La puntita del globo es un triángulo hecho con bordes: cada anclaje pinta
-   un lado distinto, así que hay que recorrerlos todos. */
-.maplibregl-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
-.maplibregl-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
-.maplibregl-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
-  border-bottom-color: var(--popup-surface);
-}
-.maplibregl-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
-.maplibregl-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
-.maplibregl-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
-  border-top-color: var(--popup-surface);
-}
-.maplibregl-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: var(--popup-surface);
-}
-.maplibregl-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: var(--popup-surface);
-}
-
-.maplibregl-popup .maplibregl-popup-close-button {
-  color: var(--popup-muted);
-  padding: 2px 7px;
-  font-size: 15px;
-  line-height: 1;
-}
-.maplibregl-popup .maplibregl-popup-close-button:hover {
-  background-color: var(--popup-surface-hover);
-  color: var(--popup-foreground);
-}
+   El marcador usa los tokens `--popup-*`, fijos independientemente del
+   modo (ver el comentario en `:root` arriba): el mapa es siempre claro.
+   El detalle de la sala ya no es un popup de MapLibre —se reemplazó el
+   2026-08-29 por el panel debajo del mapa (`PanelSala` en
+   `MapaEscena.tsx`), que sí seguía el tema de la página como el resto de
+   las tarjetas del sitio—, así que el CSS del popup salió de acá. */
 
 .marcador-sala {
   width: 14px;
@@ -130,48 +93,6 @@ body {
   border: 2px solid var(--popup-surface);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
   cursor: pointer;
-}
-
-.popup-sala {
-  min-width: 190px;
-  max-width: 250px;
-}
-.popup-sala__nombre {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-.popup-sala__direccion,
-.popup-sala__mas {
-  color: var(--popup-muted);
-  font-size: 11px;
-}
-.popup-sala__direccion {
-  margin-bottom: 8px;
-}
-.popup-sala__mas {
-  margin-top: 6px;
-}
-.popup-sala__lista {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 12px;
-}
-.popup-sala__lista li + li {
-  margin-top: 4px;
-}
-.popup-sala__lista a {
-  color: var(--popup-foreground);
-  text-decoration: none;
-}
-.popup-sala__lista a:hover {
-  text-decoration: underline;
-}
-.popup-sala__fecha {
-  color: var(--popup-muted);
-  font-variant-numeric: tabular-nums;
-  margin-right: 4px;
 }
 
 /* La franja lateral roja de cada tarjeta solo aparece al pasar el mouse. */
