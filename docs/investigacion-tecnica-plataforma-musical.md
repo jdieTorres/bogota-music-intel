@@ -78,12 +78,14 @@ Se llamaron con `httpx` desde la máquina de Juan. Cuatro correcciones a las lis
 
 Confirmadas vivas y respondiendo: MusicBrainz, Deezer, iTunes Search, Radio Browser, Lyrics.ovh, Openwhyd, Mixcloud, Discogs. Con key y vivas (responden el error de credencial, o sea que el servicio existe y el alta es self-service): Last.fm, Jamendo, Genius, Musixmatch.
 
-#### El hallazgo que sí sirve para la Fase 5
+#### El hallazgo que sí sirve para la Fase 5 (y el que lo tumbó después)
 Deezer no tiene charts por país, **pero sí una editorial "Música colombiana" (id 498)**, y funciona: `GET /editorial/498/charts` devuelve tracks y artistas reales de la escena (Systema Solar, Kraken, Junior Jein, Totó La Momposina; KAROL G, Ryan Castro, Feid). Para esta plataforma es **mejor** que un chart de país, que estaría lleno de pop global.
 
-Ojo con un detalle editorial ya conocido: esa lista es de *género*, no de nacionalidad — entre los artistas aparece Bad Bunny. Es el mismo problema que ya se resolvió en la cartelera, así que conviene anticipar que va a hacer falta el mismo tipo de filtro.
+Ojo con un detalle editorial ya conocido: esa lista es de *género*, no de nacionalidad — entre los artistas aparece Bad Bunny. Es el mismo problema que ya se resolvió en la cartelera, y el radar reusa la misma lista curada + MusicBrainz para resolverlo.
 
-**Last.fm aporta el eje que a Deezer le falta**: tiene `geo.gettopartists?country=colombia`, o sea popularidad por país. Las dos son complementarias, no redundantes. Requiere una key gratuita que todavía **nadie sacó**.
+⚠️ **Pausado el 2026-08-28: la editorial geolocaliza por IP, no por id — ver 2.3.** El hallazgo de arriba se verificó llamando a la API de verdad, pero desde Bogotá. Llamada desde el runner de GitHub Actions que corre la ingesta, la misma URL con el mismo id 498 devuelve un chart genérico sin nada colombiano. No sirve para producción tal como está.
+
+**Last.fm aporta el eje que a Deezer le falta**: tiene `geo.gettopartists?country=colombia`, o sea popularidad por país. Es un parámetro explícito de la consulta, no depende de la IP de quien pregunta —a diferencia de Deezer, no tiene el problema de 2.3—. Key sacada el 2026-08-28.
 
 #### La pregunta que se fue a responder: ¿alguna API cubre el hueco de MusicBrainz?
 El problema conocido es que MusicBrainz conoce a los artistas locales pero **sin país**, y por eso hay ocho curados a mano. Se probó con esos ocho:
@@ -100,10 +102,23 @@ Se revisaron developer.prod.napster.com, developer-beta.napster.com y páginas d
 - Consecuencia para el **Scout de emergentes**: se queda con Jamendo + Openwhyd, que era el plan si la prueba salía mal. No hace falta buscar reemplazo ahora.
 - Vale como recordatorio del método: la investigación documental dejó esto abierto meses; **un `GET` lo cerró en un segundo**. Cuando una duda se pueda contestar llamando a la API, llamarla antes que seguir leyendo.
 
+### 2.3 Deezer editorial 498 geolocaliza por IP (descubierto el 2026-08-28, pausado)
+La Fase 5 se implementó completa (migración, `deezer.py`, `radar.py`, `radar_cli.py`, frontend en `/tendencias`, paso nuevo en el cron) y se corrió a mano desde el equipo de Juan (Bogotá): trajo Systema Solar, Kraken, KAROL G, Feid — el chart colombiano esperado. Se hizo commit y push, y se disparó el cron real (`workflow_dispatch`) para verificar de punta a punta.
+
+**La corrida en GitHub Actions guardó otra cosa.** Mismo endpoint, mismo id de editorial (498), sin ningún error ni código de estado distinto: devolvió un chart genérico —Dolly Parton, Drake, Taylor Swift, The Beatles, Eminem— sin un solo artista colombiano en 50. Comparado con una llamada hecha en el momento desde la IP de Bogotá (verificada contra ipinfo.io: `186.84.89.98`, Bogotá, AS10620 Telmex Colombia), que sí devolvió el chart correcto.
+
+**Conclusión: la editorial de Deezer geolocaliza la respuesta por la IP de quien pregunta, no solo por el id que se pide.** El nombre "editorial" sugiere contenido curado y estable por id, y no lo es — es sensible a la ubicación del servidor que llama, sin documentarlo y sin ninguna señal de error que lo delate. Se probó agregar `country=CO` y `relation=CO` como parámetros; no cambiaron el resultado desde Bogotá, pero no se pudo confirmar el efecto real desde una IP no colombiana (no hay una forma de simular eso en este entorno).
+
+**Consecuencia:** la ingesta corre en GitHub Actions (no en Colombia), así que este eje del radar no sirve para producción tal como está. Se pausó: se borraron las 115 filas `deezer_editorial` ya guardadas (dato no verificado, incluida la foto mala de esa corrida), `deezer.py` queda intacto sin llamarse desde `radar.py`, y el frontend de `/tendencias` muestra solo el eje de Last.fm con una nota explicando por qué. El radar sigue siendo útil con un solo eje: Last.fm no tiene este problema porque `country=colombia` es un parámetro explícito de la consulta, no depende de dónde corre el servidor.
+
+**Para retomarlo hace falta una de estas tres cosas**, ninguna probada todavía: (a) confirmar si algún parámetro documentado de Deezer fuerza el país sin depender de IP —lo intentado hasta ahora no funcionó, pero se intentó sin poder verificarlo desde afuera de Colombia—; (b) rutear la llamada a través de un proxy o función serverless con salida en Colombia; o (c) resignarse a que Deezer solo sirve corrido a mano desde Colombia, nunca desde el cron.
+
+**Nota de método:** esto es el mismo error que ya cerró la sección 2.1 (Napster) un nivel más abajo. "Se verificó llamando a la API" no alcanza si se llama siempre desde el mismo lugar — la respuesta puede depender de dónde se llama, no solo de qué se pide. La próxima vez que una fuente geolocalice contenido (charts, precios, disponibilidad), probarla también desde el entorno real donde va a correr en producción, no solo desde la máquina de desarrollo.
+
 ### Mapa recomendado por módulo (fuentes gratuitas apiladas)
 - **Directorio/wiki de la escena local:** MusicBrainz (principal) + Discogs + Genius.
 - **Scout de emergentes:** Jamendo (principal) + Openwhyd (señal social). ~~Napster~~ sale: la API dejó de existir (ver 2.1).
-- **Radar de tendencias (Fase 5):** **Deezer editorial "Música colombiana" (id 498)** para el eje de género —no hay chart por país, ver 2.2— **+ Last.fm `geo.gettopartists?country=colombia`** para el eje de popularidad local + Openwhyd como señal cruzada. Falta sacar la key gratuita de Last.fm.
+- **Radar de tendencias (Fase 5) — implementado el 2026-08-28, un solo eje activo.** Last.fm `geo.gettopartists?country=colombia` funciona en producción. Deezer editorial 498 ("Música colombiana") está pausado: geolocaliza por IP y no sirve corrido desde GitHub Actions — ver 2.3. Openwhyd como señal cruzada queda para más adelante, sin arrancar.
 - **Mapa de escena en vivo / Calendario de eventos:** ninguna API gratuita lo cubre — depende 100% de scraping (ver sección 3).
 - **Motor de similitud sonora:** Essentia (pipeline propio) + Jamendo como fuente de audio legal.
 - **Detector de música generada por IA:** clasificador propio; Jamendo (audio humano) + Sunor/Suno (ejemplos IA) como datasets.
@@ -205,14 +220,15 @@ Alcance: los 3 módulos priorizados — Mapa de escena en vivo, Calendario agreg
 2. **Fase 2 — Scraper base:** parsers a medida para Movistar Arena, Ace of Spades, Lourdes Music Hall, Royal Center, Latino Power, la página de vendedor de Rockal Live, y los dos hallazgos nuevos (Teatro Jorge Eliécer Gaitán vía Idartes, Teatro Cafam vía su sitio propio); almacenamiento en Supabase.
 3. **Fase 3 — Calendario de eventos:** pipeline cron diario + vista de listado/detalle.
 4. **Fase 4 — Mapa de escena en vivo:** MapLibre + capa de venues activos con los datos ya recolectados.
-5. **Fase 5 — Radar de tendencias:** Deezer charts (CO) + Last.fm tags, vista de tendencias. (Napster se suma aquí solo si la prueba directa de cobertura LatAm, sección 2.1, sale positiva.)
+5. **Fase 5 — Radar de tendencias — implementada el 2026-08-28, un eje activo.** Last.fm en producción; Deezer pausado por geolocalización de IP (ver 2.3). Sección 7 tiene el detalle completo de la implementación.
 6. **Fase 6 — Pulido y deploy:** testing con datos reales, deploy final en Vercel, borrador de la pieza narrativa insignia.
 7. **Fase 7 (buffer):** iterar según feedback, sumar Boro Room/The Bonfire vía carga manual, mejorar UI, avanzar la pieza insignia.
 
 ### Pendiente de definir
 - Nombre e identidad definitiva del proyecto (placeholder `bogota-music-intel` activo mientras tanto).
-- Probar Napster con queries reales de artistas colombianos antes de incluirlo en el módulo Scout de emergentes / Radar de tendencias (ver 2.1).
+- ~~Probar Napster con queries reales antes de incluirlo~~ — **cerrado 2026-08-28:** la API ya no existe, sale de la lista de fuentes (ver 2.1). No hace falta probarla.
 - ~~Confirmar si Teatro Cafam necesita fuente manual~~ — **resuelto 2026-08-27:** sí, es manual. Todo el dominio está detrás de un WAF (ver sección 4).
+- Encontrar una forma real de traer el eje de Deezer sin depender de la IP del servidor (ver 2.3), o resignarse a que quede fuera del cron.
 
 ---
 
@@ -318,6 +334,37 @@ La clasificación es por fila, y la deduplicación entre fuentes ocurre después
 
 ---
 
+## 7. Radar de tendencias (Fase 5) — implementado el 2026-08-28, un eje activo
+
+Arrancó con las dos fuentes de la sección 2.2 (Deezer editorial 498 + Last.fm `geo.gettopartists`) y terminó con una sola en producción: el hallazgo de geolocalización de Deezer (sección 2.3) lo pausó a mitad de la misma sesión, después de haber commiteado y desplegado el pipeline completo con las dos.
+
+### Cómo quedó
+
+- Tabla nueva `trending_artists` (migración `supabase/migrations/20260828020000_trending_artists.sql`), aplicada a mano por Juan en el SQL editor de Supabase. Cada corrida inserta una foto (`captured_at`), no hace upsert: sirve para ver tendencia entre semanas más adelante. El frontend lee solo la foto más reciente por fuente.
+- `services/api/bogota_music_intel/lastfm.py` trae `geo.gettopartists?country=colombia`. `deezer.py` existe pero no se llama desde el pipeline (ver 2.3).
+- `radar.py` resuelve el origen de cada artista **reusando la lista curada de `artistas_locales.py` + MusicBrainz**, el mismo camino que ya usa `classify.py` para los eventos — no hay una segunda implementación del criterio "no sé" vs. "confirmado que no".
+- `radar_cli.py` sigue el mismo patrón que `classify_cli.py`: si MusicBrainz deja de responder, corta a las 3 fallas seguidas en vez de perder tres reintentos por cada artista restante. Uso: `python -m bogota_music_intel.radar_cli [--dry-run] [--limit N]`.
+- Paso nuevo en `.github/workflows/scraper.yml` (`Update trending radar`), con el secret `BMI_LASTFM_API_KEY` agregado al repo el 2026-08-28. Verificado en una corrida `workflow_dispatch` real, en verde.
+- Frontend en `/tendencias` (`apps/web/src/app/tendencias/page.tsx`), verificado en navegador (claro y oscuro).
+
+### Trampa encontrada: la imagen "genérica" de Last.fm
+
+Last.fm dejó de servir fotos reales de artista por su API hace años (tema de licencias) y devuelve **la misma imagen** —una estrella genérica, hash `2a96cbd8b46e442fc41c2b86b821562f`— para los 100 artistas de una corrida real. No viene documentado como tal; se ve en pantalla como si la imagen no hubiera cargado. `lastfm.py` filtra ese hash específico y devuelve `None` en vez de mostrarlo como si fuera la foto del artista.
+
+### MusicBrainz, otra vez el cuello de botella
+
+El 2026-08-28 MusicBrainz devolvió 503 con mucha frecuencia (varias corridas de prueba tuvieron entre 4 y 8 artistas sin resolver de 100). No es un bug de esta sesión: es el mismo servicio ya documentado como frágil en la sección "Trampas encontradas" de arriba, con el agravante de que acá se consultan ~100 artistas por corrida en vez de ~50 eventos. Una corrida completa (`--limit 50`, 100 candidatos) tardó **8m36s en GitHub Actions** el 2026-08-28 — vale como referencia de cuánto puede tardar el paso del cron, no es una corrida colgada.
+
+### Cuenta real (2026-08-28, última foto de `lastfm_geo`)
+
+50 artistas: 6 confirmados locales (KAROL G, Feid y otros ya en la lista curada o resueltos por MusicBrainz), el resto internacionales o sin resolver — el radar no oculta que lo más escuchado en Colombia está dominado por lo internacional, es justamente el dato que interesa mostrar.
+
+### Ver también
+
+Sección 2.3 tiene el detalle completo del hallazgo de Deezer y lo que haría falta para retomarlo.
+
+---
+
 ### Estado de ejecución
 - **Fases 1 a 4 completadas** (2026-08-27). Seis scrapers en producción alimentando Supabase; cuatro venues quedan en carga manual con el motivo documentado en `services/api/bogota_music_intel/scrapers/registry.py`. Calendario y mapa en `apps/web`.
 - Geocodificación: **9 de 9 salas ubicadas** (2026-08-27). Cinco las resolvió Nominatim; las otras cuatro (Auditorio Mayor, Capital Live Concerts, Lourdes Music Hall, Teatro Libre Sede Centro) no existen como POI en OpenStreetMap y se curaron a mano en `coordenadas_curadas.py`.
@@ -325,4 +372,6 @@ La clasificación es por fila, y la deduplicación entre fuentes ocurre después
   - Las coordenadas curadas las pasó Juan desde Google Maps y se verificaron **por geocodificación inversa**, comprobando que cada punto cayera sobre la calle que la propia sala publica. Es una comprobación independiente de quien pasó el dato y atrapa el error típico (lat/lon invertidas, un dígito de más) sin abrir un mapa.
   - Sigue valiendo la regla que las mantuvo sin ubicar hasta tener el dato: mejor "sin ubicar" que un pin equivocado. Buscar "Lourdes, Chapinero" devuelve con toda confianza la iglesia Nuestra Señora de Lourdes, no la sala.
 - **Filtrado editorial aplicado en la base el 2026-08-27** (sección 6). Los 58 eventos quedaron clasificados y la cartelera muestra 48. Verificado contra el servidor de desarrollo: la home y `/mapa` renderizan, ninguno de los 6 no-musicales aparece, y en los 6 días que mezclan local con internacional el orden es el correcto en los 6.
-- Siguiente: el look & feel (el otro pendiente acordado), la lista curada de artistas locales, y la Fase 5 (radar de tendencias).
+- **Fase 5 (radar de tendencias) implementada el 2026-08-28** (sección 7), con un solo eje en producción — Deezer quedó pausado por geolocalización de IP (sección 2.3).
+- Look & feel: primera ronda cerrada el 2026-08-28 (Verde Neón), con una pasada final pendiente antes del deploy — ver `CLAUDE.md` § Pendientes activos.
+- Siguiente: nunca se ha desplegado a Vercel; retomar el eje de Deezer si aparece una forma real de traerlo sin depender de la IP del servidor; la pasada final de look & feel antes del deploy (Fase 6).
