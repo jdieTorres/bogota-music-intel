@@ -44,8 +44,23 @@ jobs:
           bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
         run: python -m bogota_music_intel.classify_cli
 
-      # Radar de tendencias (Fase 5): una foto nueva por corrida, no
-      # depende de los eventos ni de los pasos anteriores.
+      # Cola de moderación: abre un borrador por cada evento nuevo y marca
+      # los publicados cuya fuente se movió. Va DESPUÉS de clasificar para
+      # que el borrador herede event_type e is_local ya resueltos y el admin
+      # no tenga que decidirlos a mano.
+      #
+      # No publica nada: eso lo hace una persona. Ver
+      # docs/investigacion-tecnica-plataforma-musical.md § 9.
+      - name: Moderation queue
+        if: '!cancelled()'
+        env:
+          bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
+          bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
+        run: python -m bogota_music_intel.moderacion_cli
+
+      # Radar de tendencias: fuera del MVP desde el 2026-08-31, pero el paso
+      # se deja corriendo porque /tendencias sigue existiendo y alimentarlo
+      # no cuesta nada más que la llamada diaria a Last.fm.
       - name: Update trending radar
         if: '!cancelled()'
         env:
