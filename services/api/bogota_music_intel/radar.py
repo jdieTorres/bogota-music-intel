@@ -32,7 +32,7 @@ from dataclasses import dataclass
 import httpx
 
 from bogota_music_intel.artistas_locales import artista_curado
-from bogota_music_intel.lastfm import ArtistaLastfm, top_artistas_colombia
+from bogota_music_intel.lastfm import top_artistas_colombia
 from bogota_music_intel.musicbrainz import resolver_artista
 from bogota_music_intel.tipos_evento import FUENTE_ARTISTA_CURADO, FUENTE_MUSICBRAINZ
 

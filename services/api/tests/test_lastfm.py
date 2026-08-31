@@ -98,6 +98,5 @@ def test_error_de_la_api_no_se_confunde_con_lista_vacia():
     def handler(request):
         return httpx.Response(200, json={"error": 10, "message": "Invalid API key"})
 
-    with _cliente_falso(handler) as cliente:
-        with pytest.raises(lastfm.LastfmNoDisponible):
-            lastfm.top_artistas_colombia(client=cliente)
+    with _cliente_falso(handler) as cliente, pytest.raises(lastfm.LastfmNoDisponible):
+        lastfm.top_artistas_colombia(client=cliente)

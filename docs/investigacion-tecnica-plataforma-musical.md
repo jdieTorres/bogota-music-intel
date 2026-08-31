@@ -376,9 +376,9 @@ Sección 2.3 tiene el detalle completo del hallazgo de Deezer y lo que haría fa
 - Look & feel: primera ronda cerrada el 2026-08-28 (Verde Neón), con una pasada final pendiente antes del deploy — ver `CLAUDE.md` § Pendientes activos.
 - **Fase 6 (pulido y deploy) arrancada.** Panel de sala en el mapa y normalización de títulos el 2026-08-29; la normalización revisada a fondo contra los 53 títulos reales el 2026-08-31 (sección 8). La columna `venues.photo_url` existe y está aplicada, pero `fotos_curadas.py` sigue vacío: **0 de 9 salas con foto**, esperando URLs reales de Juan.
 - **Sin desplegar a Vercel** (verificado el 2026-08-31: no hay configuración de Vercel en el repo). Todo lo verificado hasta hoy es local.
-- ⚠️ **El workflow `Tests` está en rojo desde el 2026-08-29** por dos errores de `ruff` heredados del commit del radar — no por los tests, que pasan. Detalle en `CLAUDE.md` § Lo que quedó a medias.
+- El workflow `Tests` estuvo **en rojo desde el 2026-08-29 hasta el 2026-08-31**, por dos errores de `ruff` heredados del commit del radar — no por los tests, que pasaban. Ya arreglado; la lección de por qué nadie lo vio está en `CLAUDE.md` § Lo que quedó a medias.
 - ⚠️ **MusicBrainz no clasificó desde CI un evento que sí clasifica local** (Carlos Vives, cron del 2026-08-30). Segundo caso del mismo patrón que Deezer (sección 2.3): una API que responde distinto según desde dónde se la llame.
-- Siguiente: poner `Tests` en verde, desplegar a Vercel, ver si el cron clasifica solo el evento pendiente, y la pasada final de look & feel antes del deploy. Retomar el eje de Deezer sigue siendo opcional.
+- Siguiente: desplegar a Vercel, ver si el cron clasifica solo el evento pendiente, y la pasada final de look & feel antes del deploy. Retomar el eje de Deezer sigue siendo opcional.
 
 ---
 

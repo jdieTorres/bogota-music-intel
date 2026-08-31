@@ -115,7 +115,7 @@ Que casi no quede ninguno sin resolver **no significa que el problema esté cerr
 
 ### Lo que quedó a medias (pendientes operativos)
 - **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen falta las variables `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en el proyecto de Vercel. Vercel corre `npm run build`, así que el `prebuild` que copia el worker de MapLibre se dispara solo.
-- 🔴 **El workflow `Tests` está en rojo en todos los push desde el 2026-08-29, y no lo detectó nadie.** Falla `ruff`, **no** los tests: `pytest` pasa (151) y el job de frontend pasa entero. Son dos errores, los dos del commit del radar (`eb73a01`, Fase 5): un import sin usar en `bogota_music_intel/radar.py:35` (`ArtistaLastfm`) y un `with` anidado en `tests/test_lastfm.py:101` (SIM117). Se reproducen local con `python -m ruff check bogota_music_intel tests`. Pasó desapercibido porque **el otro workflow, `Scraper cron`, sí está verde**, y es el que se venía mirando. Arreglarlo es mecánico; lo que importa registrar es que "el cron está verde" no dice nada sobre `Tests`.
+- ~~**El workflow `Tests` está en rojo desde el 2026-08-29.**~~ **Arreglado el 2026-08-31.** Estuvo rojo en todos los push durante tres días sin que nadie lo notara. No fallaban los tests: fallaba `ruff`, con dos errores del commit del radar (`eb73a01`, Fase 5) — un import sin usar en `radar.py` y un `with` anidado en `tests/test_lastfm.py` (SIM117). Lo que queda como lección, y por eso no se borra: **pasó desapercibido porque `Scraper cron` sí estaba verde**, y era el workflow que se venía mirando. Son dos workflows distintos y uno no dice nada del otro. Antes de dar el CI por bueno, mirar los dos: `curl -s ".../actions/runs?per_page=20"` y agrupar por `name`.
 - 🔴 **La ruta de MusicBrainz en CI ya se ejercitó y no clasificó** — esto corrige lo que decía esta misma sección hasta el 2026-08-31 ("se sabrá la primera vez que el scraping traiga un evento nuevo"). Ya pasó: el cron del **2026-08-30T17:54Z** trajo un evento nuevo de verdad (`Carlos Vives & La Provincia Tour Al Sol`), el paso `Classify events` corrió 33 segundos y terminó **success**, y el evento sigue **sin clasificar** un día después. Local resuelve el mismo evento al instante y sin reintentos: `classify_cli --dry-run` devuelve «Carlos Vives → CO → local». O sea que el "success" del paso es el comportamiento diseñado —MusicBrainz falla, se deja sin clasificar para reintentar, no se tumba la corrida—, pero **el resultado desde CI no es el mismo que desde acá**.
   - No está probada la causa: no se leyeron los logs de la corrida (hacen falta credenciales). La sospecha razonable es que MusicBrainz trate distinto a las IP de GitHub Actions, que es **exactamente el mismo patrón que ya se pagó con Deezer** (ver la regla de "probarla también desde donde va a correr en producción", más abajo). Es la segunda vez que aparece.
   - Cómo saber si se repite o fue transitorio: mirar si el próximo cron lo clasifica. Si el evento sigue en `null` después de dos o tres corridas, no es un 503 de paso.
@@ -140,10 +140,9 @@ El look & feel del 2026-08-28 (Verde Neón, tipografía, iconografía, toggle cl
 
 La Fase 6 ya arrancó por el lado del pulido: el 2026-08-29 se agregó el panel de sala en el mapa y la normalización de títulos, y el 2026-08-31 esa normalización se revisó a fondo contra los 53 títulos reales. En orden de lo más concreto, lo que falta:
 
-1. **Poner `Tests` en verde** — dos errores de `ruff` que llevan desde el 2026-08-29 (ver "Lo que quedó a medias"). Es mecánico y hasta que no esté, el CI no sirve de señal.
-2. **Desplegar a Vercel**, que nunca se ha hecho. Es lo que permite hablar de "pulido" sobre algo real y no sobre `localhost`.
-3. **Mirar si el cron clasifica solo a Carlos Vives.** Es el primer dato real sobre MusicBrainz desde CI y hoy está en rojo.
-4. **La pasada final de look & feel**, antes del deploy público.
+1. **Desplegar a Vercel**, que nunca se ha hecho. Es lo que permite hablar de "pulido" sobre algo real y no sobre `localhost`.
+2. **Mirar si el cron clasifica solo a Carlos Vives.** Es el primer dato real sobre MusicBrainz desde CI y hoy está en rojo.
+3. **La pasada final de look & feel**, antes del deploy público.
 
 Dos cosas están esperando a Juan y nadie más las puede destrabar: **las fotos de sala** (`fotos_curadas.py` está vacío, 0 de 9) y la pregunta de producto sobre el título de un evento duplicado (`docs/…` § 8, al final).
 
