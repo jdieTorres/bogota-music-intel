@@ -16,14 +16,14 @@ Proyecto personal concebido como puente de carrera entre ingeniería de software
 
 | Módulo | Función | Fuente de datos | Público objetivo |
 |---|---|---|---|
-| **Radar de tendencias** | Detecta patrones sonoros (BPM, tonalidad, energía) en lo que suena en Bogotá/Colombia semana a semana | Spotify API + librosa | Periodistas, curadores |
-| **Scout de emergentes** | Identifica artistas colombianos con crecimiento anómalo antes de volverse masivos | SoundCloud, Bandcamp, Spotify for Artists (scraping ético) | Sellos, bookers, medios |
+| ~~**Radar de tendencias**~~ *(fuera del MVP, 2026-08-31)* | Detecta patrones sonoros (BPM, tonalidad, energía) en lo que suena en Bogotá/Colombia semana a semana | ~~Spotify API + librosa~~ — Spotify deprecó `audio-features`; se implementó con Last.fm y quedó fuera del MVP (ver § 5) | Periodistas, curadores |
+| **Scout de emergentes** ⚠️ | Identifica artistas colombianos con crecimiento anómalo antes de volverse masivos | ~~SoundCloud, Bandcamp, Spotify for Artists~~ — las tres cerradas o sin API. Los reemplazos (Jamendo, Openwhyd) **no cubren la escena local**: medido el 2026-08-31, ver § 5 | Sellos, bookers, medios |
 | **Panel de salud de catálogo** | Dashboard para que artistas independientes vean sus métricas unificadas | Spotify for Artists + redes sociales | Artistas locales |
 | **Motor de similitud sonora** | Recomendaciones y playlists por mood/sonido, con foco en catálogo local | Essentia (embeddings de audio) | Oyentes, curadores |
 | **Detector de música generada por IA** | Clasifica si un track fue hecho con IA — relevante por el debate actual sobre autenticidad artística | Modelos de clasificación de audio (features espectrales + ML) | Sellos, plataformas, periodistas |
 | **Mapa de escena en vivo** | Datos de venues, festivales, precios de boletas y giras en la ciudad, con capas interactivas | Scraping de venues + eventos + fuentes abiertas | Público general, prensa |
 | **Calendario agregador de eventos** | Todos los conciertos/festivales de la semana en un solo lugar | Scraping de venues, redes, Songkick/Bandsintown si aplica | Público general |
-| **Directorio / wiki de la escena local** | Perfil de artistas, sellos, salas, colectivos, con datos abiertos y editable tipo wiki | Curación manual + colaborativa | Toda la comunidad musical |
+| **Directorio / wiki de la escena local** ⭐ *(en el MVP desde 2026-08-31)* | Perfil de artistas, sellos, salas, colectivos, con datos abiertos y editable tipo wiki | Curación manual + colaborativa, sobre la cartelera ya scrapeada | Toda la comunidad musical |
 | **Pieza insignia narrativa** | Reportaje de datos sobre la escena bogotana; carta de presentación editorial | Combinación de todos los módulos anteriores | Medios, portafolio |
 | **API pública de datos** *(fase futura/lejana)* | Expone los datos agregados para que otros devs/periodistas construyan sobre el proyecto | Todos los módulos | Desarrolladores, periodistas externos |
 
@@ -49,15 +49,35 @@ Quedan como backlog para fases futuras si el proyecto escala:
 
 ---
 
-## 5. Priorización — MVP sugerido
+## 5. Priorización — MVP
 
-Módulos recomendados para el lanzamiento inicial (los más rápidos de mostrar y con mayor gancho visual/editorial):
+Los tres módulos del lanzamiento inicial:
 
 1. **Mapa de escena en vivo** (con al menos 1-2 capas del punto 3)
 2. **Calendario agregador de eventos**
-3. **Radar de tendencias**
+3. **Directorio / wiki de la escena local**
 
-El **directorio/wiki** y la **API pública** quedan como fase 2 y fase futura respectivamente, dado que requieren más curación de contenido (directorio) o una base de usuarios ya consolidada (API).
+La **API pública** sigue siendo fase futura: necesita una base de usuarios que todavía no existe.
+
+### Cambio del 2026-08-31: el Directorio reemplaza al Radar de tendencias
+
+Decisión de Juan. El **Radar de tendencias sale del MVP** y el **Directorio entra en su lugar** — el directorio estaba pospuesto justamente por "requerir más curación de contenido", y esa curación resultó ser el activo del proyecto, no su costo. El código del radar (`radar.py`, `lastfm.py`, `deezer.py`, `/tendencias`) queda en el repo sin borrar; solo deja de ser parte del alcance priorizado.
+
+Por qué el radar deja de tener sentido acá:
+
+- **Su dato era prestado.** El eje que quedaba vivo, Last.fm `geo.gettopartists?country=colombia`, lo puede consultar cualquiera. El directorio corre sobre datos propios: la cartelera scrapeada más el conocimiento de escena curado a mano.
+- **Contradecía el principio editorial.** El propio hallazgo del radar es que *"lo más escuchado en Colombia está dominado por lo internacional"*. Una plataforma cuyo propósito es promover toques locales no gana destacando eso.
+- **El otro eje nunca funcionó** (Deezer geolocaliza por IP — ver investigación técnica § 2.3), así que el módulo vivía con la mitad de lo diseñado.
+
+Por qué el directorio y no los otros candidatos, evaluados el 2026-08-31:
+
+- **Scout de emergentes — descartado con evidencia.** Su propósito es encontrar al artista colombiano *antes* de que sea masivo, y sus fuentes no lo tienen. Openwhyd, llamada ese día con los seis locales curados del proyecto, devolvió **0 coincidencias reales de 6**, mientras que Bomba Estéreo (20/20), Systema Solar (20/20) y Karol G (15/20) sí aparecen. Cubre justo a quien ya no necesita ser descubierto. Es la quinta confirmación del mismo patrón (ver investigación técnica § 2.2). *Jamendo no se probó*: hace falta un `client_id` que el proyecto no tiene.
+- **Panel de salud de catálogo — descartado.** Depende de Spotify for Artists, que no tiene API pública: exige que cada artista entre con su propia cuenta. Además sirve a un artista por vez, no a la escena.
+- **Motor de similitud sonora — descartado.** Essentia necesita audio y no hay fuente legal del audio de esta escena. Jamendo es Creative Commons global, no Bogotá.
+- **Detector de música generada por IA — descartado.** No tiene relación con la escena de Bogotá: es un proyecto de ML que podría vivir en cualquier ciudad, y el pivote de carrera de Juan es hacia periodismo y contenido, no ML.
+- **Pieza insignia narrativa — no compite: es la salida, no un módulo.** Es contenido, no una sección con pipeline propio, y se alimenta de los demás. Mejora mucho cuando el directorio exista.
+
+**El contraargumento, aceptado:** el MVP se queda sin su único módulo analítico — mapa, calendario y directorio contestan *dónde, cuándo y quién*, ninguno contesta *qué está pasando*. Se compensa desde el directorio: la ficha de una sala con su historial de programación ("qué parte de su cartelera es local") es análisis sobre datos propios, y por eso más defendible que un chart que cualquiera puede consultar.
 
 ---
 

@@ -164,6 +164,25 @@ El `robots.txt` de Tuboleta bloquea explícitamente por nombre a ClaudeBot, GPTB
 **Investigación de exclusividad (resuelta):** se comparó el listado de Tuboleta Bogotá (59 eventos, ago-nov 2026) contra el sitio propio de Movistar Arena (movistararena.co/en/events/), el venue con más presencia en ambos listados. Los mismos eventos aparecen en los dos lados (Jorge Drexler, WWE Bogotá, Jhon Alex Castaño, Jorge Celedón, Robbie Williams, Laura & Brenda, 5 Seconds of Summer, etc.) — **Tuboleta no es exclusiva para Movistar Arena, es un canal de venta duplicado de la misma cartelera que ya está en el sitio del venue.** Teatro Jorge Eliécer Gaitán es un escenario público (Idartes, `idartes.gov.co/es/agenda/teatro-jeg`) con agenda propia fuera de Tuboleta. Teatro Cafam es el caso más dudoso: su ticketing corre sobre un subdominio propio de Tuboleta (`cafam.checkout.tuboleta.com`), aunque cafam.com.co también publica programación editorial de "temporada de teatro" sin pasar por ahí.
 - **Conclusión aplicada:** no se justifica invertir en el bookmarklet manual de Tuboleta para el MVP — las fuentes ya priorizadas (sitios propios de venue + Idartes para teatros públicos) cubren la gran mayoría de la cartelera relevante sin tocar una plataforma que bloquea bots de IA explícitamente. Se deja como pendiente de fase 2 solo si aparece un venue específico (ej. Teatro Cafam) donde se confirme que Tuboleta es la única fuente viable.
 
+### Auditoría de `robots.txt` de fuentes de eventos (2026-08-31)
+
+Hecha al buscar cómo tapar el hueco de cobertura: el scraping actual solo ve las salas que publican su propia cartelera, y deja fuera lo que se vende por ticketera o se anuncia por redes. Se pidió el `robots.txt` de nueve sitios y se miró el bloque `User-agent: *` y los agentes de IA nombrados.
+
+| Fuente | ¿Nos deja? | Nota |
+|---|---|---|
+| **visitbogota.co** | ✅ | **El hallazgo.** Agenda oficial del distrito, sobre Drupal; su `robots.txt` solo veda rutas de sistema (`/core/`, `/admin/`, `/user/…`). `/es/agenda-de-eventos` está abierto. **Agrega eventos vendidos por Tuboleta** — el Carlos Vives del Movistar aparece ahí. |
+| **ticketlive.com.co** | ✅ | Ticketera; publica salas que ya seguimos (Lourdes Music Hall). |
+| **mitaquilla.com.co** | ✅ | Ticketera; publicaba el Bloodbath de Lourdes. |
+| **feverup.com** | ✅ | Agregador; tiene ficha de Lourdes Music Hall. |
+| idartes.gov.co, tickets.eticketablanca.com | ✅ | Ya en uso. |
+| **tuboleta.com** | ❌ | Bloquea ClaudeBot, GPTBot, CCBot, Google-Extended. Sin cambios: sigue vedada. |
+| **bandsintown.com** | ❌ | Bloquea los mismos cuatro. Ya estaba cerrada por API; ahora también por `robots.txt`. |
+| **songkick.com** | ❌ | Igual que Bandsintown. |
+
+**Consecuencia:** hay cuatro fuentes abiertas sin explotar, y una de ellas —la agenda del distrito— cubre parte de lo que se vende por Tuboleta **sin tocar Tuboleta**. No es evadir el bloqueo: es tomar el dato de quien sí nos deja.
+
+Lo que **no** cambia: Tuboleta, Bandsintown y Songkick siguen fuera del pipeline automático. Para esos, y para Instagram, la vía es **pegar, no traer**: el admin copia el texto o el flyer en el formulario y el sistema prellena. La distinción es real y no hay que difuminarla — si el admin pega una URL y *nuestro servidor* la va a buscar, sigue siendo nuestro agente entrando donde no lo dejan; si pega el contenido, no hay robot.
+
 ---
 
 ## 4. Auditoría de venues candidatos
@@ -415,3 +434,80 @@ Todo eso vive en `apps/web/src/lib/titulosCurados.ts`, con evidencia y test que 
 Akriila llega por Royal Center como "AKRIILA - TOUR LUCY" y por Rockal Live como "AKRIILA EN BOGOTÁ". `unificarDuplicados` se queda con la segunda porque trae precio, hora y género, así que la cartelera muestra "Akriila" **sin la gira**, aunque la otra fuente sí la publicaba.
 
 No es un defecto de la normalización y no está resuelto. Arreglarlo significa que la fila unificada tome el título de una fuente y el resto de los campos de otra, y ahí el título mostrado deja de corresponder al `source_url` de la fila que se muestra. **Es una decisión de producto pendiente de Juan**: ¿vale mostrar un título que no está en la página a la que lleva el enlace?
+
+---
+
+## 9. Fase 5 (nueva) — moderación: el scraping propone, el admin publica
+
+Diseñada con Juan el 2026-08-31, al reemplazar el radar por el directorio. **Ningún evento se publica solo.** El cron sigue corriendo igual, pero lo que trae entra como **borrador** a una cola de revisión; el admin verifica, completa y publica.
+
+### Por qué, y por qué encaja
+
+El problema que lo motivó no es de calidad sino de **sesgo de cobertura**: las seis fuentes actuales tiran a salas grandes, donde tocan los internacionales. El toque local en un bar chico, anunciado solo por historia de Instagram, es estructuralmente invisible para el pipeline — y el propósito de la plataforma es promover justamente ese toque.
+
+⚠️ **Corrección de un dato que se llegó a proponer como titular editorial:** "de 44 conciertos anunciados en Bogotá, 7 son de artistas locales". Ese 16% **no mide la escena de Bogotá: mide qué salas scrapeamos.** Es honesto como "de lo que publican estas seis fuentes" y sería falso como afirmación sobre la ciudad. La moderación y la carga manual existen para que la plataforma deje de tener ese sesgo sin saberlo.
+
+No es una arquitectura nueva: es **"guardar crudo, filtrar y clasificar en lectura"** una vuelta más, la misma forma que ya tiene el paso de clasificación.
+
+### Las dos capas
+
+- **`events` (crudo)** — una fila por fuente, como hoy. El admin nunca la toca; el cron la reescribe libremente en cada corrida.
+- **Evento canónico (publicado)** — una fila por show real, con los valores aprobados, enlazada a **una o varias** filas crudas.
+
+Al revisar un borrador el admin hace una de dos cosas: **publicar como nuevo** o **adjuntar a un canónico existente** ("es el mismo show que ya publiqué"). Un evento cargado a mano es un canónico sin fuente cruda; si mañana un scraper lo encuentra, se adjunta.
+
+Esto resuelve tres cosas de una:
+
+1. **Identidad única del evento.** Hoy el upsert garantiza unicidad solo *dentro* de una fuente (`source` + `source_event_id`), por eso el mismo show llega dos veces desde Royal Center y Rockal Live. El canónico es la identidad que faltaba, y cubre también el duplicado entre el cron y el admin.
+2. **Salda la deuda de la dedupe.** Estaba anotado que `dedupe.ts` tenía que moverse del frontend a la ingesta cuando existiera la API pública. Acá se mueve, y mejor: deja de ser lógica de producto y pasa a ser **un sugeridor en la pantalla de revisión** ("esto se parece a X, ¿es el mismo?"), donde decide un humano y no una heurística.
+3. **Mata el problema del título del duplicado** (§ 8, "Akriila pierde Tour Lucy"): el canónico puede tomar el título de una fuente y el precio de otra, porque las tiene todas colgando. La pregunta de producto que quedaba abierta ahí se responde sola.
+
+### El scraper no puede pisar lo que decidió el admin
+
+Verificado en el código el 2026-08-31, y **no es una promesa de diseño sino comportamiento ya en producción**: el upsert de `save_events` sube un diccionario con solo sus propias columnas, así que nunca toca `event_type`, `is_local` ni `classification_source`. Por eso la clasificación sobrevive a todas las corridas del cron desde el 27 de agosto. Las columnas del admin funcionan igual: el scraper no las menciona.
+
+**La condición que hace que funcione:** las ediciones del admin van en **columnas propias, nunca encima de las scrapeadas**. El scraper sí reescribe `title`, `starts_at` y `price_text` en cada corrida; una corrección hecha en el mismo campo se pierde al día siguiente. Lo que se muestra = valor del admin si existe, si no el crudo.
+
+### Toda sobrescritura del origen pasa por aprobación
+
+Como el canónico guarda su propia copia de lo aprobado y el crudo se actualiza libre, comparar los dos detecta cuándo la fuente se movió después de la aprobación. Ese evento vuelve a la cola **etiquetado**, con el cambio a la vista (`precio: $102.000 → $118.000`), para que el admin apruebe o rechace. Aplica a cualquier campo: precio, sala, nombre, fecha.
+
+Esto convierte la moderación de un filtro de entrada en **verificación continua**, que es lo que hoy no existe: un evento publicado se desactualiza en silencio.
+
+Lo mismo con la desaparición: hoy `_prune_missing_events` borra sin avisar el evento futuro que salió de la cartelera. Un evento **publicado** que desaparece del origen debe avisarle al admin en vez de esfumarse — puede ser una cancelación real o que la sala rehizo su web.
+
+### Qué pasa con los filtros de exclusión
+
+- **`eventos_excluidos.py` (lista de eventos puntuales) se retira.** Existía porque borrar una fila no alcanzaba: el cron la devolvía. Con borradores, "no lo quiero" es simplemente no publicarlo — reversible y visible, sin la contrapartida de que sacar una entrada no recupera el pasado.
+- **Las reglas (`classify.py`, `exclusion_patterns.py`) ascienden.** Dejan de filtrar la cartelera y pasan a **ordenar la cola**: lo que no es música cae en un cajón aparte en vez de mezclarse con los toques. Es más útil ahí que en la lectura.
+
+**Y con eso una regla dura cambia de signo.** Estaba escrito que *"excluir es caro y silencioso: un evento que no aparece no deja rastro para nadie"*, y por eso las reglas se mantenían estrechas. Bajo moderación **eso deja de ser cierto**: un evento mal filtrado sigue siendo visible para el admin, en su cajón. Las reglas de exclusión pueden volverse **más agresivas, no menos** — lo contrario de lo que había que hacer hasta ahora.
+
+### La cola es chica, medido
+
+`scraped_at` no está en el upsert del scraper, así que marca cuándo entró un evento **por primera vez**. Al 2026-08-31:
+
+    2026-08-27:  52   <- carga inicial
+    2026-08-30:   1
+
+**Un evento nuevo en cuatro días.** El riesgo razonable de este diseño —que el humano se vuelva el cuello de botella— no aplica con este volumen, así que no hace falta inventar excepciones de auto-publicación para fuentes "confiables": todo pasa por revisión. Si el volumen sube al sumar fuentes, se revisa.
+
+### Alcance de la fase
+
+| Parte | Qué |
+|---|---|
+| **Base** | Estado `borrador`/`publicado`, evento canónico con sus fuentes, columnas de edición del admin separadas de las del scraper, `evidencia` obligatoria a nivel de base para lo cargado a mano |
+| **Superficie** | Formulario de admin sobre Supabase Auth: cola de revisión ordenada por fecha del evento, con todo prellenado, y "evento nuevo" como borrador vacío |
+| **Cobertura** | Scrapers nuevos para las cuatro fuentes abiertas de § 3; pegado manual de texto o flyer para lo que no se puede traer |
+| **Módulo** | Directorio de salas y artistas, alimentado por lo ya curado |
+
+Dos consecuencias sobre el trabajo anterior, que conviene saber antes de construir:
+
+- **La normalización de títulos (§ 8) cambia de trabajo**: deja de tener que *acertar* y pasa a *proponer un buen borrador* para que el admin edite menos. Las cinco entradas de `TITULOS` en `titulosCurados.ts` quedan sobrando —un humano corrigiendo el borrador es estrictamente mejor que curar por título exacto—; `GRAFIAS` sí sobrevive, porque se aplica sola a los shows futuros del mismo artista.
+- **El formulario de admin sube de "cuando la fricción moleste" a prerequisito.** Lo necesitan la cola de revisión, la carga manual y el directorio. Y un evento tiene fecha: editar un `.py` y correr un CLI no sirve. Es una desviación consciente de la convención de "lo curado vive en git con evidencia y tests" — se compensa haciendo `evidencia` obligatoria en la base, que es la base exigiendo lo que allá exigía un test.
+
+### Instagram como salida, no como fuente
+
+Se evaluó y se descartó **scrapear una cuenta propia** (subir la info a Instagram o X y volver a bajarla). Es técnicamente posible —leer los posts de tu propia cuenta de Instagram no requiere app review, alcanza con modo desarrollo y rol de tester; X no tiene tier gratuito para cuentas nuevas desde febrero de 2026 y cobra por lectura— pero es un viaje de ida y vuelta a través de una base de datos peor: obligaría a escribir un parser de nuestros propios datos sobre un caption, que es peor fuente que la página de una sala.
+
+**La dirección correcta es la inversa: la plataforma es la fuente, las redes son la salida.** El admin cura en la plataforma y la plataforma publica sola ("esta semana en Bogotá: 5 toques locales"). Mismo esfuerzo, los datos quedan estructurados, publicar es la dirección que las plataformas sí soportan, y la cuenta se vuelve distribución — que es un pendiente abierto del doc de producto (§ 7) y parte del pivote editorial de Juan. Queda anotado para después del MVP.
