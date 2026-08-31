@@ -5,7 +5,9 @@ del Teatro Jorge Eliécer Gaitán entran solo conciertos, porque es una
 agenda distrital que programa de todo; y hay eventos sueltos que él sacó a
 mano y no deben volver.
 """
-from bogota_music_intel.eventos_excluidos import EVENTOS_EXCLUIDOS, esta_excluido
+from types import SimpleNamespace
+
+from bogota_music_intel.eventos_excluidos import cargar_bloqueados
 from bogota_music_intel.scrapers.idartes_teatro_jeg import es_concierto
 
 BASE = "https://www.idartes.gov.co/es/agenda"
@@ -47,15 +49,40 @@ class TestIdartesSoloConciertos:
         assert not es_concierto(f"{BASE}/taller-de-percusion/algo-nuevo")
 
 
-class TestEventosExcluidos:
-    def test_toda_entrada_documenta_su_motivo(self):
-        for clave, entrada in EVENTOS_EXCLUIDOS.items():
-            assert len(entrada.motivo) > 40, clave
+class _ClienteFalso:
+    """Lo mínimo de la interfaz de Supabase que usa `cargar_bloqueados`."""
 
-    def test_bloquea_lo_que_juan_saco(self):
-        assert esta_excluido("movistar_arena", "laura-brenda")
+    def __init__(self, filas=None, falla=False):
+        self._filas = filas or []
+        self._falla = falla
 
-    def test_no_bloquea_nada_mas(self):
-        assert not esta_excluido("movistar_arena", "wwe-bogota-2026")
+    def table(self, _nombre):
+        if self._falla:
+            raise RuntimeError("relation \"blocked_source_events\" does not exist")
+        return self
+
+    def select(self, _campos):
+        return self
+
+    def execute(self):
+        return SimpleNamespace(data=self._filas)
+
+
+class TestEventosBloqueados:
+    def test_devuelve_la_clave_compuesta(self):
+        cliente = _ClienteFalso(
+            [{"source": "movistar_arena", "source_event_id": "laura-brenda"}]
+        )
+        bloqueados = cargar_bloqueados(cliente)
+        assert ("movistar_arena", "laura-brenda") in bloqueados
         # La clave es (fuente, id): el mismo id en otra fuente no se bloquea.
-        assert not esta_excluido("royal_center", "laura-brenda")
+        assert ("royal_center", "laura-brenda") not in bloqueados
+
+    def test_sin_la_tabla_no_tumba_la_ingesta(self):
+        # Una base sin la migración de borrado tiene que poder scrapear.
+        # Bloquear de menos deja un evento de más a la vista, que se arregla
+        # desde el formulario; fallar deja la cartelera sin actualizar.
+        assert cargar_bloqueados(_ClienteFalso(falla=True)) == set()
+
+    def test_una_tabla_vacia_no_bloquea_nada(self):
+        assert cargar_bloqueados(_ClienteFalso([])) == set()

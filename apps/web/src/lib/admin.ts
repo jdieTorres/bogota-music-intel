@@ -70,23 +70,76 @@ export type Correccion = Partial<
   >
 >;
 
-/**
- * Lo que espera revisión: los borradores, y lo ya publicado cuya fuente se
- * movió después. Ordenado por fecha del evento porque lo urgente es lo que
- * está por pasar, no lo que entró primero.
- *
- * Un evento sin fecha va al final: no se sabe cuándo es, así que no puede
- * ser lo más urgente.
- */
-export async function getCola(): Promise<EventoEnCola[]> {
-  const { data, error } = await supabase
-    .from("canonical_events")
-    .select(CAMPOS)
-    .or("status.eq.borrador,change_detected_at.not.is.null")
-    .order("starts_at", { ascending: true, nullsFirst: false });
+/** Las tres pestañas de la pantalla. */
+export type Pestaña = "cola" | "publicados" | "pasados";
 
-  if (error) throw new Error(`No se pudo cargar la cola: ${error.message}`);
+/** Inicio del día de hoy en Bogotá, en UTC. Igual que en la cartelera: se
+ *  corta por día y no por hora, porque un show de las 8 p. m. sigue siendo
+ *  de hoy a las 11. */
+function inicioDeHoyEnBogota(): string {
+  const partes = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  return `${partes}T00:00:00-05:00`;
+}
+
+async function consultar(
+  armar: (q: ReturnType<typeof consultaBase>) => ReturnType<typeof consultaBase>,
+): Promise<EventoEnCola[]> {
+  const { data, error } = await armar(consultaBase());
+  if (error) throw new Error(`No se pudo cargar: ${error.message}`);
   return (data ?? []) as unknown as EventoEnCola[];
+}
+
+function consultaBase() {
+  return supabase.from("canonical_events").select(CAMPOS);
+}
+
+/**
+ * Lo que hay en cada pestaña, y por qué son tres y no una:
+ *
+ * - `cola`: lo que **pide una decisión**. Borradores que trajo el cron, más
+ *   lo publicado cuya fuente se movió. Es lo único que caduca.
+ * - `publicados`: lo que **está en la cartelera ahora**, para corregir o
+ *   sacar algo que ya se aprobó.
+ * - `pasados`: lo que **ya ocurrió**. Se separa porque no se toca casi
+ *   nunca y mezclarlo con lo vigente haría que la lista útil se pierda.
+ *
+ * Todo va ordenado por fecha del evento; lo pasado al revés, que es como se
+ * busca (lo más reciente primero). Un evento sin fecha va al final: no se
+ * sabe cuándo es, así que no puede ser lo más urgente.
+ */
+export async function getEventos(pestaña: Pestaña): Promise<EventoEnCola[]> {
+  const hoy = inicioDeHoyEnBogota();
+
+  if (pestaña === "cola") {
+    return consultar((q) =>
+      q
+        .or("status.eq.borrador,change_detected_at.not.is.null")
+        .order("starts_at", { ascending: true, nullsFirst: false }),
+    );
+  }
+  if (pestaña === "publicados") {
+    return consultar((q) =>
+      q
+        .eq("status", "publicado")
+        .or(`starts_at.gte.${hoy},starts_at.is.null`)
+        .order("starts_at", { ascending: true, nullsFirst: false }),
+    );
+  }
+  return consultar((q) =>
+    q.lt("starts_at", hoy).order("starts_at", { ascending: false }),
+  );
+}
+
+/** Un evento suelto, para editarlo desde su propia página. */
+export async function getEvento(id: string): Promise<EventoEnCola | null> {
+  const { data, error } = await consultaBase().eq("id", id).maybeSingle();
+  if (error) throw new Error(`No se pudo cargar el evento: ${error.message}`);
+  return (data as unknown as EventoEnCola) ?? null;
 }
 
 function revisado() {
@@ -108,9 +161,11 @@ export async function publicar(id: string, correccion: Correccion) {
 }
 
 /**
- * Lo vi y no va. No borra nada: la fila cruda se queda y el canónico queda
- * en `descartado`, así que la decisión es reversible y deja rastro. Borrar
- * de verdad no serviría — el cron traería el evento de vuelta mañana.
+ * Lo vi y no va. **No borra nada**: la fila cruda se queda y el canónico
+ * queda en `descartado`, así que la decisión es reversible y deja rastro.
+ *
+ * Es el camino que conviene por defecto. `borrar()` es el otro caso —
+ * cuando el evento no tiene que volver nunca— y ese sí es irreversible.
  */
 export async function descartar(id: string) {
   const { error } = await supabase
@@ -159,4 +214,35 @@ export async function resolverCambio(evento: EventoEnCola, aceptar: boolean) {
     })
     .eq("id", evento.id);
   if (error) throw new Error(`No se pudo resolver el cambio: ${error.message}`);
+}
+
+/**
+ * Borra el evento de verdad y lo bloquea para que no vuelva.
+ *
+ * **No es lo mismo que descartar.** Descartar deja la fila en `descartado`
+ * y es reversible. Borrar elimina el canónico y sus filas crudas, y anota
+ * `(source, source_event_id)` en `blocked_source_events` para que la
+ * ingesta no lo vuelva a guardar.
+ *
+ * Ese bloqueo no es un extra: sin él, borrar no sirve de nada. Las filas
+ * crudas se vuelven a scrapear y el cron abre un borrador nuevo en la
+ * corrida siguiente — pasó el 2026-08-31 al soltar el canónico de WWE.
+ *
+ * Las tres cosas van dentro de una función de Postgres para que ocurran
+ * juntas o ninguna: si se hicieran en tres llamadas desde acá, una caída
+ * en el medio podría dejar filas crudas sin bloquear, que es el peor
+ * estado — el evento vuelve mañana y nadie se acuerda de por qué.
+ */
+export async function borrar(id: string, motivo: string) {
+  const { error } = await supabase.rpc("borrar_evento", {
+    canonico_id: id,
+    motivo,
+  });
+  if (error) throw new Error(`No se pudo borrar: ${error.message}`);
+}
+
+/** ¿La sesión actual puede moderar? Lo contesta la base, no el frontend. */
+export async function esAdmin(): Promise<boolean> {
+  const { data } = await supabase.rpc("es_admin");
+  return Boolean(data);
 }

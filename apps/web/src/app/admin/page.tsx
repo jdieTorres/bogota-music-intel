@@ -20,8 +20,10 @@ import { useCallback, useEffect, useState } from "react";
 import {
   type Correccion,
   type EventoEnCola,
+  type Pestaña,
+  borrar,
   descartar,
-  getCola,
+  getEventos,
   guardar,
   publicar,
   resolverCambio,
@@ -48,36 +50,40 @@ export default function AdminPage() {
   );
   const [cola, setCola] = useState<EventoEnCola[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [pestaña, setPestaña] = useState<Pestaña>("cola");
 
-  const cargar = useCallback(async (haySesion: boolean) => {
-    if (!haySesion) {
-      setSesion("fuera");
-      return;
-    }
-    const { data: esAdmin } = await supabase.rpc("es_admin");
-    if (!esAdmin) {
-      setSesion("sin-permiso");
-      return;
-    }
-    try {
-      setCola(await getCola());
-      setSesion("dentro");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, []);
+  const cargar = useCallback(
+    async (haySesion: boolean, cual: Pestaña) => {
+      if (!haySesion) {
+        setSesion("fuera");
+        return;
+      }
+      const { data: esAdmin } = await supabase.rpc("es_admin");
+      if (!esAdmin) {
+        setSesion("sin-permiso");
+        return;
+      }
+      try {
+        setCola(await getEventos(cual));
+        setSesion("dentro");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [],
+  );
 
   // Se escucha la sesión en vez de leerla una vez: Supabase emite el estado
   // inicial al suscribirse, así que esto cubre el arranque, y además la
   // pantalla reacciona sola al entrar y al salir sin que nadie la refresque.
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((_evento, sesion) => {
-      void cargar(Boolean(sesion));
+      void cargar(Boolean(sesion), pestaña);
     });
     return () => data.subscription.unsubscribe();
-  }, [cargar]);
+  }, [cargar, pestaña]);
 
-  const recargar = useCallback(() => void cargar(true), [cargar]);
+  const recargar = useCallback(() => void cargar(true, pestaña), [cargar, pestaña]);
 
   if (sesion === "cargando") {
     return <Marco><p className="text-muted">Cargando…</p></Marco>;
@@ -102,29 +108,41 @@ export default function AdminPage() {
   return (
     <Marco>
       <div className="flex items-baseline justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Cola de moderación
-          </h1>
-          <p className="mt-2 font-mono text-xs uppercase tracking-widest text-muted">
-            {cola.length === 0
-              ? "Nada por revisar"
-              : `${cola.length} ${cola.length === 1 ? "evento" : "eventos"} esperando`}
-          </p>
-        </div>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Moderación</h1>
         <button onClick={() => void supabase.auth.signOut()} className={BOTON_TENUE}>
           Salir
         </button>
       </div>
 
+      <nav className="mt-6 flex gap-1 border-b border-border">
+        {PESTAÑAS.map(([clave, rotulo]) => (
+          <button
+            key={clave}
+            onClick={() => {
+              setPestaña(clave);
+              void cargar(true, clave);
+            }}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
+              pestaña === clave
+                ? "border-accent text-foreground"
+                : "border-transparent text-muted hover:text-foreground"
+            }`}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </nav>
+
+      <p className="mt-4 font-mono text-xs uppercase tracking-widest text-muted">
+        {cola.length} {cola.length === 1 ? "evento" : "eventos"}
+      </p>
+
       {error && <p className="mt-6 text-sm text-red-400">{error}</p>}
 
       {cola.length === 0 ? (
-        <p className="mt-10 text-muted">
-          El cron no trajo nada nuevo y ninguna sala movió lo que ya está publicado.
-        </p>
+        <p className="mt-10 text-muted">{VACIO[pestaña]}</p>
       ) : (
-        <ul className="mt-8 space-y-5">
+        <ul className="mt-6 space-y-5">
           {cola.map((evento) => (
             <Ficha key={evento.id} evento={evento} alResolver={recargar} setError={setError} />
           ))}
@@ -133,6 +151,21 @@ export default function AdminPage() {
     </Marco>
   );
 }
+
+// Tres listas y no una, porque piden cosas distintas: la cola caduca, lo
+// publicado se corrige, y lo pasado casi no se toca. Mezclarlas haría que
+// lo urgente se pierda entre 40 eventos que ya ocurrieron.
+const PESTAÑAS: [Pestaña, string][] = [
+  ["cola", "Por revisar"],
+  ["publicados", "En la cartelera"],
+  ["pasados", "Ya pasaron"],
+];
+
+const VACIO: Record<Pestaña, string> = {
+  cola: "El cron no trajo nada nuevo y ninguna sala movió lo que ya está publicado.",
+  publicados: "No hay nada publicado con fecha de hoy en adelante.",
+  pasados: "Todavía no pasó ningún evento de los que están en la base.",
+};
 
 const BOTON = "rounded-md px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90";
 const BOTON_TENUE =
@@ -213,6 +246,7 @@ function Ficha({
     is_local: evento.is_local,
   });
   const [ocupado, setOcupado] = useState(false);
+  const [borrando, setBorrando] = useState(false);
 
   const cambio = evento.change_detail;
   const editar = (parcial: Correccion) => setCampos((c) => ({ ...c, ...parcial }));
@@ -359,38 +393,125 @@ function Ficha({
         </details>
       )}
 
-      <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-4">
-        <button
-          disabled={ocupado || !campos.title}
-          onClick={() =>
-            accion(() =>
-              publicar(evento.id, {
-                ...campos,
-                starts_at: campos.starts_at ?? null,
-              }),
-            )
-          }
-          className={`${BOTON} bg-accent text-background disabled:opacity-40`}
-          title={!campos.title ? "Sin título no se puede publicar" : undefined}
-        >
-          Publicar
-        </button>
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+        {evento.status === "publicado" ? (
+          <button
+            disabled={ocupado}
+            onClick={() => accion(() => guardar(evento.id, campos))}
+            className={`${BOTON} bg-accent text-background`}
+          >
+            Guardar cambios
+          </button>
+        ) : (
+          <>
+            <button
+              disabled={ocupado || !campos.title}
+              onClick={() => accion(() => publicar(evento.id, campos))}
+              className={`${BOTON} bg-accent text-background disabled:opacity-40`}
+              title={!campos.title ? "Sin título no se puede publicar" : undefined}
+            >
+              Publicar
+            </button>
+            <button
+              disabled={ocupado}
+              onClick={() => accion(() => guardar(evento.id, campos))}
+              className={BOTON_TENUE}
+            >
+              Guardar sin publicar
+            </button>
+          </>
+        )}
+
+        {evento.status !== "descartado" && (
+          <button
+            disabled={ocupado}
+            onClick={() => accion(() => descartar(evento.id))}
+            className={`${BOTON_TENUE} ml-auto`}
+            title="Lo saca de la cartelera pero no lo borra: se puede volver atrás"
+          >
+            {evento.status === "publicado" ? "Quitar de la cartelera" : "No va"}
+          </button>
+        )}
         <button
           disabled={ocupado}
-          onClick={() => accion(() => guardar(evento.id, campos))}
-          className={BOTON_TENUE}
+          onClick={() => setBorrando(true)}
+          className={`${BOTON_TENUE} border-red-500/40 text-red-400 hover:text-red-300 ${
+            evento.status === "descartado" ? "ml-auto" : ""
+          }`}
         >
-          Guardar sin publicar
-        </button>
-        <button
-          disabled={ocupado}
-          onClick={() => accion(() => descartar(evento.id))}
-          className={`${BOTON_TENUE} ml-auto`}
-        >
-          No va
+          Borrar
         </button>
       </div>
+
+      {borrando && (
+        <ConfirmarBorrado
+          evento={evento}
+          ocupado={ocupado}
+          alCancelar={() => setBorrando(false)}
+          alConfirmar={(motivo) => accion(() => borrar(evento.id, motivo))}
+        />
+      )}
     </li>
+  );
+}
+
+/**
+ * El paso intermedio antes de borrar. Pide un motivo y no solo un "sí",
+ * por dos razones: la función de Postgres lo exige —un borrado que no
+ * registra por qué no se puede auditar— y escribir una frase obliga a
+ * mirar qué se está borrando, que es justo lo que un botón de confirmar
+ * genérico no consigue.
+ */
+function ConfirmarBorrado({
+  evento,
+  ocupado,
+  alCancelar,
+  alConfirmar,
+}: {
+  evento: EventoEnCola;
+  ocupado: boolean;
+  alCancelar: () => void;
+  alConfirmar: (motivo: string) => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const fuentes = evento.events.length;
+
+  return (
+    <div className="mt-4 rounded-md border border-red-500/40 bg-background p-4">
+      <p className="text-sm font-medium">Borrar «{evento.title}» para siempre</p>
+      <p className="mt-2 text-xs leading-relaxed text-muted">
+        Esto no es lo mismo que quitarlo de la cartelera. Se borra el evento y{" "}
+        {fuentes > 0 ? (
+          <>
+            {fuentes === 1 ? "la fila cruda de su fuente" : `las ${fuentes} filas crudas`}, y
+            queda bloqueado para que el cron no lo vuelva a traer. Sin ese bloqueo volvería
+            solo en la próxima corrida.
+          </>
+        ) : (
+          <>no hay forma de recuperarlo: lo cargaste a mano, así que ninguna fuente lo tiene.</>
+        )}{" "}
+        <strong className="text-foreground">No se puede deshacer.</strong>
+      </p>
+      <input
+        value={motivo}
+        onChange={(e) => setMotivo(e.target.value)}
+        placeholder="Por qué se borra (queda registrado)"
+        className={`${CAMPO} mt-3`}
+      />
+      <div className="mt-3 flex gap-2">
+        <button
+          disabled={ocupado || motivo.trim().length < 5}
+          onClick={() => alConfirmar(motivo.trim())}
+          className={`${BOTON} bg-red-600 text-white disabled:opacity-40`}
+          title={motivo.trim().length < 5 ? "Escribí el motivo primero" : undefined}
+        >
+          Borrar definitivamente
+        </button>
+        <button onClick={alCancelar} className={BOTON_TENUE}>
+          Cancelar
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -114,10 +114,8 @@ Lo que hay que tener en la cabeza antes de tocar la ingesta:
 - La normalización de títulos **cambia de trabajo**: deja de tener que acertar y pasa a proponer un buen borrador. Las 5 entradas de `TITULOS` en `titulosCurados.ts` quedan sobrando; `GRAFIAS` sobrevive.
 - **El formulario de admin sube a prerequisito** (Supabase Auth). Lo necesitan la cola, la carga manual y el directorio. Un evento tiene fecha, así que editar un `.py` y correr un CLI no sirve — es una desviación consciente de "lo curado vive en git con tests", compensada haciendo `evidencia` obligatoria en la base.
 
-### Lo que Juan saca a mano (se retira con la moderación)
-⚠️ **Esta pieza tiene fecha de vencimiento**: el modelo de moderación de arriba la reemplaza — sacar un evento pasa a ser "no lo publico". Se documenta porque sigue viva y corriendo hasta que la Fase 5 esté hecha, y porque el razonamiento de abajo explica por qué no alcanza con borrar la fila.
-
-`services/api/bogota_music_intel/eventos_excluidos.py` bloquea eventos puntuales **antes de guardarlos**, por `(source, source_event_id)`.
+### Lo que no vuelve a entrar
+`services/api/bogota_music_intel/eventos_excluidos.py` filtra **antes de guardar**, por `(source, source_event_id)`. **Desde el 2026-08-31 la lista vive en la base** (`blocked_source_events`) y no en git: la escribe el botón de borrar del formulario, y una lista que el admin tiene que poder escribir no puede estar en el repo. El archivo quedó solo como el lector.
 
 Por qué en la ingesta y no como bandera de "no mostrar": borrar la fila no alcanza en una fuente activa. `save_events` hace upsert de todo lo que el scraper encuentra, así que un `DELETE` dura hasta la próxima corrida del cron y el evento vuelve solo. Se probó el 2026-08-28 con `Laura & Brenda` (Movistar Arena).
 
@@ -181,7 +179,9 @@ O sea que **la Fase 6 deja de ser lo siguiente**: hay una Fase 5 nueva por delan
 1. ~~**La base de la moderación**~~ — **hecha el 2026-08-31** (ver "Moderación" más arriba).
 2. **El formulario de admin** — `/admin`, hecho el 2026-08-31 en su primera mitad: entrar, ver la cola, corregir campos, publicar, descartar y resolver los cambios que hizo la sala. **Falta la carga manual de eventos** (el "evento nuevo" como borrador vacío) y confirmar los duplicados sugeridos.
    - Quién puede escribir lo decide la tabla `admins` y RLS, **no el frontend** (`20260831020000_admin.sql`). Se hizo con lista y no con "cualquiera autenticado" porque el registro público de Supabase Auth se configura en el panel y no en el repo: si mañana quedara abierto, `to authenticated` dejaría publicar a cualquiera que se registrara.
-   - Nadie borra desde el navegador, ni siquiera un admin: para eso está `descartado`, que es reversible y deja rastro.
+   - **Tres pestañas** (2026-08-31): *Por revisar* (la cola que caduca), *En la cartelera* (lo publicado vigente, para corregir o sacar) y *Ya pasaron*. Y los mismos controles desde la página de cada evento, para quien está mirando la cartelera y ve algo mal.
+   - **Descartar y borrar son cosas distintas y conviene no confundirlas.** `descartado` saca de la cartelera y es reversible. **Borrar** elimina el canónico y sus filas crudas y anota `(source, source_event_id)` en `blocked_source_events`; sin ese bloqueo el borrado no sirve, porque el cron abre un borrador nuevo en la corrida siguiente — comprobado el 2026-08-31 al soltar el canónico de WWE. Las tres cosas van en la función `borrar_evento()` para que ocurran juntas o ninguna, y exige un motivo: un borrado que no registra por qué no se puede auditar.
+   - No hay política de DELETE sobre ninguna tabla. La única forma de borrar es esa función.
    - Al resolver un cambio de la fuente, **tanto aceptar como rechazar actualizan `source_snapshot`**. El snapshot es "lo que ya vi de la fuente", no "lo que muestro": sin actualizarlo al rechazar, el mismo cambio volvería a la cola en cada corrida del cron para siempre.
 3. **Cobertura**: scrapers para las cuatro fuentes abiertas (empezando por `visitbogota.co`, que es la que tapa parte del hueco de Tuboleta) y el pegado manual de texto o flyer.
 4. **El directorio** de salas y artistas, que es el módulo en sí.

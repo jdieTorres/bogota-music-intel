@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ControlesDeAdmin } from "@/components/ControlesDeAdmin";
+
 import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
 import { tituloParaMostrar } from "@/lib/tituloEvento";
@@ -30,6 +32,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
 
   const hora = horaDeEvento(evento.starts_at, evento.date_precision);
   const venue = nombreDelVenue(evento);
+  const titulo = tituloParaMostrar(evento, venue);
 
   return (
     <article className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
@@ -42,7 +45,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
 
       <header className="mt-6">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {tituloParaMostrar(evento, venue)}
+          {titulo}
         </h1>
         <p className="mt-3 text-lg text-muted">{venue}</p>
       </header>
@@ -94,6 +97,8 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
       )}
 
       <Procedencia evento={evento} />
+
+      <ControlesDeAdmin eventoId={evento.id} titulo={titulo} />
     </article>
   );
 }

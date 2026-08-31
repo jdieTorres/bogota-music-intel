@@ -8,7 +8,7 @@ Uso:
 import argparse
 import sys
 
-from bogota_music_intel.eventos_excluidos import esta_excluido
+from bogota_music_intel.eventos_excluidos import cargar_bloqueados
 from bogota_music_intel.scrapers.models import dedupe_events
 from bogota_music_intel.scrapers.registry import SCRAPERS
 from bogota_music_intel.storage import get_client, save_events
@@ -29,6 +29,20 @@ def main() -> int:
     client = None if args.dry_run else get_client()
     had_errors = False
 
+    # La lista de bloqueados vive en la base desde el 2026-08-31, así que el
+    # dry-run necesita credenciales para descontarla. Se intenta y se sigue
+    # sin ella si no hay: correr un dry-run sin credenciales seguía siendo
+    # útil antes y lo sigue siendo — solo que el conteo queda en bruto, y
+    # eso se avisa en vez de mentir el número.
+    bloqueados: set[tuple[str, str]] = set()
+    if args.dry_run:
+        try:
+            bloqueados = cargar_bloqueados(get_client())
+        except Exception:  # noqa: BLE001 - sin credenciales el dry-run sigue sirviendo
+            print("(sin credenciales: el conteo no descuenta los eventos bloqueados)")
+    else:
+        bloqueados = cargar_bloqueados(client)
+
     for source in selected:
         # El scrapeo y el guardado van dentro del mismo try: si el guardado
         # queda afuera, un error de Supabase en una fuente aborta el proceso
@@ -39,7 +53,9 @@ def main() -> int:
                 # Se descuenta lo bloqueado para que el dry-run informe lo
                 # que se guardaría y no lo que se encontró: el filtro vive
                 # en save_events, que acá no se llama.
-                guardables = [e for e in events if not esta_excluido(e.source, e.source_event_id)]
+                guardables = [
+                    e for e in events if (e.source, e.source_event_id) not in bloqueados
+                ]
                 detalle = f"{len(guardables)} eventos"
                 if len(guardables) != len(events):
                     detalle += f" ({len(events) - len(guardables)} bloqueados a mano)"
