@@ -7,7 +7,12 @@ from bogota_music_intel.deduplicacion import (
     mas_completo,
     titulo_equivalente,
 )
-from bogota_music_intel.moderacion import borrador_desde, cambios, snapshot
+from bogota_music_intel.moderacion import (
+    borrador_desde,
+    cambios,
+    clasificacion_pendiente,
+    snapshot,
+)
 
 SALA = "11111111-1111-1111-1111-111111111111"
 OTRA_SALA = "22222222-2222-2222-2222-222222222222"
@@ -135,3 +140,33 @@ class TestCambiosEnElOrigen:
         despues = borrador_desde([crudo(description="Puertas 8:00 pm.")])
         assert cambios(antes["source_snapshot"], despues) == {}
         assert "description" not in snapshot(crudo())
+
+
+class TestClasificacionTardia:
+    """MusicBrainz puede fallar el primer día y resolver el segundo, cuando
+    el canónico ya existe. Sin esto, esa clasificación no llegaría nunca."""
+
+    def test_rellena_el_hueco_que_el_crudo_resolvio_despues(self):
+        canonico = {"event_type": None, "is_local": None}
+        resuelto = crudo(event_type="music", is_local=True)
+        assert clasificacion_pendiente(canonico, [resuelto]) == {
+            "event_type": "music",
+            "is_local": True,
+        }
+
+    def test_no_pisa_lo_que_el_admin_ya_decidio(self):
+        # Si el admin corrigió el tipo a mano, su decisión gana sobre lo que
+        # diga MusicBrainz mañana: para eso existe la revisión.
+        canonico = {"event_type": "fiesta", "is_local": None}
+        assert clasificacion_pendiente(canonico, [crudo(event_type="music")]) == {}
+
+    def test_is_local_false_es_un_dato_y_se_baja(self):
+        # False es "internacional confirmado", tan bueno como True. Tratarlo
+        # como vacío dejaría el canónico sin un dato que sí se resolvió.
+        canonico = {"event_type": "music", "is_local": None}
+        assert clasificacion_pendiente(canonico, [crudo(is_local=False)]) == {
+            "is_local": False
+        }
+
+    def test_sin_fuentes_no_hay_nada_que_bajar(self):
+        assert clasificacion_pendiente({"event_type": None, "is_local": None}, []) == {}

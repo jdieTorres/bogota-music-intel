@@ -125,3 +125,31 @@ def borrador_desde(crudos: list[dict]) -> dict:
     # primera corrida siguiente, sin que nadie hubiera cambiado nada.
     borrador["source_snapshot"] = snapshot(borrador)
     return borrador
+
+
+# La clasificación editorial (`event_type`, `is_local`) la escribe
+# `classify.py` sobre el crudo, y el borrador la hereda al crearse. Pero un
+# evento puede quedar sin clasificar —MusicBrainz devuelve 503, o falla
+# desde CI— y resolverse recién en una corrida posterior, cuando el canónico
+# ya existe. Sin esto, esa clasificación tardía no llegaría nunca.
+CAMPOS_DE_CLASIFICACION = ("event_type", "is_local")
+
+
+def clasificacion_pendiente(canonico: dict, crudos: list[dict]) -> dict:
+    """Lo que el clasificador resolvió después y al canónico le falta.
+
+    **Solo rellena huecos, nunca sobrescribe.** Si el admin corrigió el tipo
+    de un evento a mano, su decisión gana sobre lo que diga MusicBrainz en
+    la corrida siguiente: para eso existe la revisión.
+    """
+    if not crudos:
+        return {}
+
+    pendiente = {}
+    for campo in CAMPOS_DE_CLASIFICACION:
+        if canonico.get(campo) is not None:
+            continue
+        valor = next((c[campo] for c in crudos if c.get(campo) is not None), None)
+        if valor is not None:
+            pendiente[campo] = valor
+    return pendiente

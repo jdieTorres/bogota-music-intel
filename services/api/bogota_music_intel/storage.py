@@ -8,7 +8,6 @@ from supabase import Client, create_client
 from bogota_music_intel.config import settings
 from bogota_music_intel.eventos_excluidos import esta_excluido
 from bogota_music_intel.nombres_de_salas import NOMBRES_CORREGIDOS
-from bogota_music_intel.radar import FilaTendencia
 from bogota_music_intel.scrapers.models import ScrapedEvent, dedupe_events
 from bogota_music_intel.scrapers.text import normalize_venue_name
 
@@ -129,28 +128,3 @@ def save_events(client: Client, events: list[ScrapedEvent]) -> SaveResult:
     source = events[0].source
     pruned = _prune_missing_events(client, source, [e.source_event_id for e in events])
     return SaveResult(saved=len(rows), pruned=pruned)
-
-
-def save_trending_snapshot(client: Client, filas: list[FilaTendencia]) -> int:
-    """Inserta una foto nueva del radar de tendencias. A diferencia de
-    `save_events`, no hace upsert: cada corrida es una fila nueva con su
-    propio `captured_at`, para poder ver la tendencia entre semanas más
-    adelante. El frontend lee solo la más reciente por fuente."""
-    if not filas:
-        return 0
-
-    rows = [
-        {
-            "source": fila.source,
-            "rank": fila.rank,
-            "artist_name": fila.artist_name,
-            "external_id": fila.external_id,
-            "image_url": fila.image_url,
-            "metric": fila.metric,
-            "is_local": fila.is_local,
-            "classification_source": fila.classification_source,
-        }
-        for fila in filas
-    ]
-    client.table("trending_artists").insert(rows).execute()
-    return len(rows)

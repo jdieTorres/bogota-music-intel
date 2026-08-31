@@ -57,14 +57,3 @@ jobs:
           bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
           bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
         run: python -m bogota_music_intel.moderacion_cli
-
-      # Radar de tendencias: fuera del MVP desde el 2026-08-31, pero el paso
-      # se deja corriendo porque /tendencias sigue existiendo y alimentarlo
-      # no cuesta nada más que la llamada diaria a Last.fm.
-      - name: Update trending radar
-        if: '!cancelled()'
-        env:
-          bmi_supabase_url: ${{ secrets.BMI_SUPABASE_URL }}
-          bmi_supabase_service_role_key: ${{ secrets.BMI_SUPABASE_SERVICE_ROLE_KEY }}
-          bmi_lastfm_api_key: ${{ secrets.BMI_LASTFM_API_KEY }}
-        run: python -m bogota_music_intel.radar_cli

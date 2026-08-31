@@ -17,6 +17,9 @@ Hace tres cosas, y ninguna publica nada:
    algo ya publicado, el canónico vuelve a la cola con el cambio a la vista.
 3. **Avisa de los publicados que se quedaron sin fuente**, que hoy
    desaparecían en silencio cuando la sala los sacaba de su cartelera.
+4. **Baja la clasificación que llegó tarde**: un evento que MusicBrainz no
+   resolvió el primer día y sí el segundo tiene que llegarle al canónico,
+   que ya existía cuando eso pasó.
 
 `--backfill` es la mudanza inicial: toma lo que ya está en la base y lo
 publica como canónico para que la cartelera no se vacíe al cambiar de
@@ -28,7 +31,11 @@ import argparse
 from datetime import UTC, datetime
 
 from bogota_music_intel.deduplicacion import agrupar_mismos_shows, es_el_mismo_show
-from bogota_music_intel.moderacion import borrador_desde, cambios
+from bogota_music_intel.moderacion import (
+    borrador_desde,
+    cambios,
+    clasificacion_pendiente,
+)
 from bogota_music_intel.storage import get_client
 
 CAMPOS_CRUDOS = (
@@ -36,7 +43,8 @@ CAMPOS_CRUDOS = (
     "description,price_text,category,ticket_url,image_url,event_type,is_local,canonical_id"
 )
 CAMPOS_CANONICOS = (
-    "id,status,origin,venue_id,title,starts_at,source_snapshot,change_detected_at"
+    "id,status,origin,venue_id,title,starts_at,source_snapshot,change_detected_at,"
+    "event_type,is_local"
 )
 
 
@@ -121,6 +129,31 @@ def _avisar_huerfanos(crudos: list[dict], canonicos: list[dict]) -> int:
     return len(huerfanos)
 
 
+def _bajar_clasificacion_tardia(client, crudos, canonicos, guardar: bool) -> int:
+    """Rellena en el canónico la clasificación que el crudo resolvió después.
+
+    Solo rellena huecos: si el admin corrigió el tipo a mano, su decisión
+    gana sobre lo que diga MusicBrainz mañana.
+    """
+    por_canonico: dict[str, list[dict]] = {}
+    for evento in crudos:
+        if evento.get("canonical_id"):
+            por_canonico.setdefault(evento["canonical_id"], []).append(evento)
+
+    bajadas = 0
+    for canonico in canonicos:
+        pendiente = clasificacion_pendiente(canonico, por_canonico.get(canonico["id"], []))
+        if not pendiente:
+            continue
+        print(f"  [CLASIFICADO] {canonico['title']} — {pendiente}")
+        if guardar:
+            client.table("canonical_events").update(pendiente).eq(
+                "id", canonico["id"]
+            ).execute()
+        bajadas += 1
+    return bajadas
+
+
 def _backfill(client, crudos: list[dict], guardar: bool) -> int:
     """La mudanza inicial: publica como canónico lo que ya estaba a la vista."""
     sin_canonico = [e for e in crudos if not e.get("canonical_id")]
@@ -182,9 +215,11 @@ def main() -> int:
     else:
         abiertos = _abrir_borradores(client, crudos, canonicos, guardar)
         marcados = _marcar_cambios(client, crudos, canonicos, guardar)
+        bajadas = _bajar_clasificacion_tardia(client, crudos, canonicos, guardar)
         huerfanos = _avisar_huerfanos(crudos, canonicos)
         print(
             f"\n{abiertos} borradores nuevos, {marcados} con cambios en el origen, "
+            f"{bajadas} con clasificación que llegó tarde, "
             f"{huerfanos} publicados sin fuente."
         )
 

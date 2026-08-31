@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_role_key: str = ""
     environment: str = "development"
-    lastfm_api_key: str = ""
 
 
 settings = Settings()
