@@ -179,7 +179,10 @@ O sea que **la Fase 6 deja de ser lo siguiente**: hay una Fase 5 nueva por delan
 **Lo siguiente es la Fase 5 nueva**, en este orden, porque cada paso habilita al que sigue:
 
 1. ~~**La base de la moderación**~~ — **hecha el 2026-08-31** (ver "Moderación" más arriba).
-2. **El formulario de admin** sobre Supabase Auth: cola de revisión ordenada por fecha del evento, y "evento nuevo" como borrador vacío. Es el prerequisito de la carga manual y del directorio.
+2. **El formulario de admin** — `/admin`, hecho el 2026-08-31 en su primera mitad: entrar, ver la cola, corregir campos, publicar, descartar y resolver los cambios que hizo la sala. **Falta la carga manual de eventos** (el "evento nuevo" como borrador vacío) y confirmar los duplicados sugeridos.
+   - Quién puede escribir lo decide la tabla `admins` y RLS, **no el frontend** (`20260831020000_admin.sql`). Se hizo con lista y no con "cualquiera autenticado" porque el registro público de Supabase Auth se configura en el panel y no en el repo: si mañana quedara abierto, `to authenticated` dejaría publicar a cualquiera que se registrara.
+   - Nadie borra desde el navegador, ni siquiera un admin: para eso está `descartado`, que es reversible y deja rastro.
+   - Al resolver un cambio de la fuente, **tanto aceptar como rechazar actualizan `source_snapshot`**. El snapshot es "lo que ya vi de la fuente", no "lo que muestro": sin actualizarlo al rechazar, el mismo cambio volvería a la cola en cada corrida del cron para siempre.
 3. **Cobertura**: scrapers para las cuatro fuentes abiertas (empezando por `visitbogota.co`, que es la que tapa parte del hueco de Tuboleta) y el pegado manual de texto o flyer.
 4. **El directorio** de salas y artistas, que es el módulo en sí.
 

@@ -10,7 +10,10 @@ if (!url || !key) {
   );
 }
 
-// Clave publicable: solo lectura. Las políticas RLS de la base permiten
-// SELECT público sobre venues y events, y bloquean cualquier escritura —
-// el pipeline de scraping escribe aparte con la service role key.
+// Clave publicable. Sin sesión es solo lectura: RLS permite SELECT público
+// sobre venues, events y lo publicado de canonical_events, y bloquea toda
+// escritura. Con la sesión de un admin (ver `admin.ts` y la tabla `admins`)
+// el mismo cliente puede leer la cola y publicar — quién puede hacerlo lo
+// decide la base, no el frontend. El pipeline de scraping sigue escribiendo
+// aparte con la service role key.
 export const supabase = createClient(url, key);
