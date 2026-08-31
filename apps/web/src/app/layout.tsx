@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Script from "next/script";
 import { Caveat, Fredoka, Geist_Mono, Work_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -39,10 +38,27 @@ export const metadata: Metadata = {
     "Los conciertos de la escena bogotana en un solo lugar, recogidos directamente de las carteleras de cada sala.",
 };
 
-// Fija `data-theme` antes de que React hidrate, para que el modo guardado
-// (o "claro" por defecto) se pinte en el primer frame sin parpadeo y sin
-// que el toggle choque con el render del servidor. `suppressHydrationWarning`
-// en <html> es necesario porque este atributo lo pone este script, no React.
+// Fija `data-theme` antes de que el navegador pinte, para que el modo
+// guardado (o "claro" por defecto) salga bien en el primer frame.
+// `suppressHydrationWarning` en <html> es necesario porque este atributo lo
+// pone este script, no React.
+//
+// ⚠️ Va como <script> crudo y NO con `next/script`. Se probó con
+// `<Script strategy="beforeInteractive">` y no sirve para esto, por dos
+// motivos que solo se ven mirando el HTML servido:
+//
+//   1. Next no lo emite como etiqueta ejecutable: lo encola en
+//      `self.__next_s` y lo ejecuta su runtime al arrancar. O sea que el
+//      tema depende del bundle de JS y no puede aplicarse antes del primer
+//      pintado. En localhost no se nota —CSS y JS llegan en el mismo
+//      milisegundo— pero en producción el bundle llega después.
+//   2. La propia documentación de Next dice que `beforeInteractive` "no
+//      bloquea la hidratación", que es justo la garantía que hace falta acá.
+//
+// Además tiraba un error de consola en cada navegación del cliente
+// ("Scripts inside React components are never executed when rendering on
+// the client"). Un <script> crudo en el <head> se ejecuta mientras el
+// navegador parsea el HTML, que es exactamente lo que se necesita.
 const SCRIPT_TEMA = `
 (function () {
   try {
@@ -65,9 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${workSans.variable} ${fredoka.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <Script id="tema-inicial" strategy="beforeInteractive">
-          {SCRIPT_TEMA}
-        </Script>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <header className="border-b border-border">

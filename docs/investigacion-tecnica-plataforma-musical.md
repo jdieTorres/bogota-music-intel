@@ -223,6 +223,22 @@ Verificadas contra los sitios reales; hay tests de regresión en `services/api/t
 
 ---
 
+### El script anti-parpadeo del tema no puede ir con `next/script` (2026-08-31)
+
+Salió de un error de consola que vio Juan navegando: *"Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client"*, apuntando al `<Script strategy="beforeInteractive">` del `layout.tsx`.
+
+El error de consola era el síntoma menor. **Mirando el HTML servido, el script nunca se emitía como etiqueta ejecutable**: Next lo empuja a una cola, `self.__next_s`, que procesa su propio runtime al arrancar. O sea que el tema guardado quedaba atado a que cargara el bundle de JS, y no podía aplicarse antes del primer pintado — exactamente lo contrario de lo que el comentario del código afirmaba desde el 2026-08-28.
+
+La documentación de Next lo dice sin vueltas y contradice el nombre de la estrategia: los scripts `beforeInteractive` *"se precargan y se buscan antes que cualquier código propio, pero su ejecución **no bloquea la hidratación**"*. Para un anti-parpadeo eso no alcanza: hace falta que corra mientras el navegador parsea el HTML.
+
+**En localhost no se ve el defecto**, y eso es lo que lo mantuvo escondido: medido en el navegador, el CSS y el primer chunk de JS terminan en el mismo milisegundo (902 ms los dos), así que la ventana de parpadeo es de 0 ms. En producción, con el bundle llegando por red después del CSS, la ventana existe.
+
+Arreglado con un `<script dangerouslySetInnerHTML>` crudo en el `<head>`, que React renderiza en el HTML del servidor y el navegador ejecuta al parsear. Verificado en el HTML servido —la etiqueta está, la cola `__next_s` ya no— y en el navegador, sin errores de consola al navegar entre rutas.
+
+**La lección, que ya es la tercera del mismo tipo en este proyecto:** el mapa en negro con CI verde, Deezer geolocalizando por IP, y ahora esto. Las tres se veían bien desde donde se estaba mirando. Acá ni siquiera el navegador alcanzaba: hubo que mirar el HTML que sale del servidor, porque en el DOM ya inspeccionado el `<script>` **sí aparece** — lo inyecta el runtime de Next después.
+
+---
+
 ## 5. Plan de ejecución del MVP
 
 **Ritmo de dedicación confirmado: medio tiempo** (varias horas, varios días a la semana). El cronograma original de 30-60 días asumía dedicación más intensiva; con medio tiempo, cada "semana" del plan probablemente toma 1.5-2 semanas reales de calendario. Se mantiene el plan por fases (no por fecha fija) y se ajusta el ritmo real semana a semana.
