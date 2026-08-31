@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { Cartelera, EstadoVacio, SinConexion } from "@/components/Cartelera";
 import { PestanasCartelera } from "@/components/PestanasCartelera";
-import { unificarDuplicados } from "@/lib/dedupe";
 import {
   type Evento,
   getFiestasProximas,
@@ -31,7 +30,7 @@ export default async function Page() {
     return <SinConexion />;
   }
 
-  const proximas = unificarDuplicados(crudos);
+  const proximas = crudos;
   const salas = new Set(proximas.map(nombreDelVenue));
 
   return (

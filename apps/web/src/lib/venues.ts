@@ -1,4 +1,3 @@
-import { unificarEnUnaSala } from "@/lib/dedupe";
 import { EN_CARTELERA } from "@/lib/editorial";
 import { supabase } from "@/lib/supabase";
 
@@ -52,14 +51,18 @@ export async function getEscena(): Promise<EscenaEnMapa> {
     .from("venues")
     .select(
       `slug, name, address, photo_url, latitude, longitude,
-       events ( id, title, starts_at, event_type )`,
+       canonical_events ( id, title, starts_at, event_type )`,
     )
-    // El mismo criterio editorial que la cartelera: sin esto el popup de una
+    // Solo lo publicado, con la misma doble cerradura que la cartelera: RLS
+    // ya lo garantiza y el filtro lo repite para que un cambio de políticas
+    // no empiece a mostrar borradores en el mapa sin que nadie lo note.
+    .eq("canonical_events.status", "publicado")
+    // El mismo criterio editorial que la cartelera: sin esto el panel de una
     // sala sigue anunciando la obra de teatro que la home ya no muestra. Las
     // fiestas sí entran: acá no se separan de los conciertos, porque el mapa
     // contesta "dónde hay música esta noche" y una fiesta también cuenta.
-    .or(EN_CARTELERA, { referencedTable: "events" })
-    .gte("events.starts_at", inicioDeHoyEnBogota())
+    .or(EN_CARTELERA, { referencedTable: "canonical_events" })
+    .gte("canonical_events.starts_at", inicioDeHoyEnBogota())
     .order("name");
 
   if (error) throw new Error(`No se pudo cargar el mapa: ${error.message}`);
@@ -68,13 +71,12 @@ export async function getEscena(): Promise<EscenaEnMapa> {
   const sinUbicar: SalaSinUbicar[] = [];
 
   for (const fila of data ?? []) {
-    // Sin unificar, el popup de Royal Center muestra dos veces el mismo
-    // show: la sala y el promotor lo publican por separado.
-    const eventos = unificarEnUnaSala(
-      ((fila.events ?? []) as EventoEnSala[])
-        .slice()
-        .sort((a, b) => (a.starts_at ?? "").localeCompare(b.starts_at ?? "")),
-    );
+    // Ya no hace falta unificar acá: el evento canónico es la unidad
+    // deduplicada, así que Royal Center ya no muestra dos veces el mismo
+    // show que la sala y el promotor publican por separado.
+    const eventos = ((fila.canonical_events ?? []) as EventoEnSala[])
+      .slice()
+      .sort((a, b) => (a.starts_at ?? "").localeCompare(b.starts_at ?? ""));
 
     // Una sala sin eventos próximos no aporta al mapa de escena activa.
     if (eventos.length === 0) continue;

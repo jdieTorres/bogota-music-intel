@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getEvento, nombreDelVenue } from "@/lib/events";
+import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
 import { tituloParaMostrar } from "@/lib/tituloEvento";
 
@@ -93,19 +93,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
         </a>
       )}
 
-      <p className="mt-10 border-t border-border pt-5 text-xs leading-relaxed text-muted">
-        Datos recogidos de{" "}
-        <a
-          href={evento.source_url}
-          target="_blank"
-          rel="noreferrer"
-          className="underline underline-offset-4 transition-colors hover:text-foreground"
-        >
-          la cartelera oficial de la sala
-        </a>
-        . Confirmá los detalles ahí antes de comprar: la programación puede
-        cambiar después de la última actualización.
-      </p>
+      <Procedencia evento={evento} />
     </article>
   );
 }
@@ -124,5 +112,64 @@ function Dato({
       </dt>
       <dd className="mt-1 text-sm">{children}</dd>
     </div>
+  );
+}
+
+/**
+ * De dónde salió lo que se está mostrando.
+ *
+ * No es un pie de página decorativo: es la diferencia entre "esto lo publica
+ * la sala" y "esto lo verificamos nosotros". Un evento cargado a mano no
+ * tiene cartelera oficial a la que remitir —por eso existe, justamente: los
+ * toques que no se publican en ningún lado— así que afirmar que sí la tiene
+ * sería exactamente el tipo de dato inventado que el proyecto no permite.
+ *
+ * Por lo mismo, "revisado a mano" solo se dice cuando `reviewed_at` existe.
+ * Los 51 eventos de la mudanza inicial se publicaron sin que nadie los
+ * mirara, y decir lo contrario sería la misma mentira en la otra dirección.
+ */
+function Procedencia({ evento }: { evento: Evento }) {
+  const fuentes = evento.events ?? [];
+  const revisado = evento.reviewed_at !== null;
+
+  // El hostname y no el slug interno (`rockal_live`): al lector le sirve
+  // saber que el dato salió de royalcenter.com.co, no cómo llamamos a esa
+  // fuente en el código.
+  const dominio = (url: string) => {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return url;
+    }
+  };
+
+  return (
+    <p className="mt-10 border-t border-border pt-5 text-xs leading-relaxed text-muted">
+      {fuentes.length === 0 ? (
+        <>Evento verificado y cargado a mano{evento.evidence ? `: ${evento.evidence}` : ""}.</>
+      ) : (
+        <>
+          Datos recogidos de{" "}
+          {fuentes.map((fuente, i) => (
+            <span key={fuente.source_url}>
+              {i > 0 && " y de "}
+              <a
+                href={fuente.source_url}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4 transition-colors hover:text-foreground"
+              >
+                {fuentes.length > 1
+                  ? dominio(fuente.source_url)
+                  : "la cartelera oficial de la sala"}
+              </a>
+            </span>
+          ))}
+          {revisado ? ", y revisados a mano." : "."}
+        </>
+      )}{" "}
+      Confirmá los detalles antes de comprar: la programación puede cambiar
+      después de la última actualización.
+    </p>
   );
 }

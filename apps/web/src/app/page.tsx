@@ -1,6 +1,5 @@
 import { Cartelera, EstadoVacio, SinConexion } from "@/components/Cartelera";
 import { PestanasCartelera } from "@/components/PestanasCartelera";
-import { unificarDuplicados } from "@/lib/dedupe";
 import {
   type Evento,
   getEventosProximos,
@@ -28,8 +27,9 @@ export default async function Page() {
     return <SinConexion />;
   }
 
-  // La sala y el promotor publican el mismo show por separado.
-  const proximos = unificarDuplicados(crudos);
+  // Ya vienen deduplicados: el evento canónico es la unidad publicada, y
+  // quién se une a quién lo decidió una persona en la cola de revisión.
+  const proximos = crudos;
   const salas = new Set(proximos.map(nombreDelVenue));
 
   return (

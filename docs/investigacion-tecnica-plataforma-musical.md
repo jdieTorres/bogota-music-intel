@@ -439,7 +439,9 @@ No es un defecto de la normalización y no está resuelto. Arreglarlo significa 
 
 ## 9. Fase 5 (nueva) — moderación: el scraping propone, el admin publica
 
-Diseñada con Juan el 2026-08-31, al reemplazar el radar por el directorio. **Ningún evento se publica solo.** El cron sigue corriendo igual, pero lo que trae entra como **borrador** a una cola de revisión; el admin verifica, completa y publica.
+Diseñada con Juan el 2026-08-31, al reemplazar el radar por el directorio. **La base está construida y corriendo desde ese mismo día**; falta el formulario de admin, la cobertura y el directorio.
+
+**Ningún evento se publica solo.** El cron sigue corriendo igual, pero lo que trae entra como **borrador** a una cola de revisión; el admin verifica, completa y publica.
 
 ### Por qué, y por qué encaja
 
@@ -511,3 +513,19 @@ Dos consecuencias sobre el trabajo anterior, que conviene saber antes de constru
 Se evaluó y se descartó **scrapear una cuenta propia** (subir la info a Instagram o X y volver a bajarla). Es técnicamente posible —leer los posts de tu propia cuenta de Instagram no requiere app review, alcanza con modo desarrollo y rol de tester; X no tiene tier gratuito para cuentas nuevas desde febrero de 2026 y cobra por lectura— pero es un viaje de ida y vuelta a través de una base de datos peor: obligaría a escribir un parser de nuestros propios datos sobre un caption, que es peor fuente que la página de una sala.
 
 **La dirección correcta es la inversa: la plataforma es la fuente, las redes son la salida.** El admin cura en la plataforma y la plataforma publica sola ("esta semana en Bogotá: 5 toques locales"). Mismo esfuerzo, los datos quedan estructurados, publicar es la dirección que las plataformas sí soportan, y la cuenta se vuelve distribución — que es un pendiente abierto del doc de producto (§ 7) y parte del pivote editorial de Juan. Queda anotado para después del MVP.
+
+### Estado de la base (2026-08-31)
+
+Hecho y verificado:
+
+- Migración `supabase/migrations/20260831000000_moderacion.sql`, aplicada por Juan en el SQL editor.
+- `deduplicacion.py` y `moderacion.py` (lógica pura, sin credenciales) + `moderacion_cli.py`, con 16 tests.
+- Backfill corrido: **51 canónicos de 53 filas crudas**, todos `publicado`, 0 huérfanos, 0 crudos sin canónico. Se unieron los dos duplicados esperados —Akriila y MADE4RAP, que llegan por dos fuentes cada uno—, el mismo resultado que daba la dedupe del frontend.
+- **Idempotencia comprobada contra datos reales**: una corrida normal inmediatamente después reporta `0 borradores nuevos, 0 con cambios en el origen, 0 publicados sin fuente`. Es la prueba de que el snapshot no inventa cambios.
+- Paso `Moderation queue` en el cron, después de `Classify events`.
+- La cartelera, el mapa y el detalle leen `canonical_events`. Verificado en navegador: 39 conciertos, 2 fiestas y 41 eventos en el mapa — **los mismos números que antes de la mudanza**, que es la señal de que no se perdió ni se duplicó nada.
+- `apps/web/src/lib/dedupe.ts` borrado con sus 15 tests: la lógica vive ahora en Python, con los suyos.
+
+⚠️ **Los 51 del backfill tienen `reviewed_at` en null, a propósito.** Nadie los revisó: se publicaron para que la cartelera no se vaciara al cambiar de modelo. Esto ya se cobró un error al escribir la página de detalle: el aviso de procedencia decía "y revisados a mano" para todos, lo cual era falso para los 51. Ahora esa frase solo aparece cuando `reviewed_at` existe. Vale como recordatorio de que la regla de no inventar datos también aplica a lo que el sitio dice **sobre sí mismo**, no solo a los datos de los eventos.
+
+El aviso de procedencia además distingue tres casos, porque no puede afirmar lo mismo en los tres: una fuente ("la cartelera oficial de la sala"), varias (los dominios reales, no los slugs internos como `rockal_live`), y ninguna (evento cargado a mano, con su evidencia).

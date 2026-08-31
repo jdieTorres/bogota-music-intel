@@ -13,9 +13,19 @@ export type EventoVenue = {
  *  evento sin clasificar se sigue mostrando. */
 export type TipoEvento = "music" | "fiesta" | "not_music" | null;
 
+/** De dónde salió el evento. Un `manual` no tiene página de sala a la que
+ *  remitir al lector, y por eso la base le exige `evidence`. */
+export type OrigenEvento = "scraper" | "manual";
+
+/** La página de la que salió el dato. Un evento puede tener varias: el
+ *  mismo show publicado por la sala y por el promotor. */
+export type FuenteEvento = {
+  source: string;
+  source_url: string;
+};
+
 export type Evento = {
   id: string;
-  source: string;
   title: string;
   starts_at: string | null;
   ends_at: string | null;
@@ -24,22 +34,40 @@ export type Evento = {
   price_text: string | null;
   category: string | null;
   ticket_url: string | null;
-  source_url: string;
   image_url: string | null;
-  venue_name_raw: string;
   event_type: TipoEvento;
   /** null = no se pudo resolver el origen del artista. Distinto de false,
    *  que es un internacional confirmado. */
   is_local: boolean | null;
+  origin: OrigenEvento;
+  /** De dónde salió el dato cuando no hay página de sala que lo respalde. */
+  evidence: string | null;
+  /** Cuándo lo revisó una persona. `null` significa que nadie lo hizo —los
+   *  51 de la mudanza inicial están así— y por eso la página no puede
+   *  afirmar que fue revisado. */
+  reviewed_at: string | null;
   venues: EventoVenue | null;
+  /** Las filas crudas de las que cuelga este evento. Vacío si lo cargó el
+   *  admin a mano. */
+  events: FuenteEvento[];
 };
 
 const CAMPOS = `
-  id, source, title, starts_at, ends_at, date_precision, description,
-  price_text, category, ticket_url, source_url, image_url, venue_name_raw,
-  event_type, is_local,
-  venues ( slug, name, city )
+  id, title, starts_at, ends_at, date_precision, description,
+  price_text, category, ticket_url, image_url,
+  event_type, is_local, origin, evidence, reviewed_at,
+  venues ( slug, name, city ),
+  events ( source, source_url )
 `;
+
+/**
+ * Solo lo publicado. Se pide explícitamente **además** de que RLS ya lo
+ * garantice: la política de la base es la defensa real —la publishable key
+ * no puede leer un borrador ni queriendo— y este filtro es la segunda
+ * cerradura, para que un cambio futuro en las políticas no empiece a
+ * publicar borradores sin que nadie lo note.
+ */
+const PUBLICADO = "publicado";
 
 
 /** Inicio del día de hoy en Bogotá, en UTC. Un evento que empieza a las 8pm
@@ -57,11 +85,16 @@ function inicioDeHoyEnBogota(): string {
 }
 
 /** Lo próximo de una pestaña, en orden cronológico. El filtro editorial es
- *  lo único que cambia entre conciertos y fiestas. */
+ *  lo único que cambia entre conciertos y fiestas.
+ *
+ *  Ya no hace falta deduplicar acá: el evento canónico ES la unidad
+ *  deduplicada, y quién se une a quién lo decidió una persona en la cola de
+ *  revisión, no una heurística en el navegador. */
 async function proximos(filtroEditorial: string): Promise<Evento[]> {
   const { data, error } = await supabase
-    .from("events")
+    .from("canonical_events")
     .select(CAMPOS)
+    .eq("status", PUBLICADO)
     .or(filtroEditorial)
     .gte("starts_at", inicioDeHoyEnBogota())
     .order("starts_at", { ascending: true });
@@ -74,8 +107,9 @@ async function proximos(filtroEditorial: string): Promise<Evento[]> {
  *  vez de descartarlos: existen, solo que hay que confirmar cuándo son. */
 async function sinFecha(filtroEditorial: string): Promise<Evento[]> {
   const { data, error } = await supabase
-    .from("events")
+    .from("canonical_events")
     .select(CAMPOS)
+    .eq("status", PUBLICADO)
     .or(filtroEditorial)
     .is("starts_at", null)
     .order("title", { ascending: true });
@@ -91,8 +125,9 @@ export const getFiestasSinFecha = () => sinFecha(SOLO_FIESTAS);
 
 export async function getEvento(id: string): Promise<Evento | null> {
   const { data, error } = await supabase
-    .from("events")
+    .from("canonical_events")
     .select(CAMPOS)
+    .eq("status", PUBLICADO)
     .eq("id", id)
     .maybeSingle();
 
@@ -100,8 +135,11 @@ export async function getEvento(id: string): Promise<Evento | null> {
   return (data as unknown as Evento) ?? null;
 }
 
+/** El nombre de la sala, o el hueco honesto si todavía no se le asignó
+ *  una. Puede pasar con un evento cargado a mano en un lugar que la base
+ *  todavía no conoce: mejor decir que falta que inventar un nombre. */
 export function nombreDelVenue(evento: Evento): string {
-  return evento.venues?.name ?? evento.venue_name_raw;
+  return evento.venues?.name ?? "Sala por confirmar";
 }
 
 /** Agrupa por día calendario de Bogotá, conservando el orden cronológico. */
