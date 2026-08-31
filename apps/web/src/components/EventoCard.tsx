@@ -34,7 +34,7 @@ export function EventoCard({ evento }: { evento: Evento }) {
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
           <h3 className="text-balance font-medium leading-snug transition-colors group-hover:text-accent">
-            {tituloParaMostrar(evento)}
+            {tituloParaMostrar(evento, venue)}
           </h3>
           <p className="truncate text-sm text-muted">{venue}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">

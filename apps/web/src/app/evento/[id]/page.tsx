@@ -16,7 +16,7 @@ export async function generateMetadata(
   const evento = await getEvento(id);
   if (!evento) return { title: "Evento no encontrado" };
 
-  const titulo = tituloParaMostrar(evento);
+  const titulo = tituloParaMostrar(evento, nombreDelVenue(evento));
   return {
     title: titulo,
     description: evento.description ?? `${titulo} en ${nombreDelVenue(evento)}, Bogotá.`,
@@ -42,7 +42,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
 
       <header className="mt-6">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {tituloParaMostrar(evento)}
+          {tituloParaMostrar(evento, venue)}
         </h1>
         <p className="mt-3 text-lg text-muted">{venue}</p>
       </header>

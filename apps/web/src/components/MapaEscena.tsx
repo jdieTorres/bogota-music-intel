@@ -100,7 +100,7 @@ function PanelSala({ sala }: { sala: SalaEnMapa }) {
                 <span className="shrink-0 font-mono text-xs text-muted">
                   {fechaCorta(evento.starts_at)}
                 </span>
-                <span className="truncate text-sm">{tituloParaMostrar(evento)}</span>
+                <span className="truncate text-sm">{tituloParaMostrar(evento, sala.name)}</span>
               </Link>
             </li>
           ))}
