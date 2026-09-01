@@ -11,11 +11,6 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-- 🔴 **Pushear los 5 commits del 2026-09-01.** El CI no los ha visto. Lo más
-  importante sin ejercitar es el paso `npm run lint` que se agregó al workflow
-  `Tests` ese mismo día: **nunca se ha ejecutado en CI**. Localmente pasa,
-  pero eso es lo que también pasaba antes de descubrir que el frontend no
-  tenía linter. Tampoco pasó por CI nada del festival ni del género.
 - **Publicar los 6 festivales.** Están marcados pero en borrador, así que
   `/festivales` se ve vacía — es correcto, no un bug. Son seis clics en
   `/admin` → "Por revisar" → Publicar.
@@ -78,6 +73,13 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
     `event_type` en null **antes** de tocar nada.
   - Lo único demostrado hoy: MusicBrainz responde bien desde la máquina de
     Juan (74 de 74, sin un solo 503, el 2026-09-01).
+- ✅ **Cerrado el 2026-09-01: el CI vio todo lo del 2026-09-01.** Se pushearon
+  los 6 commits del día —eran 6, no 5 como decía la nota anterior— y el
+  workflow `Tests` quedó **verde en `e02bc5e`**. Con eso queda ejercitado por
+  primera vez el paso **`npm run lint`**, que era lo que más preocupaba, y de
+  paso se resuelve la duda que estaba anotada como "*no debería* no es *se
+  verificó*": el linter corre **antes** de `npx next typegen` y no lo necesita.
+  También pasaron por CI el festival y el género.
 - **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen
   falta `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en
   el proyecto de Vercel.
@@ -111,7 +113,7 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 | Fotos de sala | **0 de 13** |
 | Bloqueados | 24 `(fuente, id)` que no vuelven a entrar |
 | En pantalla | **40 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), 42 eventos en el mapa |
-| Tests | 249 backend + 42 frontend, verdes **en local** |
+| Tests | 249 backend + 42 frontend, verdes **en CI** (`e02bc5e`, 2026-09-01T21:36Z) |
 
 Cómo leerlas sin equivocarse:
 
