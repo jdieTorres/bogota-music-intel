@@ -552,3 +552,21 @@ El aviso de procedencia además distingue tres casos, porque no puede afirmar lo
   - **La tabla `trending_artists` sigue en pie**, con 215 filas de `lastfm_geo`. La migración para soltarla está escrita y **sin aplicar** (`20260831010000_baja_radar.sql`): borra datos irrecuperables —cada fila era la foto de un momento— y no le hace daño a nadie quedarse. Es decisión de Juan.
 - **Los tres `not_music` pasaron a `descartado`.** Estaban en `publicado` y a la vez filtrados por el criterio editorial, que es una contradicción: `status` contesta "¿va al sitio?" y `event_type` contesta "¿qué es?". Un `not_music` publicado dice "aprobado" sobre algo que nunca se muestra. Las filas crudas no se tocan: borrarlas las traería de vuelta en la corrida siguiente.
 - **Defecto encontrado y corregido en el propio modelo de moderación**, un día después de escribirlo: la clasificación editorial se hereda del crudo **al crear el borrador**, así que un evento que MusicBrainz resolvía tarde —503, o el problema de CI de arriba— se quedaba con `event_type` en null en el canónico **para siempre**. El canónico ya existía cuando llegó la respuesta. Lo arregla un paso nuevo del CLI (`clasificacion_pendiente`) que **solo rellena huecos y nunca sobrescribe**: si el admin corrigió el tipo a mano, su decisión gana sobre lo que diga MusicBrainz mañana. Se detectó revisando la base, no con los tests — los tests probaban lo que el código hacía, no lo que faltaba que hiciera.
+
+### La normalización se muda a la ingesta (2026-08-31)
+
+Lo levantó Juan mirando la pantalla de moderación: **los títulos que aparecían para editar no eran los que veía el público.** La normalización era una capa de presentación (`apps/web/src/lib/tituloEvento.ts`), así que la base guardaba `AKRIILA EN BOGOTÁ` y el navegador dibujaba `Akriila`. El admin editaba una cosa y publicaba otra.
+
+Su diagnóstico fue el correcto y va más lejos que el síntoma: **el título guardado tiene que ser el título publicado**. Con moderación de por medio, una transformación al mostrar puede pisar una corrección hecha a mano, que es exactamente lo contrario de para qué existe la cola.
+
+Se movió el módulo entero a Python (`titulos.py` + `titulos_curados.py`) y se aplica en `borrador_desde()`, entre la llegada del cron y la cola de borradores. El frontend ya no transforma nada: muestra `canonical_events.title` tal cual, y `tituloEvento.ts`, `titulosCurados.ts` y sus 56 tests se borraron.
+
+Cómo se verificó que el port no cambió comportamiento:
+
+- Los 49 tests del frontend se portaron y pasaron **al primer intento**, más 7 de las listas curadas: 56 en Python.
+- Se corrió el normalizador nuevo sobre los 53 títulos crudos reales y se comparó, entrada por entrada, contra lo que el TypeScript producía en el navegador. Idénticos.
+- Después de migrar, la cartelera muestra los mismos 39 conciertos con los mismos títulos.
+
+**La trampa que casi se pasa por alto:** `source_snapshot` guarda el título tal como se aprobó, y se compara contra lo que devuelve `borrador_desde()`. Al empezar a normalizar, el snapshot de los 51 canónicos —guardado en crudo— habría diferido del borrador nuevo, y el cron habría marcado **los 51 como "la fuente cambió el título"** sin que ninguna sala tocara nada. El paso único `moderacion_cli --normalizar-titulos` actualiza las dos cosas a la vez: 43 títulos puestos al día, y la corrida siguiente reporta 0 cambios.
+
+**Consecuencia sobre la limitación conocida de la dedupe** (el caso Akriila perdiendo "Tour Lucy"): dejó de ser una pregunta de producto abierta. El canónico cuelga de todas sus fuentes y el admin edita el título antes de publicar, así que la respuesta ya no depende de una heurística.

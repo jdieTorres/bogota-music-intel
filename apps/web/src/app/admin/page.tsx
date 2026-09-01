@@ -51,6 +51,7 @@ export default function AdminPage() {
   const [cola, setCola] = useState<EventoEnCola[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pestaña, setPestaña] = useState<Pestaña>("cola");
+  const [elegido, setElegido] = useState<string | null>(null);
 
   const cargar = useCallback(
     async (haySesion: boolean, cual: Pestaña) => {
@@ -84,6 +85,11 @@ export default function AdminPage() {
   }, [cargar, pestaña]);
 
   const recargar = useCallback(() => void cargar(true, pestaña), [cargar, pestaña]);
+
+  // Se busca en la lista en vez de guardar el objeto: así, después de
+  // recargar, la ficha abierta muestra lo que quedó en la base y no una
+  // copia de antes de guardar.
+  const seleccionado = cola.find((e) => e.id === elegido) ?? null;
 
   if (sesion === "cargando") {
     return <Marco><p className="text-muted">Cargando…</p></Marco>;
@@ -120,6 +126,7 @@ export default function AdminPage() {
             key={clave}
             onClick={() => {
               setPestaña(clave);
+              setElegido(null);
               void cargar(true, clave);
             }}
             className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
@@ -139,12 +146,32 @@ export default function AdminPage() {
 
       {error && <p className="mt-6 text-sm text-red-400">{error}</p>}
 
-      {cola.length === 0 ? (
+      {seleccionado ? (
+        <div className="mt-6">
+          <button
+            onClick={() => setElegido(null)}
+            className="font-mono text-xs uppercase tracking-widest text-muted transition-colors hover:text-foreground"
+          >
+            ← Volver al listado
+          </button>
+          <div className="mt-4">
+            <Ficha
+              key={seleccionado.id}
+              evento={seleccionado}
+              alResolver={() => {
+                setElegido(null);
+                recargar();
+              }}
+              setError={setError}
+            />
+          </div>
+        </div>
+      ) : cola.length === 0 ? (
         <p className="mt-10 text-muted">{VACIO[pestaña]}</p>
       ) : (
-        <ul className="mt-6 space-y-5">
+        <ul className="mt-6 divide-y divide-border border-y border-border">
           {cola.map((evento) => (
-            <Ficha key={evento.id} evento={evento} alResolver={recargar} setError={setError} />
+            <Renglon key={evento.id} evento={evento} alElegir={() => setElegido(evento.id)} />
           ))}
         </ul>
       )}
@@ -227,6 +254,57 @@ function Ingreso() {
   );
 }
 
+/**
+ * Un renglón del listado. Muestra lo justo para decidir si hay que entrar:
+ * cuándo, cómo se va a ver publicado, dónde, y qué reclama atención.
+ *
+ * El título es el que se va a publicar, no el crudo de la sala: desde el
+ * 2026-08-31 la normalización corre en la ingesta, así que lo que se ve acá
+ * es literalmente lo que ve el visitante. Antes no era así y editar a
+ * ciegas era fácil.
+ */
+/** "03 sep 26". Se arma por partes porque `es-CO` interpone "de" entre
+ *  ellas ("03 de sept de 26") y en una columna angosta eso parte el
+ *  renglón en dos líneas. */
+function fechaCompacta(iso: string | null): string {
+  if (!iso) return "sin fecha";
+  const partes = new Intl.DateTimeFormat("es-CO", {
+    timeZone: "America/Bogota",
+    day: "2-digit",
+    month: "short",
+    year: "2-digit",
+  }).formatToParts(new Date(iso));
+  const valor = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? "";
+  return `${valor("day")} ${valor("month").replace(".", "")} ${valor("year")}`;
+}
+
+function Renglon({ evento, alElegir }: { evento: EventoEnCola; alElegir: () => void }) {
+  return (
+    <li>
+      <button
+        onClick={alElegir}
+        className="flex w-full items-baseline gap-3 px-2 py-3 text-left transition-colors hover:bg-surface-hover"
+      >
+        <span className="w-20 shrink-0 font-mono text-xs text-muted">
+          {fechaCompacta(evento.starts_at)}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate">{evento.title ?? "(sin título)"}</span>
+          <span className="mt-0.5 block truncate text-xs text-muted">
+            {evento.venues?.name ?? "sala sin asignar"}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {evento.change_detail && <Etiqueta acento>cambió</Etiqueta>}
+          {evento.status === "borrador" && <Etiqueta>borrador</Etiqueta>}
+          {evento.origin === "manual" && <Etiqueta>a mano</Etiqueta>}
+          {evento.event_type === "not_music" && <Etiqueta>no es música</Etiqueta>}
+        </span>
+      </button>
+    </li>
+  );
+}
+
 function Ficha({
   evento,
   alResolver,
@@ -264,7 +342,7 @@ function Ficha({
   }
 
   return (
-    <li className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
         <Etiqueta>{evento.status}</Etiqueta>
         {evento.origin === "manual" && <Etiqueta>cargado a mano</Etiqueta>}
@@ -451,7 +529,7 @@ function Ficha({
           alConfirmar={(motivo) => accion(() => borrar(evento.id, motivo))}
         />
       )}
-    </li>
+    </div>
   );
 }
 

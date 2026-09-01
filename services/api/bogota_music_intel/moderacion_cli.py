@@ -42,6 +42,7 @@ CAMPOS_CRUDOS = (
     "id,source,source_event_id,venue_id,title,starts_at,ends_at,date_precision,"
     "description,price_text,category,ticket_url,image_url,event_type,is_local,canonical_id"
 )
+CAMPOS_SALAS = "id,name"
 CAMPOS_CANONICOS = (
     "id,status,origin,venue_id,title,starts_at,source_snapshot,change_detected_at,"
     "event_type,is_local"
@@ -55,14 +56,14 @@ def _ordenados(eventos: list[dict]) -> list[dict]:
     return sorted(eventos, key=lambda e: (e["source"], e["source_event_id"]))
 
 
-def _abrir_borradores(client, crudos: list[dict], canonicos: list[dict], guardar: bool) -> int:
+def _abrir_borradores(client, crudos, canonicos, salas, guardar: bool) -> int:
     sin_canonico = [e for e in crudos if not e.get("canonical_id")]
     if not sin_canonico:
         return 0
 
     abiertos = 0
     for grupo in agrupar_mismos_shows(_ordenados(sin_canonico)):
-        borrador = borrador_desde(grupo)
+        borrador = borrador_desde(grupo, salas)
 
         # La sugerencia de duplicado no decide nada: la confirma el admin.
         parecido = next((c for c in canonicos if es_el_mismo_show(c, grupo[0])), None)
@@ -83,7 +84,7 @@ def _abrir_borradores(client, crudos: list[dict], canonicos: list[dict], guardar
     return abiertos
 
 
-def _marcar_cambios(client, crudos: list[dict], canonicos: list[dict], guardar: bool) -> int:
+def _marcar_cambios(client, crudos, canonicos, salas, guardar: bool) -> int:
     por_canonico: dict[str, list[dict]] = {}
     for evento in crudos:
         if evento.get("canonical_id"):
@@ -97,7 +98,7 @@ def _marcar_cambios(client, crudos: list[dict], canonicos: list[dict], guardar: 
         if not fuentes:
             continue
 
-        diferencias = cambios(canonico.get("source_snapshot"), borrador_desde(fuentes))
+        diferencias = cambios(canonico.get("source_snapshot"), borrador_desde(fuentes, salas))
         if not diferencias:
             continue
 
@@ -154,14 +155,14 @@ def _bajar_clasificacion_tardia(client, crudos, canonicos, guardar: bool) -> int
     return bajadas
 
 
-def _backfill(client, crudos: list[dict], guardar: bool) -> int:
+def _backfill(client, crudos, salas, guardar: bool) -> int:
     """La mudanza inicial: publica como canónico lo que ya estaba a la vista."""
     sin_canonico = [e for e in crudos if not e.get("canonical_id")]
     ahora = datetime.now(UTC).isoformat()
     publicados = 0
 
     for grupo in agrupar_mismos_shows(_ordenados(sin_canonico)):
-        canonico = borrador_desde(grupo)
+        canonico = borrador_desde(grupo, salas)
         canonico["status"] = "publicado"
         canonico["published_at"] = ahora
         # `reviewed_at` queda en null a propósito: nadie lo revisó. Es lo que
@@ -178,9 +179,60 @@ def _backfill(client, crudos: list[dict], guardar: bool) -> int:
     return publicados
 
 
+def _normalizar_titulos(client, crudos, canonicos, salas, guardar: bool) -> int:
+    """Paso único: pasa por el normalizador los títulos que ya estaban.
+
+    Los 51 canónicos del backfill se crearon con el título crudo, porque la
+    normalización todavía vivía en el frontend. Al mudarla a la ingesta hay
+    que ponerlos al día, o el sitio mostraría el título de la sala en
+    mayúscula sostenida.
+
+    **También actualiza `source_snapshot['title']`, y eso no es opcional.**
+    El snapshot guarda "lo que ya vi de la fuente", y se compara contra lo
+    que produce `borrador_desde()`. Si el snapshot quedara con el título
+    crudo mientras el borrador pasa a devolverlo normalizado, la corrida
+    siguiente marcaría los 51 como "la fuente cambió el título" sin que
+    ninguna sala hubiera tocado nada.
+    """
+    por_canonico: dict[str, list[dict]] = {}
+    for evento in crudos:
+        if evento.get("canonical_id"):
+            por_canonico.setdefault(evento["canonical_id"], []).append(evento)
+
+    puestos_al_dia = 0
+    for canonico in canonicos:
+        fuentes = _ordenados(por_canonico.get(canonico["id"], []))
+        if not fuentes:
+            continue
+
+        propuesto = borrador_desde(fuentes, salas)
+        nuevo_titulo = propuesto["title"]
+        snapshot_al_dia = {
+            **(canonico.get("source_snapshot") or {}),
+            "title": propuesto["source_snapshot"]["title"],
+        }
+        if nuevo_titulo == canonico["title"] and snapshot_al_dia == canonico.get(
+            "source_snapshot"
+        ):
+            continue
+
+        print(f"  {canonico['title']}  ->  {nuevo_titulo}")
+        if guardar:
+            client.table("canonical_events").update(
+                {"title": nuevo_titulo, "source_snapshot": snapshot_al_dia}
+            ).eq("id", canonico["id"]).execute()
+        puestos_al_dia += 1
+    return puestos_al_dia
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="No guarda, solo reporta")
+    parser.add_argument(
+        "--normalizar-titulos",
+        action="store_true",
+        help="Paso único: normaliza los títulos que se guardaron crudos",
+    )
     parser.add_argument(
         "--backfill",
         action="store_true",
@@ -193,6 +245,10 @@ def main() -> int:
     try:
         crudos = client.table("events").select(CAMPOS_CRUDOS).execute().data
         canonicos = client.table("canonical_events").select(CAMPOS_CANONICOS).execute().data
+        salas = {
+            v["id"]: v["name"]
+            for v in client.table("venues").select(CAMPOS_SALAS).execute().data
+        }
     except Exception as exc:
         if "canonical_id" in str(exc) or "canonical_events" in str(exc):
             print(
@@ -203,18 +259,21 @@ def main() -> int:
             return 1
         raise
 
-    if args.backfill:
+    if args.normalizar_titulos:
+        puestos = _normalizar_titulos(client, crudos, canonicos, salas, guardar)
+        print(f"\n{puestos} títulos puestos al día.")
+    elif args.backfill:
         if canonicos:
             print(
                 f"Ya hay {len(canonicos)} canónicos: el backfill es una sola vez.\n"
                 "Corré sin --backfill para la operación normal."
             )
             return 1
-        publicados = _backfill(client, crudos, guardar)
+        publicados = _backfill(client, crudos, salas, guardar)
         print(f"\n{publicados} eventos publicados como canónicos (mudanza inicial).")
     else:
-        abiertos = _abrir_borradores(client, crudos, canonicos, guardar)
-        marcados = _marcar_cambios(client, crudos, canonicos, guardar)
+        abiertos = _abrir_borradores(client, crudos, canonicos, salas, guardar)
+        marcados = _marcar_cambios(client, crudos, canonicos, salas, guardar)
         bajadas = _bajar_clasificacion_tardia(client, crudos, canonicos, guardar)
         huerfanos = _avisar_huerfanos(crudos, canonicos)
         print(

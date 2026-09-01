@@ -23,6 +23,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from bogota_music_intel.deduplicacion import mas_completo
+from bogota_music_intel.titulos import normalizar_titulo
 
 # Los campos crudos que se vigilan: si la sala mueve alguno después de que
 # el admin aprobó, el evento vuelve a la cola.
@@ -93,7 +94,7 @@ def cambios(aprobado: dict | None, crudo: dict) -> dict[str, dict[str, Any]]:
     }
 
 
-def borrador_desde(crudos: list[dict]) -> dict:
+def borrador_desde(crudos: list[dict], salas: dict[str, str] | None = None) -> dict:
     """Arma el borrador del canónico a partir de sus filas crudas.
 
     Cuando el mismo show llega por varias fuentes se prellena con la más
@@ -101,6 +102,16 @@ def borrador_desde(crudos: list[dict]) -> dict:
     de todas, así que el admin puede tomar el título de una y el precio de
     otra. Eso es lo que arregla el caso de Akriila, que perdía "Tour Lucy"
     porque ganaba la fila que traía precio y hora.
+
+    **El título se normaliza acá**, entre la llegada del cron y la cola de
+    revisión (`titulos.py`). Antes se normalizaba al mostrar, y eso hacía que
+    el admin editara un título distinto del que veía el visitante — lo notó
+    Juan el 2026-08-31 mirando la pantalla de moderación. Que la normalización
+    ocurra antes es lo que hace cierto que el título guardado es el publicado,
+    y que una corrección a mano no la pise nadie después.
+
+    `salas` mapea `venue_id` a nombre de sala, para poder quitar el "en
+    <sala>" que varias fuentes le pegan al título.
     """
     if not crudos:
         raise ValueError("Un borrador de fuente scrapeada necesita al menos un crudo")
@@ -116,6 +127,13 @@ def borrador_desde(crudos: list[dict]) -> dict:
                 if otro.get(campo) is not None:
                     borrador[campo] = otro[campo]
                     break
+
+    if borrador.get("title"):
+        borrador["title"] = normalizar_titulo(
+            borrador["title"],
+            borrador.get("event_type"),
+            (salas or {}).get(borrador.get("venue_id") or ""),
+        )
 
     borrador["status"] = "borrador"
     borrador["origin"] = "scraper"

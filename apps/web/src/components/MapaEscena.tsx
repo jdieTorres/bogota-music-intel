@@ -17,7 +17,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { IconNota } from "@/components/icons";
 import type { SalaEnMapa } from "@/lib/venues";
-import { tituloParaMostrar } from "@/lib/tituloEvento";
 
 // maplibre-gl 6 resuelve su worker con `import.meta.url` y descarta el valor si
 // no es una URL http(s). Turbopack no le da una, así que el mapa se queda sin
@@ -100,7 +99,7 @@ function PanelSala({ sala }: { sala: SalaEnMapa }) {
                 <span className="shrink-0 font-mono text-xs text-muted">
                   {fechaCorta(evento.starts_at)}
                 </span>
-                <span className="truncate text-sm">{tituloParaMostrar(evento, sala.name)}</span>
+                <span className="truncate text-sm">{evento.title}</span>
               </Link>
             </li>
           ))}

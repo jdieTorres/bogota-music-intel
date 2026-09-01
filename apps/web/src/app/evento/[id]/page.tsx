@@ -7,7 +7,6 @@ import { ControlesDeAdmin } from "@/components/ControlesDeAdmin";
 
 import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
-import { tituloParaMostrar } from "@/lib/tituloEvento";
 
 export const revalidate = 1800;
 
@@ -18,7 +17,7 @@ export async function generateMetadata(
   const evento = await getEvento(id);
   if (!evento) return { title: "Evento no encontrado" };
 
-  const titulo = tituloParaMostrar(evento, nombreDelVenue(evento));
+  const titulo = evento.title;
   return {
     title: titulo,
     description: evento.description ?? `${titulo} en ${nombreDelVenue(evento)}, Bogotá.`,
@@ -32,7 +31,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
 
   const hora = horaDeEvento(evento.starts_at, evento.date_precision);
   const venue = nombreDelVenue(evento);
-  const titulo = tituloParaMostrar(evento, venue);
+  const titulo = evento.title;
 
   return (
     <article className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
