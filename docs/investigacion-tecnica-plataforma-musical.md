@@ -651,3 +651,37 @@ La primera reacción fue envolver cada ficha en un `try/except` para "no perder 
 El scraper es estricto a propósito: si una ficha falla, falla la fuente, no se guarda nada y no se poda nada. Cuesta un día de atraso con reintento automático del cron, contra borrar eventos reales sin que nadie se entere.
 
 Vale para cualquier fuente futura que pagine o que pida una ficha por evento.
+
+### El género: una columna con dos trabajos (2026-09-01)
+
+`events.category` (y su copia en `canonical_events`) se llenó pensando en el clasificador, y de paso quedó siendo lo que la cartelera muestra como "Género". Los dos usos no piden lo mismo, y al sumar visitbogota se rompió la costura: la fuente escribe ahí su taxonomía, así que en la pestaña de conciertos aparecieron chips que decían "Conciertos".
+
+Qué guarda cada fuente en `category`, que es el fondo del asunto:
+
+| Fuente | Qué escribe | ¿Sirve como género? |
+|---|---|---|
+| `rockal_live` | un género — "Pop", "Rock/Punk/Metal", "Hip Hop/Rap" | sí |
+| `visitbogota` | su taxonomía — "Conciertos", "Ferias MICE" | no |
+| `idartes_teatro_jeg` | una disciplina — "Música", "Danza", "Teatro" | no, pero es la señal que clasifica |
+| el resto | nada | — |
+
+Se arregló en dos tiempos, y el primero solo a medias:
+
+1. **Filtrar al mostrar** (`generoVisible` en `apps/web/src/lib/editorial.ts`). Se hizo primero en el chip de la tarjeta y se olvidó la página de detalle. Corregirlo sitio por sitio es jugar a los topos, así que el filtro se movió al punto de lectura: el tipo `Evento` **no expone `category`**, expone `genero` ya filtrado. Un componente no puede equivocarse con un valor que no recibe.
+2. **Poder escribirlo.** Filtrar era todo lo que se podía hacer mientras no hubiera dónde corregir el dato — el género no sale de ninguna fuente. Desde el 2026-09-01 hay campo opcional en los dos formularios de `/admin`, escribiendo en `canonical_events.category`, que es la copia editable y por lo tanto sobrevive al cron.
+
+**La cuenta que justifica el trabajo**: de 49 publicados, 7 traen un género usable —todos de Rockal Live—, 33 vienen en null y 8 traen la taxonomía de la fuente. El 86% de los chips, si van a existir, los escribe una persona.
+
+Detalle que conviene no perder: `category` es un **campo vigilado** (`CAMPOS_VIGILADOS` en `moderacion.py`). Un género escrito a mano no se pierde —el snapshot guarda el valor crudo, no el editado— pero si la sala cambia su categoría, el evento vuelve a la cola con ese cambio a la vista. Es el comportamiento correcto y conviene saberlo antes de asustarse.
+
+La lista de sugerencias (`apps/web/src/lib/admin/generos.ts`) es un `datalist`, no un `select`: sirve para que no convivan "rock", "Rock" y "Rock/Punk/Metal", no para cerrar el vocabulario. Un test verifica que ninguna sugerencia caiga en la lista de valores que `generoVisible` esconde — ofrecer un valor que después no se muestra sería mentirle al admin.
+
+### `images.remotePatterns`: una lista blanca necesita quien avise (2026-09-01)
+
+`next/image` rechaza cualquier host que no esté en `images.remotePatterns` de `apps/web/next.config.ts`. No degrada: **lanza y rompe la tarjeta**. Al sumar visitbogota nadie agregó su host, y la ingesta estuvo un día guardando 51 imágenes de un host no permitido; se supo cuando se publicó el primer evento y Juan abrió la página.
+
+La lista sigue siendo explícita y no un comodín, a propósito: el optimizador de Next descarga y sirve cualquier URL que se le permita, así que abrirla lo convertiría en un proxy de imágenes para cualquiera.
+
+Lo que se agregó no es la línea que faltaba sino el aviso: `moderacion_cli` compara los hosts que llegan contra `remotePatterns`, **leyéndola del propio `next.config.ts`** —mantener dos copias las desincronizaría— y lo dice en el log del cron. De paso salieron los dos hosts del radar (Deezer y Last.fm), que ya no existen.
+
+Generaliza: cuando se elige una lista blanca sobre un comodín, el costo real no es escribirla, es **enterarse tarde de que le falta una entrada**. Eso se paga una sola vez con un chequeo automático.
