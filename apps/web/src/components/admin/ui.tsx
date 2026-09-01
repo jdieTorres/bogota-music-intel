@@ -1,5 +1,7 @@
 "use client";
 
+import { GENEROS_SUGERIDOS } from "@/lib/admin/generos";
+
 /** Los átomos visuales que comparten las dos secciones de moderación.
  *  Viven aparte para que eventos y salas se vean iguales sin copiar clases. */
 
@@ -67,3 +69,50 @@ export function desdeCampoDeFecha(valor: string): string | null {
   return valor ? `${valor}:00-05:00` : null;
 }
 
+
+/**
+ * El campo de género, compartido por la carga a mano y la ficha de la cola.
+ *
+ * Escribe en `category`, que es la misma columna que llena el scraper. No
+ * hace falta una columna aparte —la regla de "las ediciones del admin van
+ * en columnas propias" es para `events`, el crudo que el cron reescribe—:
+ * `canonical_events` es justamente la copia editable, y lo que se escribe
+ * acá sobrevive a las corridas del cron.
+ *
+ * Es opcional. Vacío significa "no lo sé", que es el hueco honesto de
+ * siempre; el chip simplemente no sale.
+ */
+export function CampoDeGenero({
+  valor,
+  alCambiar,
+}: {
+  valor: string | null;
+  alCambiar: (valor: string | null) => void;
+}) {
+  return (
+    <label>
+      <Rotulo>Género (opcional)</Rotulo>
+      <input
+        value={valor ?? ""}
+        onChange={(e) => alCambiar(e.target.value || null)}
+        list="generos-sugeridos"
+        placeholder="Salsa, Rock/Punk/Metal…"
+        className={CAMPO}
+      />
+      <datalist id="generos-sugeridos">
+        {GENEROS_SUGERIDOS.map((g) => (
+          <option key={g} value={g} />
+        ))}
+      </datalist>
+      {/* Por qué esto importa: la fuente escribe acá su taxonomía —"Conciertos"
+          en visitbogota, "Música" en Idartes— y eso no es un género. La
+          cartelera esconde esos valores (`generoVisible`), así que si el campo
+          dice uno de esos, el evento sale sin chip hasta que lo corrijas. */}
+      <span className="mt-1 block text-xs leading-relaxed text-muted">
+        Sale como chip al lado del título. &ldquo;Conciertos&rdquo;,
+        &ldquo;Música&rdquo; y &ldquo;Otro&rdquo; no se muestran: son la etiqueta
+        de la fuente, no un género.
+      </span>
+    </label>
+  );
+}

@@ -252,6 +252,11 @@ export type EventoNuevo = {
   starts_at: string | null;
   price_text?: string | null;
   ticket_url?: string | null;
+  /** El género que sale como chip en la cartelera. Opcional: vacío es el
+   *  hueco honesto, y el chip no aparece. Va en `category`, la misma
+   *  columna que llena el scraper — en el canónico, que es la copia
+   *  editable, no en la fila cruda que el cron reescribe. */
+  category?: string | null;
   event_type: "music" | "fiesta" | "not_music" | null;
   is_local: boolean | null;
   /** Obligatoria: la base rechaza un `origin = 'manual'` sin evidencia. */

@@ -74,6 +74,11 @@ export function priorizarLocales<T extends ConOrigen>(eventos: T[]): T[] {
  * "Conciertos", que en la pestaña de conciertos es puro ruido.
  *
  * Se filtra al mostrar y no al guardar: el clasificador necesita el valor.
+ *
+ * Desde el 2026-09-01 el filtro es una **red de seguridad, no el arreglo**:
+ * `/admin` tiene un campo de género, así que la respuesta a un evento sin
+ * chip es escribirle el género real. Esto solo evita que la taxonomía de la
+ * fuente se cuele mientras nadie lo hizo.
  */
 const CATEGORIAS_SIN_VALOR_VISIBLE = new Set([
   "conciertos",

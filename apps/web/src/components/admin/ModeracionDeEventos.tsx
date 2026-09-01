@@ -17,6 +17,7 @@ import {
   BOTON_ROJO,
   BOTON_TENUE,
   CAMPO,
+  CampoDeGenero,
   Etiqueta,
   Rotulo,
   aCampoDeFecha,
@@ -291,6 +292,8 @@ function Ficha({
             className={CAMPO}
           />
         </label>
+        <CampoDeGenero valor={campos.category ?? null} alCambiar={(g) => editar({ category: g })} />
+
         <label>
           <Rotulo>Qué es</Rotulo>
           <select

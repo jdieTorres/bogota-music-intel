@@ -16,7 +16,13 @@
 
 import { useEffect, useState } from "react";
 
-import { BOTON, CAMPO, Rotulo, desdeCampoDeFecha } from "@/components/admin/ui";
+import {
+  BOTON,
+  CAMPO,
+  CampoDeGenero,
+  Rotulo,
+  desdeCampoDeFecha,
+} from "@/components/admin/ui";
 import { crearEvento } from "@/lib/admin/eventos";
 import { getSalasPublicadas } from "@/lib/admin/salas";
 
@@ -33,6 +39,7 @@ export function FormularioDeEvento({
   const [fecha, setFecha] = useState("");
   const [precio, setPrecio] = useState("");
   const [boleteria, setBoleteria] = useState("");
+  const [genero, setGenero] = useState<string | null>(null);
   const [tipo, setTipo] = useState<"music" | "fiesta" | "not_music" | "">("music");
   const [local, setLocal] = useState("");
   const [evidencia, setEvidencia] = useState("");
@@ -56,6 +63,7 @@ export function FormularioDeEvento({
         starts_at: desdeCampoDeFecha(fecha),
         price_text: precio.trim() || null,
         ticket_url: boleteria.trim() || null,
+        category: genero?.trim() || null,
         event_type: tipo || null,
         is_local: local === "" ? null : local === "true",
         evidence: evidencia.trim(),
@@ -133,6 +141,8 @@ export function FormularioDeEvento({
             className={CAMPO}
           />
         </label>
+
+        <CampoDeGenero valor={genero} alCambiar={setGenero} />
 
         <label>
           <Rotulo>Qué es</Rotulo>

@@ -32,18 +32,21 @@ export function EventoCard({ evento }: { evento: Evento }) {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+          {/* El género va pegado al título y no en la fila de abajo con la hora
+              y el precio: es lo que dice de qué es el toque, y ahí se lee junto
+              al nombre en vez de perderse entre los datos de logística. */}
           <h3 className="text-balance font-medium leading-snug transition-colors group-hover:text-accent">
             {evento.title}
+            {evento.genero && (
+              <span className="ml-2 whitespace-nowrap rounded-full border border-border px-2 py-0.5 align-middle text-xs font-normal text-muted">
+                {evento.genero}
+              </span>
+            )}
           </h3>
           <p className="truncate text-sm text-muted">{venue}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
             {hora && <span className="font-mono">{hora}</span>}
             {evento.price_text && <span>{evento.price_text}</span>}
-            {evento.genero && (
-              <span className="rounded-full border border-border px-2 py-0.5">
-                {evento.genero}
-              </span>
-            )}
           </div>
         </div>
       </Link>
