@@ -612,3 +612,42 @@ Al entrar los 66 eventos de visitbogota y los 5 de Idartes, la cola pasó de 0 a
 `XXXIV Congreso Internacional AEDEM 2026 en Bogotá | Economía, innovación` quedaba normalizado con **dos barras**: al quitar el "en Bogotá", el separador que venía después quedaba al principio de la gira y se volvía a unir con otro `|`.
 
 Los 53 títulos con que se verificó el normalizador no lo encontraron porque **ninguna de las seis fuentes anteriores titula así**. Vale como argumento a favor de sumar fuentes aunque cuesten triage: cada una ejercita el parser de una forma que las anteriores no.
+
+### Tres ajustes tras la primera revisión real de la cola (2026-09-01)
+
+Juan revisó los 60 borradores a mano y pidió tres cosas. Las tres salieron de usar el sistema, no de leerlo.
+
+**1. visitbogota sí publica su taxonomía.** El parámetro `?tipo=` del listado se ignora —por eso la sección de arriba la daba por perdida— pero **la ficha trae un bloque rotulado "Categoría del evento"**, y ahí el valor está y acierta. Comprobado contra 13 fichas de todas las clases, sin una sola contradicción:
+
+| Categoría | Eventos |
+|---|---|
+| Conciertos | Drexler, Jazz al Parque, Festival Cordillera, Sara Landry |
+| Teatro | las obras, y también la comedia (Bogotá ríe, Hassam) |
+| Educativo | el congreso AEDEM |
+| Deportivo | WWE |
+| Otros | la feria de bodas |
+
+Es **lo contrario de Idartes**, donde la etiqueta del listado miente y manda la ruta. La conclusión general: la confianza en una señal se mide fuente por fuente y no se hereda de otra.
+
+Se sumaron a `CATEGORIAS_NO_MUSICALES`: `deportivo`, `educativo`, `ferias`, `gastronomia`, `mice`. **No** se sumaron dos, a propósito: `Otros` es el cajón de sastre de esta fuente —y además choca con el `Otro` de Rockal Live, que ahí significa "otro género"— y `Cultura` es demasiado ancho, porque un concierto dentro de una programación cultural sigue siendo un concierto.
+
+**2. Lo ya reconocido como no musical nace descartado, no en la cola.** Si el sistema ya sabe que se va a descartar, hacérselo descartar a una persona es trabajo regalado. Nace `descartado` y no "sin crear", y la diferencia importa: sin canónico, su fila cruda volvería a pedir un borrador todos los días, y el evento desaparecería sin dejar rastro — que es justo lo que la cola vino a evitar.
+
+**3. La sugerencia de duplicado comparaba contra el título equivocado.** Lenny Tavárez llegó por visitbogota y no disparó la ventana. La causa: se comparaba la fila cruda nueva contra el **título curado del canónico**, que ya no se parece a lo que publica ninguna fuente.
+
+```
+"Lenny Tavárez & Justin Quiles | Superarte"  vs  "Lenny Tavárez & J Quilles"  ->  0.29  ✗
+"Lenny Tavarez – J quiles"                   vs  "Lenny Tavárez & J Quilles"  ->  0.60  ✓
+```
+
+Ahora se compara **crudo contra crudo**, que es para lo que la heurística fue escrita. Y como la sugerencia se calculaba una sola vez al abrir el borrador, un fallo quedaba para siempre: el CLI ganó un sexto paso que vuelve a revisar los borradores sin sugerencia. Al correrlo, cazó a Lenny Tavárez.
+
+### El riesgo que apareció en el camino: un lote incompleto borra
+
+Un `ReadTimeout` de visitbogota dejó **51 eventos de 66**. Eso no es perder 15 eventos: es **borrarlos**. `_prune_missing_events` elimina los eventos futuros de una fuente que no vinieron en el lote, así que un scrape parcial poda en silencio lo que sí existía.
+
+La primera reacción fue envolver cada ficha en un `try/except` para "no perder la fuente entera por una ficha". **Es exactamente al revés**, y por eso quedó anotado: con poda de por medio, saltarse una ficha equivale a borrarla. Un lote incompleto no permite concluir nada sobre lo que falta.
+
+El scraper es estricto a propósito: si una ficha falla, falla la fuente, no se guarda nada y no se poda nada. Cuesta un día de atraso con reintento automático del cron, contra borrar eventos reales sin que nadie se entere.
+
+Vale para cualquier fuente futura que pagine o que pida una ficha por evento.
