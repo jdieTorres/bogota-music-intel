@@ -35,27 +35,45 @@ def _parse_agenda_datetime(value: str | None) -> datetime | None:
 
 
 # La agenda del Teatro Jorge Eliécer Gaitán es distrital y programa de todo:
-# teatro, danza, ópera. Juan pidió el 2026-08-28 que de esta fuente entren
-# solo conciertos.
+# teatro, danza, ópera.
 #
-# El filtro va por la **URL de la ficha**, no por la etiqueta de categoría
-# del listado, porque esa etiqueta se contradice con la propia ficha: a
-# "'Fuera de sí'" la lista como «Música» y su ficha está en
-# /agenda/presentacion-de-danza/, y a "'Ella'" la lista como «Teatro» siendo
-# también danza. La ruta viene del enrutamiento del sitio y acertó en los
-# nueve eventos revisados.
-RUTA_CONCIERTO = "/agenda/concierto/"
+# **Hasta el 2026-08-31 esta fuente entraba acotada a `/agenda/concierto/`**,
+# porque sin filtro ensuciaba la cartelera. Juan levantó esa restricción al
+# existir la cola de moderación: ahora entra completa y lo que no es música
+# se descarta al revisarlo. El costo de un falso negativo cambió de lado —
+# antes un concierto mal enrutado desaparecía sin dejar rastro, ahora lo peor
+# que pasa es un borrador de más.
+#
+# La ruta de la ficha no se tira: **deja de filtrar y pasa a clasificar**,
+# que es donde vale más. Es la señal confiable de esta fuente, porque la
+# etiqueta del listado se contradice con la propia ficha —"'Fuera de sí'"
+# aparece etiquetada como **Música** y vive en `/agenda/presentacion-de-danza/`,
+# describiéndose como una obra de danza—. La ruta la genera el enrutamiento
+# del sitio; la etiqueta la escribe una persona.
+DISCIPLINA_POR_RUTA = {
+    "concierto": "Música",
+    "presentacion-de-danza": "Danza",
+    "obra-de-teatro": "Teatro",
+}
+
+# `presentacion` a secas es ambigua y por eso NO está en el mapa de arriba:
+# ahí conviven "Gaitán al Aire Vol. 57: Ancestral Beats" (música) y
+# "Einstein on the Beach" (ópera). Para esa ruta se cae a la etiqueta del
+# listado, que en los dos casos acierta.
+RUTA_AMBIGUA = "presentacion"
 
 
-def es_concierto(source_url: str) -> bool:
-    """Solo lo que Idartes publica bajo /agenda/concierto/.
+def disciplina(source_url: str, etiqueta_del_listado: str | None) -> str | None:
+    """Qué disciplina es, prefiriendo la ruta sobre la etiqueta.
 
-    Deja fuera `obra-de-teatro`, `presentacion-de-danza` y el genérico
-    `presentacion` —donde caen la ópera y los cruces interdisciplinares—.
-    Es deliberadamente estricto: ante una ruta nueva que no conozcamos, el
-    evento no entra, y eso es preferible a colar teatro en una cartelera de
-    toques."""
-    return RUTA_CONCIERTO in source_url
+    Devuelve lo que va a `category`, que es lo que después mira el
+    clasificador para decidir si el evento es música.
+    """
+    if "/agenda/" not in source_url:
+        return etiqueta_del_listado
+    partes = [p for p in source_url.split("/agenda/")[-1].split("/") if p]
+    ruta = partes[0] if partes else ""
+    return DISCIPLINA_POR_RUTA.get(ruta) or etiqueta_del_listado
 
 
 def scrape() -> list[ScrapedEvent]:
@@ -77,9 +95,6 @@ def scrape() -> list[ScrapedEvent]:
         if source_url.startswith("/"):
             source_url = BASE_URL + source_url
 
-        if not es_concierto(source_url):
-            continue
-
         starts_at = _parse_agenda_datetime(time_tag.get("datetime") if time_tag else None)
 
         events.append(
@@ -94,7 +109,10 @@ def scrape() -> list[ScrapedEvent]:
                 date_precision="day" if starts_at else "unknown",
                 description=description_tag.get_text(strip=True) if description_tag else None,
                 price_text=price_tag.get_text(strip=True) if price_tag else None,
-                category=category_tag.get_text(strip=True) if category_tag else None,
+                category=disciplina(
+                    source_url,
+                    category_tag.get_text(strip=True) if category_tag else None,
+                ),
                 image_url=(BASE_URL + img["src"]) if img and img.get("src", "").startswith("/") else (img.get("src") if img else None),
             )
         )
