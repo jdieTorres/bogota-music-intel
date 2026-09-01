@@ -187,6 +187,13 @@ _ANCLA_DE_LUGAR = re.compile(
 # con el Ronroco Tour".
 _ANTES_DE_LA_GIRA = re.compile(r"^con\s+(?:el\s+|la\s+|los\s+|las\s+)?", re.IGNORECASE)
 
+# Un separador que quedó colgando al principio de la cola. Pasa cuando el
+# lugar viene justo antes de la barra: "…AEDEM 2026 en Bogotá | Economía…"
+# deja la cola como "| Economía…", y al volver a unir con " | " el título
+# salía con dos barras seguidas. Encontrado el 2026-08-31 al sumar
+# visitbogota, que titula así varios de sus eventos.
+_SEPARADOR_COLGANDO = re.compile(r"^[|:\-–—]+\s*")
+
 CIUDAD = ("bogota", "colombia")
 
 _NO_ALFANUM = re.compile(r"[^0-9a-záéíóúüñ]", re.IGNORECASE)
@@ -244,7 +251,8 @@ def quitar_ruido_de_lugar(titulo: str, sala: str | None) -> tuple[str, str]:
         if largo == 0:
             continue
 
-        cola = _ANTES_DE_LA_GIRA.sub("", " ".join(resto_en_palabras[largo:]))
+        cola = " ".join(resto_en_palabras[largo:])
+        cola = _SEPARADOR_COLGANDO.sub("", _ANTES_DE_LA_GIRA.sub("", cola))
         return antes, cola.strip()
 
     # 2. El lugar pegado al final sin preposición: "MADE4RAP BOGOTÁ".

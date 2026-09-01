@@ -302,3 +302,28 @@ class TestListasCuradas:
     def test_no_hay_titulos_repetidos(self):
         claves = [clave_de_titulo(t.como_lo_publican) for t in TITULOS]
         assert len(set(claves)) == len(claves)
+
+
+class TestSeparadorColgando:
+    """Encontrado el 2026-08-31 al sumar visitbogota, que titula así varios
+    de sus eventos: el lugar viene justo antes de la barra."""
+
+    def test_no_deja_dos_barras_seguidas(self):
+        assert (
+            concierto(
+                "XXXIV Congreso Internacional AEDEM 2026 en Bogotá | Economía, innovación",
+                MOVISTAR,
+            )
+            == "XXXIV Congreso Internacional AEDEM 2026 | Economía, Innovación"
+        )
+
+    def test_tambien_con_guion_y_dos_puntos(self):
+        assert concierto("Nombre en Bogotá - La Gira", MOVISTAR) == "Nombre | La Gira"
+        assert concierto("Nombre en Bogotá: La Gira", MOVISTAR) == "Nombre | La Gira"
+
+    def test_no_toca_la_gira_que_venia_bien(self):
+        # El caso normal no cambia: "con el" sigue abriendo la gira.
+        assert (
+            concierto("Gustavo Santaolalla llega a Bogotá con el Ronroco Tour", JEG)
+            == "Gustavo Santaolalla | Ronroco Tour"
+        )
