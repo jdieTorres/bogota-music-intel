@@ -162,6 +162,9 @@ function Renglon({ evento, alElegir }: { evento: EventoEnCola; alElegir: () => v
         </span>
         <span className="flex shrink-0 items-center gap-2">
           {evento.change_detail && <Etiqueta acento>cambió</Etiqueta>}
+          {/* Es la razón principal para entrar a un borrador, así que tiene
+              que verse sin abrirlo. */}
+          {evento.suggested_duplicate_of && <Etiqueta acento>¿duplicado?</Etiqueta>}
           {evento.status === "borrador" && <Etiqueta>borrador</Etiqueta>}
           {evento.origin === "manual" && <Etiqueta>a mano</Etiqueta>}
           {evento.event_type === "not_music" && <Etiqueta>no es música</Etiqueta>}

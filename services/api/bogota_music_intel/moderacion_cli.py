@@ -313,10 +313,12 @@ def main() -> int:
         abiertos = _abrir_borradores(client, crudos, canonicos, salas, guardar)
         marcados = _marcar_cambios(client, crudos, canonicos, salas, guardar)
         bajadas = _bajar_clasificacion_tardia(client, crudos, canonicos, guardar)
+        rearmados = _rebaselinar_snapshots(client, crudos, canonicos, salas, guardar)
         huerfanos = _avisar_huerfanos(crudos, canonicos)
         print(
             f"\n{abiertos} borradores nuevos, {marcados} con cambios en el origen, "
             f"{bajadas} con clasificación que llegó tarde, "
+            f"{rearmados} con foto de origen rearmada, "
             f"{huerfanos} publicados sin fuente."
         )
 
