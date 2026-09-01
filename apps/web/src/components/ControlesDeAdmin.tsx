@@ -18,7 +18,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { borrar, esAdmin } from "@/lib/admin";
+import { borrar } from "@/lib/admin/eventos";
+import { esAdmin } from "@/lib/admin/sesion";
 
 export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titulo: string }) {
   const [puede, setPuede] = useState(false);
@@ -62,7 +63,7 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
   return (
     <aside className="mt-8 rounded-lg border border-dashed border-border p-4">
       <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
-        Solo vos ves esto
+        Solo tú ves esto
       </p>
 
       {!confirmando ? (

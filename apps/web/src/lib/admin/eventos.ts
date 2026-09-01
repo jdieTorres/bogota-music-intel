@@ -1,6 +1,11 @@
 /**
- * La cola de moderación: lo que el scraping propuso y todavía no publicó
- * nadie.
+ * Moderación de **eventos**: lo que el scraping propuso y todavía no
+ * publicó nadie, más lo publicado que hay que poder corregir.
+ *
+ * Las salas tienen su propio módulo (`salas.ts`) desde el 2026-08-31, y no
+ * es solo orden: son dos ciclos de vida distintos. Un evento caduca —pasa,
+ * y deja de importar—, una sala no; un evento se borra y se bloquea para
+ * que no vuelva, una sala se aprueba una vez y queda.
  *
  * Todo lo de acá corre con la sesión del admin en el navegador, no con la
  * service role key. Quién puede escribir lo decide RLS contra la tabla
@@ -241,8 +246,47 @@ export async function borrar(id: string, motivo: string) {
   if (error) throw new Error(`No se pudo borrar: ${error.message}`);
 }
 
-/** ¿La sesión actual puede moderar? Lo contesta la base, no el frontend. */
-export async function esAdmin(): Promise<boolean> {
-  const { data } = await supabase.rpc("es_admin");
-  return Boolean(data);
+export type EventoNuevo = {
+  title: string;
+  venue_id: string;
+  starts_at: string | null;
+  price_text?: string | null;
+  ticket_url?: string | null;
+  event_type: "music" | "fiesta" | "not_music" | null;
+  is_local: boolean | null;
+  /** Obligatoria: la base rechaza un `origin = 'manual'` sin evidencia. */
+  evidence: string;
+};
+
+/**
+ * Carga un evento a mano.
+ *
+ * Es la razón de ser de toda la fase: el scraping solo ve las salas que
+ * publican su propia cartelera, y el toque local en un bar chico —anunciado
+ * por una historia de Instagram y nada más— es invisible para el pipeline.
+ * Sin esto la plataforma tiene un sesgo de cobertura en contra de justo lo
+ * que dice promover.
+ *
+ * Nace como **borrador**, igual que lo que trae el cron. No es desconfianza:
+ * es que el evento aparezca en la misma cola, con la misma revisión final y
+ * el mismo botón de publicar, en vez de tener dos caminos distintos hacia la
+ * cartelera. Un camino que se salta la cola es un camino que nadie revisa.
+ *
+ * El título **no pasa por el normalizador**: lo estás escribiendo vos, ya en
+ * la forma en que querés que salga. Normalizarlo encima sería pisarte.
+ */
+export async function crearEvento(evento: EventoNuevo) {
+  const { data, error } = await supabase
+    .from("canonical_events")
+    .insert({
+      ...evento,
+      status: "borrador",
+      origin: "manual",
+      date_precision: "day",
+    })
+    .select("id")
+    .single();
+
+  if (error) throw new Error(`No se pudo crear el evento: ${error.message}`);
+  return data as { id: string };
 }
