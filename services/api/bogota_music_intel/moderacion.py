@@ -135,7 +135,20 @@ def borrador_desde(crudos: list[dict], salas: dict[str, str] | None = None) -> d
             (salas or {}).get(borrador.get("venue_id") or ""),
         )
 
-    borrador["status"] = "borrador"
+    # Lo que el clasificador ya reconoció como "no es música" no pasa por la
+    # cola: nace descartado. Pedido de Juan el 2026-09-01, después de borrar
+    # a mano una tanda de teatro, comedia y congresos de visitbogota — si el
+    # sistema ya sabe que se va a descartar, hacérselo descartar es trabajo
+    # regalado.
+    #
+    # **Nace descartado y no "sin crear", y la diferencia importa.** Si no se
+    # creara nada, su fila cruda quedaría sin `canonical_id` y la corrida
+    # siguiente volvería a intentar abrirle un borrador, todos los días. Y
+    # además desaparecería sin dejar rastro, que es justo lo que la cola vino
+    # a evitar: así queda registrado, se puede auditar y se puede recuperar
+    # cambiándole el estado.
+    es_no_musical = borrador.get("event_type") == "not_music"
+    borrador["status"] = "descartado" if es_no_musical else "borrador"
     borrador["origin"] = "scraper"
     # El snapshot se toma DESPUÉS de completar los huecos con las otras
     # fuentes, no solo de `base`. Si se tomara antes, un campo que la fuente

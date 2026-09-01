@@ -9,7 +9,7 @@ Corre después del scraping y de la clasificación, igual que `classify_cli`
 corre después de `scrape_cli`: la ingesta guarda crudo y esto arma encima la
 cola que el admin revisa.
 
-Hace cinco cosas, y ninguna publica nada:
+Hace seis cosas, y ninguna publica nada:
 
 1. **Abre borrador** para cada fila cruda que todavía no tiene canónico, y
    le anota una sugerencia de duplicado si se parece a algo ya publicado.
@@ -22,6 +22,8 @@ Hace cinco cosas, y ninguna publica nada:
    que ya existía cuando eso pasó.
 5. **Rearma la foto de origen** del canónico al que el admin le acaba de
    unir un duplicado. Sin eso ese evento dejaría de vigilarse.
+6. **Revisa de nuevo los borradores sin sugerencia**, por si el duplicado se
+   escapó cuando se abrieron: la sugerencia se calcula una sola vez.
 
 `--backfill` es la mudanza inicial: toma lo que ya está en la base y lo
 publica como canónico para que la cartelera no se vacíe al cambiar de
@@ -47,7 +49,7 @@ CAMPOS_CRUDOS = (
 CAMPOS_SALAS = "id,name"
 CAMPOS_CANONICOS = (
     "id,status,origin,venue_id,title,starts_at,source_snapshot,change_detected_at,"
-    "event_type,is_local"
+    "event_type,is_local,suggested_duplicate_of"
 )
 
 
@@ -58,17 +60,48 @@ def _ordenados(eventos: list[dict]) -> list[dict]:
     return sorted(eventos, key=lambda e: (e["source"], e["source_event_id"]))
 
 
+def _por_canonico(crudos: list[dict]) -> dict[str, list[dict]]:
+    agrupado: dict[str, list[dict]] = {}
+    for evento in crudos:
+        if evento.get("canonical_id"):
+            agrupado.setdefault(evento["canonical_id"], []).append(evento)
+    return agrupado
+
+
+def _canonico_parecido(crudo: dict, canonicos, fuentes_por_canonico) -> dict | None:
+    """Busca a qué canónico existente se parece una fila cruda nueva.
+
+    **Se compara crudo contra crudo, no contra el título del canónico**, y
+    esa es toda la diferencia. El título del canónico está normalizado y a
+    veces curado, así que ya no se parece a lo que publica ninguna fuente:
+    Movistar dice "Lenny Tavarez – J quiles", el canónico quedó como "Lenny
+    Tavárez & Justin Quiles | Superarte", y cuando visitbogota trajo "Lenny
+    Tavárez & J Quilles" la comparación contra el título curado dio 0.29 de
+    parecido y no sugirió nada. Contra la fila cruda de Movistar da 0.60 y
+    acierta. Encontrado por Juan el 2026-09-01.
+
+    Un canónico cargado a mano no tiene filas crudas; ahí se compara contra
+    él mismo, que es lo único que hay.
+    """
+    for canonico in canonicos:
+        fuentes = fuentes_por_canonico.get(canonico["id"]) or [canonico]
+        if any(es_el_mismo_show(f, crudo) for f in fuentes):
+            return canonico
+    return None
+
+
 def _abrir_borradores(client, crudos, canonicos, salas, guardar: bool) -> int:
     sin_canonico = [e for e in crudos if not e.get("canonical_id")]
     if not sin_canonico:
         return 0
 
+    fuentes_por_canonico = _por_canonico(crudos)
     abiertos = 0
     for grupo in agrupar_mismos_shows(_ordenados(sin_canonico)):
         borrador = borrador_desde(grupo, salas)
 
         # La sugerencia de duplicado no decide nada: la confirma el admin.
-        parecido = next((c for c in canonicos if es_el_mismo_show(c, grupo[0])), None)
+        parecido = _canonico_parecido(grupo[0], canonicos, fuentes_por_canonico)
         if parecido:
             borrador["suggested_duplicate_of"] = parecido["id"]
 
@@ -87,10 +120,7 @@ def _abrir_borradores(client, crudos, canonicos, salas, guardar: bool) -> int:
 
 
 def _marcar_cambios(client, crudos, canonicos, salas, guardar: bool) -> int:
-    por_canonico: dict[str, list[dict]] = {}
-    for evento in crudos:
-        if evento.get("canonical_id"):
-            por_canonico.setdefault(evento["canonical_id"], []).append(evento)
+    por_canonico = _por_canonico(crudos)
 
     marcados = 0
     for canonico in canonicos:
@@ -130,10 +160,7 @@ def _rebaselinar_snapshots(client, crudos, canonicos, salas, guardar: bool) -> i
     Es silencioso a propósito: no es un cambio del origen, es la línea de base
     que se vuelve a tomar.
     """
-    por_canonico: dict[str, list[dict]] = {}
-    for evento in crudos:
-        if evento.get("canonical_id"):
-            por_canonico.setdefault(evento["canonical_id"], []).append(evento)
+    por_canonico = _por_canonico(crudos)
 
     rearmados = 0
     for canonico in canonicos:
@@ -151,6 +178,48 @@ def _rebaselinar_snapshots(client, crudos, canonicos, salas, guardar: bool) -> i
             ).execute()
         rearmados += 1
     return rearmados
+
+
+def _revisar_duplicados(client, crudos, canonicos, guardar: bool) -> int:
+    """Vuelve a mirar los borradores que ya existen, buscando duplicados que
+    se hayan escapado.
+
+    Hace falta porque la sugerencia se calcula **una sola vez**, al abrir el
+    borrador. Si en ese momento la comparación falló —como pasó con Lenny
+    Tavárez, por comparar contra el título curado en vez de contra la fila
+    cruda— el borrador queda sin sugerencia para siempre, y el admin lo
+    publica sin enterarse de que ya existía.
+
+    Solo mira borradores que todavía no tienen sugerencia, y solo propone
+    contra canónicos publicados: unir dos borradores entre sí no tiene
+    sentido, porque ninguno de los dos es todavía el evento bueno.
+    """
+    fuentes_por_canonico = _por_canonico(crudos)
+    publicados = [c for c in canonicos if c["status"] == "publicado"]
+
+    encontrados = 0
+    for canonico in canonicos:
+        if canonico["status"] != "borrador" or canonico.get("suggested_duplicate_of"):
+            continue
+        mias = fuentes_por_canonico.get(canonico["id"]) or [canonico]
+
+        parecido = None
+        for otro in publicados:
+            suyas = fuentes_por_canonico.get(otro["id"]) or [otro]
+            if any(es_el_mismo_show(f, mia) for f in suyas for mia in mias):
+                parecido = otro
+                break
+        if not parecido:
+            continue
+
+        print(f"  [¿DUPLICADO?] {canonico['title']}")
+        print(f"      se parece a: {parecido['title']}")
+        if guardar:
+            client.table("canonical_events").update(
+                {"suggested_duplicate_of": parecido["id"]}
+            ).eq("id", canonico["id"]).execute()
+        encontrados += 1
+    return encontrados
 
 
 def _avisar_huerfanos(crudos: list[dict], canonicos: list[dict]) -> int:
@@ -174,10 +243,7 @@ def _bajar_clasificacion_tardia(client, crudos, canonicos, guardar: bool) -> int
     Solo rellena huecos: si el admin corrigió el tipo a mano, su decisión
     gana sobre lo que diga MusicBrainz mañana.
     """
-    por_canonico: dict[str, list[dict]] = {}
-    for evento in crudos:
-        if evento.get("canonical_id"):
-            por_canonico.setdefault(evento["canonical_id"], []).append(evento)
+    por_canonico = _por_canonico(crudos)
 
     bajadas = 0
     for canonico in canonicos:
@@ -232,10 +298,7 @@ def _normalizar_titulos(client, crudos, canonicos, salas, guardar: bool) -> int:
     siguiente marcaría los 51 como "la fuente cambió el título" sin que
     ninguna sala hubiera tocado nada.
     """
-    por_canonico: dict[str, list[dict]] = {}
-    for evento in crudos:
-        if evento.get("canonical_id"):
-            por_canonico.setdefault(evento["canonical_id"], []).append(evento)
+    por_canonico = _por_canonico(crudos)
 
     puestos_al_dia = 0
     for canonico in canonicos:
@@ -314,11 +377,13 @@ def main() -> int:
         marcados = _marcar_cambios(client, crudos, canonicos, salas, guardar)
         bajadas = _bajar_clasificacion_tardia(client, crudos, canonicos, guardar)
         rearmados = _rebaselinar_snapshots(client, crudos, canonicos, salas, guardar)
+        duplicados = _revisar_duplicados(client, crudos, canonicos, guardar)
         huerfanos = _avisar_huerfanos(crudos, canonicos)
         print(
             f"\n{abiertos} borradores nuevos, {marcados} con cambios en el origen, "
             f"{bajadas} con clasificación que llegó tarde, "
             f"{rearmados} con foto de origen rearmada, "
+            f"{duplicados} duplicados detectados de más, "
             f"{huerfanos} publicados sin fuente."
         )
 

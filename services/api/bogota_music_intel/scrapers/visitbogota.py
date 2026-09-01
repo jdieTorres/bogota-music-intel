@@ -35,6 +35,7 @@ schema.org/Event"). De ahí salen fecha, descripción, imagen y sala, sin
 tener que adivinar nada del HTML.
 """
 import json
+import re
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -84,6 +85,28 @@ def _ultima_pagina(soup: BeautifulSoup) -> int:
     return min(max(numeros), MAX_PAGINAS - 1)
 
 
+# La ficha publica su taxonomía en un bloque rotulado "Categoría del evento".
+# Es la señal que faltaba: el parámetro `?tipo=` del listado se ignora, pero
+# acá el valor sí está y **acierta**. Comprobado el 2026-09-01 contra 13
+# fichas de todas las clases: Conciertos para Drexler, Jazz al Parque,
+# Festival Cordillera y Sara Landry; Teatro para las obras y para la comedia
+# (Bogotá ríe, Hassam); Educativo para el congreso; Deportivo para WWE;
+# Otros para la feria de bodas. Ninguna se contradijo.
+#
+# Es lo contrario de Idartes, donde la etiqueta del listado sí miente. Por
+# eso allá manda la ruta y acá manda la etiqueta: la confianza en una señal
+# se mide fuente por fuente, no se hereda.
+_CATEGORIA = re.compile(r"Categor[íi]a del evento\s+(.+?)\s+Categor[íi]as")
+
+
+def _categoria(soup: BeautifulSoup) -> str | None:
+    contenedor = soup.select_one(".AllTagContainer")
+    if not contenedor:
+        return None
+    coincidencia = _CATEGORIA.search(" ".join(contenedor.get_text(" ", strip=True).split()))
+    return coincidencia.group(1).strip() if coincidencia else None
+
+
 def _json_ld_del_evento(soup: BeautifulSoup) -> dict | None:
     for etiqueta in soup.find_all("script", type="application/ld+json"):
         if not etiqueta.string:
@@ -118,7 +141,8 @@ def _slug(href: str) -> str:
 
 def _evento_desde_ficha(href: str) -> ScrapedEvent | None:
     url = href if href.startswith("http") else f"{BASE_URL}{href}"
-    datos = _json_ld_del_evento(_sopa(url))
+    sopa = _sopa(url)
+    datos = _json_ld_del_evento(sopa)
     if not datos or not datos.get("name"):
         return None
 
@@ -148,6 +172,9 @@ def _evento_desde_ficha(href: str) -> ScrapedEvent | None:
         # como gratis un show de $200.000.
         price_text=None,
         image_url=imagenes[0] if isinstance(imagenes, list) and imagenes else None,
+        # La taxonomía de la ficha, que es lo que después mira el
+        # clasificador para decidir si el evento es música.
+        category=_categoria(sopa),
         raw={"json_ld_location": lugar},
     )
 
@@ -170,6 +197,20 @@ def scrape() -> list[ScrapedEvent]:
         if href in vistos:
             continue
         vistos.add(href)
+        # A propósito SIN try/except: una ficha que falla tiene que tumbar la
+        # corrida entera de esta fuente.
+        #
+        # Parece lo contrario de lo razonable —"perder una ficha cuesta menos
+        # que perder la fuente"— y es al revés, por la poda. `save_events`
+        # llama a `_prune_missing_events`, que borra los eventos futuros de
+        # esta fuente que no vinieron en el lote. O sea que **saltarse una
+        # ficha no la omite: la borra**, junto con su canónico si nadie lo
+        # había publicado todavía.
+        #
+        # Un lote incompleto no permite concluir nada sobre lo que falta. Que
+        # falle la fuente entera cuesta un día de atraso y el cron reintenta
+        # solo; que se guarde a medias borra eventos reales en silencio.
+        # Encontrado el 2026-09-01, cuando un ReadTimeout dejó 51 de 66.
         evento = _evento_desde_ficha(href)
         if evento:
             eventos.append(evento)

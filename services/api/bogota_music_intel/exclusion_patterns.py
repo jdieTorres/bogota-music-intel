@@ -43,7 +43,25 @@ CATEGORIAS_NO_MUSICALES = {
     "literatura",
     "artes plasticas",
     "audiovisual",
+    # De la taxonomía de visitbogota (2026-09-01), que es fiable: comprobada
+    # contra 13 fichas de todas las clases sin una sola contradicción.
+    "deportivo",
+    "educativo",
+    "ferias",
+    "gastronomia",
+    "mice",  # reuniones, incentivos, congresos y exposiciones
 }
+
+# Dos valores de visitbogota que **no** entran a la lista de arriba, a
+# propósito:
+#
+# - "Otros" es su cajón de sastre. Ahí cae la feria de bodas, pero también
+#   podría caer un concierto que nadie supo etiquetar. "No sé" y "confirmado
+#   que no" son estados distintos: se deja pasar y lo mira una persona.
+#   Además "Otro" es un valor de Rockal Live —un promotor musical— donde
+#   significa "otro género", no "otra cosa".
+# - "Cultura" es demasiado ancho: un concierto dentro de una programación
+#   cultural sigue siendo un concierto.
 
 
 # (patrón, motivo). El motivo se guarda para poder auditar por qué un evento
