@@ -57,6 +57,13 @@ PATRONES_NO_MUSICALES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bmonologo\b"), "monólogo"),
     (re.compile(r"\bobra de teatro\b"), "teatro"),
     (re.compile(r"\buna obra de\b"), "teatro"),
+    # Agregados al sumar visitbogota (2026-08-31), que es una agenda del
+    # distrito y programa congresos académicos junto a los conciertos. Los
+    # dos son inequívocos: no existe un toque llamado "congreso" ni
+    # "simposio". Se dejó fuera "feria" a propósito — en Colombia la Feria
+    # de las Flores y la Feria de Cali SON eventos con música.
+    (re.compile(r"\bcongreso\b"), "congreso académico o gremial"),
+    (re.compile(r"\bsimposio\b"), "simposio"),
 ]
 
 

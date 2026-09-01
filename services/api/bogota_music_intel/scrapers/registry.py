@@ -8,6 +8,7 @@ from bogota_music_intel.scrapers import (
     movistar_arena,
     rockal_live,
     royal_center,
+    visitbogota,
 )
 from bogota_music_intel.scrapers.models import ScrapedEvent
 
@@ -18,6 +19,7 @@ SCRAPERS: dict[str, Callable[[], list[ScrapedEvent]]] = {
     idartes_teatro_jeg.SOURCE: idartes_teatro_jeg.scrape,
     lourdes_music_hall.SOURCE: lourdes_music_hall.scrape,
     royal_center.SOURCE: royal_center.scrape,
+    visitbogota.SOURCE: visitbogota.scrape,
 }
 
 
