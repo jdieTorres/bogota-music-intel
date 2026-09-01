@@ -75,7 +75,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
         <Dato etiqueta="Hora">{hora ?? "Por confirmar"}</Dato>
         <Dato etiqueta="Lugar">{venue}</Dato>
         <Dato etiqueta="Precio">{evento.price_text ?? "Sin publicar"}</Dato>
-        {evento.category && <Dato etiqueta="Género">{evento.category}</Dato>}
+        {evento.genero && <Dato etiqueta="Género">{evento.genero}</Dato>}
       </dl>
 
       {evento.description && (

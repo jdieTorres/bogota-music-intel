@@ -1,4 +1,4 @@
-import { SOLO_CONCIERTOS, SOLO_FIESTAS } from "@/lib/editorial";
+import { SOLO_CONCIERTOS, SOLO_FIESTAS, generoVisible } from "@/lib/editorial";
 import { supabase } from "@/lib/supabase";
 
 export type DatePrecision = "day" | "month" | "unknown";
@@ -32,9 +32,22 @@ export type Evento = {
   date_precision: DatePrecision;
   description: string | null;
   price_text: string | null;
-  category: string | null;
   ticket_url: string | null;
   image_url: string | null;
+  /**
+   * El género a mostrar, ya filtrado.
+   *
+   * **La columna cruda es `category` y no se expone acá a propósito.** Guarda
+   * cosas distintas según la fuente: un género en Rockal Live ("Pop"), una
+   * taxonomía en visitbogota ("Conciertos"), una disciplina en Idartes
+   * ("Música"). Mostrarla tal cual pone "Género: Conciertos" en la pestaña de
+   * conciertos, que fue justo lo que pasó el 2026-09-01.
+   *
+   * Se filtró primero en cada componente y se olvidó uno —la página de
+   * detalle—, así que ahora se filtra al leer: si el tipo no trae el valor
+   * crudo, ningún componente puede equivocarse con él.
+   */
+  genero: string | null;
   event_type: TipoEvento;
   /** null = no se pudo resolver el origen del artista. Distinto de false,
    *  que es un internacional confirmado. */
@@ -100,7 +113,13 @@ async function proximos(filtroEditorial: string): Promise<Evento[]> {
     .order("starts_at", { ascending: true });
 
   if (error) throw new Error(`No se pudieron cargar los eventos: ${error.message}`);
-  return (data ?? []) as unknown as Evento[];
+  return (data ?? []).map(conGenero);
+}
+
+/** Deriva `genero` y suelta la columna cruda, para que no llegue a la vista. */
+function conGenero(fila: Record<string, unknown>): Evento {
+  const { category, ...resto } = fila as { category: string | null };
+  return { ...resto, genero: generoVisible(category) } as unknown as Evento;
 }
 
 /** Los que la fuente publicó sin fecha reconocible. Se muestran aparte en
@@ -115,7 +134,7 @@ async function sinFecha(filtroEditorial: string): Promise<Evento[]> {
     .order("title", { ascending: true });
 
   if (error) throw new Error(`No se pudieron cargar los eventos: ${error.message}`);
-  return (data ?? []) as unknown as Evento[];
+  return (data ?? []).map(conGenero);
 }
 
 export const getEventosProximos = () => proximos(SOLO_CONCIERTOS);
@@ -132,7 +151,7 @@ export async function getEvento(id: string): Promise<Evento | null> {
     .maybeSingle();
 
   if (error) throw new Error(`No se pudo cargar el evento: ${error.message}`);
-  return (data as unknown as Evento) ?? null;
+  return data ? conGenero(data as Record<string, unknown>) : null;
 }
 
 /** El nombre de la sala, o el hueco honesto si todavía no se le asignó
