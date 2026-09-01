@@ -42,6 +42,12 @@ jobs:
 
       - run: npm test
 
+      # Se agregó el 2026-09-01, y no estaba antes por olvido: el frontend era
+      # el único lado sin linter en CI —ruff sí corre del lado de Python— y
+      # `ThemeToggle.tsx` estuvo violando `react-hooks/set-state-in-effect`
+      # desde el 2026-08-31 sin que nadie se enterara.
+      - run: npm run lint
+
       # Next genera los helpers PageProps/LayoutProps en .next/types; sin
       # esto tsc no los encuentra en un checkout limpio.
       - run: npx next typegen
