@@ -570,3 +570,45 @@ Cómo se verificó que el port no cambió comportamiento:
 **La trampa que casi se pasa por alto:** `source_snapshot` guarda el título tal como se aprobó, y se compara contra lo que devuelve `borrador_desde()`. Al empezar a normalizar, el snapshot de los 51 canónicos —guardado en crudo— habría diferido del borrador nuevo, y el cron habría marcado **los 51 como "la fuente cambió el título"** sin que ninguna sala tocara nada. El paso único `moderacion_cli --normalizar-titulos` actualiza las dos cosas a la vez: 43 títulos puestos al día, y la corrida siguiente reporta 0 cambios.
 
 **Consecuencia sobre la limitación conocida de la dedupe** (el caso Akriila perdiendo "Tour Lucy"): dejó de ser una pregunta de producto abierta. El canónico cuelga de todas sus fuentes y el admin edita el título antes de publicar, así que la respuesta ya no depende de una heurística.
+
+---
+
+## 10. Cierre de la Fase 5 y primera cobertura nueva (2026-09-01)
+
+La Fase 5 quedó completa: moderación, formulario de admin, carga manual de eventos y salas, moderación de salas y confirmación de duplicados. Lo que sigue del MVP es **el directorio**, que es lo único que no ha arrancado.
+
+### Idartes deja de entrar acotada
+
+Juan revirtió el 2026-09-01 su propia decisión del 2026-08-28 de no sumar fuentes distritales y de acotar Idartes a `/agenda/concierto/`. El motivo de entonces —ensuciaban la cartelera— dejó de existir con la cola.
+
+Lo que importa registrar no es el filtro que se fue sino **qué pasó con la señal que lo hacía**. La ruta de la ficha es la única señal confiable de esa fuente (sección 3, "la categoría que publica una fuente no siempre coincide con su propia ficha"), así que en vez de tirarla **dejó de filtrar y pasó a clasificar**: se mapea a `category`, que es lo que después mira el clasificador.
+
+La regla y por qué es así, verificado contra la agenda real ese día:
+
+| Ruta | Etiqueta del listado | Queda como |
+|---|---|---|
+| `concierto` | Música | Música |
+| `presentacion-de-danza` | **Música** ← miente | **Danza** — gana la ruta |
+| `presentacion-de-danza` | Teatro | Danza |
+| `obra-de-teatro` | Teatro | Teatro |
+| `presentacion` | Música | Música — la ruta es ambigua, gana la etiqueta |
+| `presentacion` | Multidisciplinar | Multidisciplinar |
+
+`presentacion` a secas no está en el mapa porque es ambigua de verdad: ahí conviven "Gaitán al Aire Vol. 57: Ancestral Beats" (música) y "Einstein on the Beach" (ópera), y para las dos la etiqueta acierta.
+
+**Efecto lateral bueno:** recuperó a Ancestral Beats, que era la única entrada de `artistas_locales.py` sin evento en base — su show vive bajo `/agenda/presentacion/` y el filtro lo dejaba fuera.
+
+**El costo de equivocarse cambió de lado**, y eso es lo que hace razonable el cambio: antes un concierto mal enrutado desaparecía sin dejar rastro; ahora lo peor que pasa es un borrador de más.
+
+### Lo que enseñó la primera sesión de triage masivo
+
+Al entrar los 66 eventos de visitbogota y los 5 de Idartes, la cola pasó de 0 a más de 60 borradores de golpe. Dos cosas salieron de ahí:
+
+- **La cola funciona**: en pantalla no apareció nada. Ni Gorillaz, ni Rock al Parque, ni el congreso de endodoncia. 13 salas nuevas quedaron esperando aprobación en vez de entrar solas al mapa.
+- ⚠️ **"Borrar" y "No va" están demasiado cerca.** Descartar es reversible; borrar elimina las filas crudas y bloquea el evento para siempre. En esa misma sesión se borró con motivo "no music" un evento que sí era música —"Gaitán al Aire Vol. 57: Ancestral Beats"—, arrastrado por la tanda de teatro que lo rodeaba. Se recupera quitando su fila de `blocked_source_events` y esperando al cron. Si se repite, conviene alejar el botón o pedir doble confirmación cuando el evento está clasificado como música.
+
+### Un bug que solo encontró una fuente nueva
+
+`XXXIV Congreso Internacional AEDEM 2026 en Bogotá | Economía, innovación` quedaba normalizado con **dos barras**: al quitar el "en Bogotá", el separador que venía después quedaba al principio de la gira y se volvía a unir con otro `|`.
+
+Los 53 títulos con que se verificó el normalizador no lo encontraron porque **ninguna de las seis fuentes anteriores titula así**. Vale como argumento a favor de sumar fuentes aunque cuesten triage: cada una ejercita el parser de una forma que las anteriores no.
