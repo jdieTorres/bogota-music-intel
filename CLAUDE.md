@@ -113,7 +113,7 @@ Cómo quedó resuelto, en tres piezas que hay que entender juntas:
 
 En pantalla el chip va **pegado al título**, no en la fila de la hora y el precio: dice de qué es el toque, no cómo llegar.
 
-⚠️ **Casi ninguno lo trae, y ninguna fuente lo va a resolver.** Al 2026-09-01, de 49 publicados solo **7** traen un género usable, todos de Rockal Live, la única fuente que publica género de verdad; 33 vienen en null. Los otros 42 hay que escribirlos a mano o no existen. La lista de sugerencias del formulario está en `apps/web/src/lib/admin/generos.ts`, y es abierta (`datalist`, no `select`): existe para que no convivan "rock", "Rock" y "Rock/Punk/Metal", no para cerrar el vocabulario.
+⚠️ **Casi ninguno lo trae, y ninguna fuente lo va a resolver.** Cuando se construyó el campo, de 49 publicados solo **7** traían un género usable —todos de Rockal Live, la única fuente que publica género de verdad— y 33 venían en null. Unas horas después ya eran **9**: Juan empezó a escribirlos y a corregir los "Conciertos" que la fuente había dejado. Los que falten hay que escribirlos a mano o no existen; **recontar antes de citar este número**, que se mueve con cada sesión de moderación. La lista de sugerencias del formulario está en `apps/web/src/lib/admin/generos.ts`, y es abierta (`datalist`, no `select`): existe para que no convivan "rock", "Rock" y "Rock/Punk/Metal", no para cerrar el vocabulario.
 
 El detalle —qué escribe cada fuente en `category`, y por qué el arreglo tuvo que ser en dos tiempos— está en `docs/investigacion-tecnica-plataforma-musical.md` § 10.
 
@@ -182,8 +182,8 @@ La limpieza de lo ya guardado sale gratis: `_prune_missing_events` borra los eve
 |---|---|
 | Filas crudas | **102** — visitbogota 51, royal 12, movistar 10, lourdes 9, latino 8, rockal 8, idartes 4 |
 | Canónicos | **90** — 49 publicados, **37 borradores en cola**, 4 descartados |
-| Publicados | 45 conciertos + 4 fiestas; de los conciertos, **8 locales y 37 internacionales** |
-| Borradores | los 37 son música; ninguno con sugerencia de duplicado pendiente. **6 de ellos son festivales** y se van a poder marcar como tales en cuanto se aplique la migración (ver "Lo que quedó a medias") |
+| Publicados | 45 conciertos + 4 fiestas + **0 festivales**; de los conciertos, **8 locales y 37 internacionales** |
+| Borradores | 31 música y **6 festivales**; ninguno con sugerencia de duplicado pendiente |
 | Salas | **22** — 13 publicadas, 9 descartadas, **0 por aprobar** |
 | Bloqueados | 24 `(fuente, id)` que no vuelven a entrar |
 | En pantalla | **40 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), 42 eventos en el mapa |
@@ -191,6 +191,8 @@ La limpieza de lo ya guardado sale gratis: `_prune_missing_events` borra los eve
 ⚠️ **Las filas crudas bajaron de 114 a 102 y eso no es una falla del scraping: es el botón de borrar.** Borrar elimina las filas crudas además del canónico, así que un triage a fondo *reduce* el crudo. Si alguien vuelve a ver bajar ese número, mirar primero `blocked_source_events` —que subió de 13 a 24— antes de sospechar de una fuente.
 
 El salto entre canónicos y pantalla ya no es solo deduplicación: **la mayor parte son los 37 borradores esperando revisión**. Es el modelo funcionando, no un atraso del pipeline.
+
+⚠️ **`/festivales` se ve vacía y eso es correcto, no un bug.** Los 6 festivales están marcados pero siguen en borrador, y la cartelera solo lee lo publicado. Marcar no es publicar: publicarlos es decisión de Juan, seis clics en `/admin` → "Por revisar" → Publicar.
 
 **Las salas ya no tienen cola**: las 6 que estaban por aprobar se resolvieron el 2026-09-01 (quedaron 9 descartadas contra 3 que había). Esa parte del trabajo bloqueado en Juan está hecha.
 
@@ -200,21 +202,25 @@ El salto entre canónicos y pantalla ya no es solo deduplicación: **la mayor pa
 
 **No queda ningún publicado sin clasificar, ni ninguno sin origen resuelto** (verificado el 2026-09-01: 0 canónicos con `event_type` en null, 0 conciertos publicados con `is_local` en null). Carlos Vives —el que trajo el cron del 2026-08-30 y MusicBrainz no resolvió desde CI— se clasificó a mano el 2026-08-31 corriendo `classify_cli` local, que lo resuelve al instante: quedó como **local**.
 
-⚠️ **Pero hay 13 borradores de música con el origen sin resolver, y no son el mismo problema.** Son dos estados que se parecen en la base y se leen igual en la cola:
+⚠️ **Pero hay borradores de música con el origen sin resolver, y no son el mismo problema.** Son dos estados que se parecen en la base y se leen igual en la cola:
 
 - **MusicBrainz no se pudo consultar** (503, timeout). El evento queda con `event_type` en null, y por eso la próxima corrida lo vuelve a tomar: `classify_cli` pide justamente `event_type is null`. Este es el que se reintenta solo.
 - **MusicBrainz contestó y no reconoció al artista.** El evento queda `event_type = 'music'` con `is_local` en null y `classification_source = assumed_music`. **Este no se reintenta nunca**, y está bien que así sea: ya se preguntó y la respuesta fue "no lo conozco". Volver a preguntar todos los días no cambiaría nada.
 
-Los 13 son del segundo tipo, y **varios ni siquiera son un hueco**: Rock al Parque, Jazz al Parque, Hip Hop al Parque y Festival Cordillera son festivales sin artista de cartel, así que no hay a quién preguntarle de dónde es —el mismo caso que las fiestas—. El resto (Kris R, HUMBE, Carteto de Nos, Laura & Brenda…) son los que Juan resuelve a mano en `/admin` o curando en `artistas_locales.py`.
+Eran 13 y **quedaron 7**: los 6 festivales salieron de esa cuenta al estrenarse la categoría `festival` el 2026-09-01, porque ahí el origen en null dejó de ser un hueco y pasó a ser la respuesta correcta —un festival no tiene artista de cartel—. Es un buen ejemplo de por qué la cuenta hay que leerla con cuidado: **la mitad de lo que parecía un problema de datos era vocabulario que faltaba**.
+
+Los 7 que quedan sí son huecos de verdad, y los resuelve Juan a mano en `/admin` o curando en `artistas_locales.py`: Carteto de Nos, The Hayley Williams Show, HUMBE, Kris R, Laura & Brenda, Gorillaz y Expo Solar (este último probablemente ni siquiera sea música).
 
 Que casi no quede ninguno sin resolver **no significa que el problema esté cerrado**: se llegó ahí curando ocho artistas a mano, no porque MusicBrainz haya mejorado. Cada evento nuevo que traiga el cron puede volver a caer en "sin origen", y los locales emergentes son los que más probablemente caigan.
 
 **El mapa no cuenta lo mismo que la cartelera y no es un error** (surgió como duda el 2026-08-27): `getEscena` filtra por `starts_at >= hoy` y suma conciertos, fiestas y festivales en un solo número, mientras la cartelera los separa en tres pestañas. El mapa los junta a propósito: una sala con fiesta o con festival está tan activa como una con concierto, y para saber dónde hay música esta noche esa distinción no ayuda. Además, un evento sin fecha no puede pasar ese filtro —no se sabe si ya pasó o si viene—, así que el mapa nunca lo muestra; la cartelera sí puede, porque tiene dónde ponerlo. Hoy el único caso es THE JAZZ ROOM. Efecto lateral aceptado: el mapa no avisa que una sala tiene además eventos sin fecha confirmada.
 
 ### Lo que quedó a medias (pendientes operativos)
-- 🔴 **La migración `20260901000000_tipo_festival.sql` está escrita y SIN APLICAR, y hasta que se aplique el tipo `festival` no se puede guardar.** El `check` de `events.event_type` y el de `canonical_events.event_type` todavía aceptan solo `music`/`fiesta`/`not_music`, así que el clasificador puede decidir "festival" y la base lo rechaza con un `23514`. Todo el código —clasificador, pestaña `/festivales`, opción en los dos formularios— ya está y funciona en cuanto el `check` cambie.
-  - **La tiene que aplicar Juan**: el proyecto no tiene ni CLI de Supabase ni cadena de conexión a Postgres; `services/api/.env` solo trae la URL REST y la service role key, y PostgREST no ejecuta DDL. El camino es el SQL Editor del panel de Supabase, igual que con las migraciones anteriores.
-  - Después de aplicarla, **los 6 festivales que ya están en la cola siguen marcados como `music`** y hay que cambiarlos a mano en `/admin` → "Qué es". No se arreglan solos a propósito: `clasificacion_pendiente` solo rellena huecos y nunca sobrescribe, porque la decisión del admin tiene que ganar sobre la del clasificador. Lo que sí entra solo es lo que venga después — Rock al Parque 2027 incluido.
+- ~~🔴 La migración `20260901000000_tipo_festival.sql` está sin aplicar.~~ **Aplicada por Juan el 2026-09-01**, y los 6 festivales quedaron marcados en las dos capas ese mismo día. Se dejan dos cosas anotadas porque van a volver a hacer falta:
+  - **Las migraciones las aplica Juan a mano, en el SQL Editor de Supabase.** El proyecto no tiene CLI de Supabase ni cadena de conexión a Postgres —`services/api/.env` solo trae la URL REST y la service role key, y PostgREST no ejecuta DDL—, así que **ninguna sesión puede aplicar una migración por su cuenta**. Quien escriba la próxima tiene que entregarla y pedirla, no darla por corrida.
+  - **Marcar los 6 no fue escribir el valor a mano**: se corrió `clasificar()` sobre esas filas crudas y se guardó lo que decidió, `classification_source = curated_festival` incluido, para que el porqué quede auditable igual que en una corrida del cron. Ninguna gastó una petición a MusicBrainz. En el canónico se tocó **solo `event_type`**: ni `reviewed_at` ni el título, que son terreno del admin.
+- 🔴 **Los 5 commits del 2026-09-01 están sin pushear, así que el CI no corrió ninguno.** Lo más importante que queda sin ejercitar es **el paso `npm run lint` que se agregó al workflow `Tests` ese mismo día: nunca se ha ejecutado en CI**. Localmente pasa, pero eso es lo que también pasaba antes de descubrir que el frontend no tenía linter. Se comprobó que la config de `eslint-config-next` no usa linting con tipos, así que no debería necesitar `next typegen` antes — pero *no debería* no es *se verificó*. Al pushear, mirar que ese paso quede en verde.
+  - Tampoco pasó por CI nada del festival ni del género. Los 249 tests de backend y 42 de frontend, `ruff`, `tsc`, `eslint` y `build` están en verde **en la máquina de Juan**, que es exactamente la clase de prueba que este proyecto ya aprendió a no dar por suficiente (ver la regla de "probarla también desde donde va a correr en producción").
 - **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen falta las variables `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en el proyecto de Vercel. Vercel corre `npm run build`, así que el `prebuild` que copia el worker de MapLibre se dispara solo.
 - ~~**El workflow `Tests` está en rojo desde el 2026-08-29.**~~ **Arreglado el 2026-08-31.** Estuvo rojo en todos los push durante tres días sin que nadie lo notara. No fallaban los tests: fallaba `ruff`, con dos errores del commit del radar (`eb73a01`, Fase 5) — un import sin usar en `radar.py` y un `with` anidado en `tests/test_lastfm.py` (SIM117). Lo que queda como lección, y por eso no se borra: **pasó desapercibido porque `Scraper cron` sí estaba verde**, y era el workflow que se venía mirando. Son dos workflows distintos y uno no dice nada del otro. Antes de dar el CI por bueno, mirar los dos: `curl -s ".../actions/runs?per_page=20"` y agrupar por `name`.
 - 🔴 **La ruta de MusicBrainz en CI ya se ejercitó y no clasificó** — esto corrige lo que decía esta misma sección hasta el 2026-08-31 ("se sabrá la primera vez que el scraping traiga un evento nuevo"). Ya pasó: el cron del **2026-08-30T17:54Z** trajo un evento nuevo de verdad (`Carlos Vives & La Provincia Tour Al Sol`), el paso `Classify events` corrió 33 segundos y terminó **success**, y el evento sigue **sin clasificar** un día después. Local resuelve el mismo evento al instante y sin reintentos: `classify_cli --dry-run` devuelve «Carlos Vives → CO → local». O sea que el "success" del paso es el comportamiento diseñado —MusicBrainz falla, se deja sin clasificar para reintentar, no se tumba la corrida—, pero **el resultado desde CI no es el mismo que desde acá**.
@@ -233,7 +239,7 @@ Que casi no quede ninguno sin resolver **no significa que el problema esté cerr
 - Opcional: añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para que el CI prerenderice contra la base real en vez de contra placeholders.
 
 ### Lo que ya está cerrado
-El look & feel del 2026-08-28 (Verde Neón, tipografía, iconografía, toggle claro/oscuro) está **commiteado, verificado y aceptado**: Juan lo miró en el navegador el 2026-08-28 — "se ve bien". Eso cierra la verificación que la sesión original no pudo hacer, porque corría en la nube sin shell. (Al 2026-09-01 la suite es de **241 tests de backend y 42 de frontend**; `tsc`, `eslint`, `ruff` y build en verde, y `Tests` verde en CI en todos los push desde el 2026-08-31.)
+El look & feel del 2026-08-28 (Verde Neón, tipografía, iconografía, toggle claro/oscuro) está **commiteado, verificado y aceptado**: Juan lo miró en el navegador el 2026-08-28 — "se ve bien". Eso cierra la verificación que la sesión original no pudo hacer, porque corría en la nube sin shell. (Al 2026-09-01 la suite es de **249 tests de backend y 42 de frontend**; `tsc`, `eslint`, `ruff` y build en verde **en local**. `Tests` estuvo verde en CI en todos los push hasta el 2026-08-31 — pero lo del 2026-09-01 todavía no se pusheó, así que el CI no lo ha visto.)
 
 ~~⚠️ `npm run lint` falla y el CI no lo mira.~~ **Arreglado el 2026-09-01, las dos mitades.** El frontend era el único lado sin linter en CI —`ruff` sí corría del lado de Python—, y por eso `ThemeToggle.tsx` estuvo violando `react-hooks/set-state-in-effect` desde el 2026-08-31 sin que nadie se enterara. Ahora el workflow `Tests` corre `npm run lint`.
   - **El componente no se silenció, se rehízo**: leía `data-theme` del DOM en un `useEffect` y se copiaba a `useState`, que es la copia que la regla marca. Ahora lo lee con `useSyncExternalStore` + un `MutationObserver` sobre `<html>`. Es mejor además de más limpio: **el atributo es la fuente de verdad y ya no hay copia que pueda desfasarse** — antes, cualquier cosa que tocara `data-theme` dejaba el ícono mintiendo. El script inline del `<head>` no cambió; sigue fijando el tema antes del primer pintado.
@@ -273,9 +279,13 @@ Antes de cualquiera de los dos hay trabajo de moderación acumulado que solo pue
 **Después queda la Fase 6 (pulido y deploy)**: desplegar a Vercel —que nunca se ha hecho—, la pasada final de look & feel, y mirar si el cron llega a clasificar solo lo que MusicBrainz le falló.
 
 Esperando a Juan, y nadie más lo puede destrabar:
+- **Pushear los 5 commits del 2026-09-01**, para que el CI los mire por primera vez (ver "Lo que quedó a medias").
+- **Publicar los 6 festivales**, que están marcados pero en borrador — hasta entonces `/festivales` se ve vacía.
 - **Las fotos de sala** (`fotos_curadas.py` vacío, 0 de 13 salas publicadas).
 - **Las coordenadas de las 4 salas** que aprobó sin punto en el mapa. Ya se nota: el Coliseo Medplus aparece hoy bajo el mapa como "sin ubicar".
-- **El género de los eventos publicados** (42 de 49 sin él). No es tarea de nadie más: ninguna fuente lo publica, así que o lo escribe Juan en `/admin` o el chip no existe.
+- **El género de los eventos publicados** (40 de 49 sin él al 2026-09-01). No es tarea de nadie más: ninguna fuente lo publica, así que o lo escribe Juan en `/admin` o el chip no existe.
+
+**Pregunta abierta que hay que hacerle a Juan, no resolver por cuenta propia: ¿se les devuelve el año al título de los festivales?** Los canónicos dicen "Rock al Parque" porque el normalizador les quitó el año cuando todavía eran `music`; los crudos dicen "Rock al Parque 2026". Ahora que son `festival` la regla es la contraria —el año es la edición y se conserva, como el "Vol. 4" de los ciclos—, así que el título quedó normalizado con un criterio que ya no aplica. **No se re-normalizaron porque 5 de los 6 tienen `reviewed_at`**: no hay forma de distinguir "Juan dejó ese título" de "Juan nunca lo miró", y pisar una edición del admin es exactamente lo que el modelo de moderación prohíbe. Si Juan confirma que el título no fue decisión suya, es una corrida y ya.
 
 ⚠️ `apps/web` corre **Next.js 16**, que cambió convenciones respecto a versiones anteriores: `params`/`searchParams` son Promises, existen los helpers globales `PageProps<'/ruta'>` y `LayoutProps<'/ruta'>`, y Turbopack es el default. Antes de escribir código de frontend, leé la guía correspondiente en `apps/web/node_modules/next/dist/docs/` (así lo pide `apps/web/AGENTS.md`).
 
