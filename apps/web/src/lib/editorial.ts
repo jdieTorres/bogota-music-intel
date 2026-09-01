@@ -11,6 +11,9 @@
  * 3. Las fiestas y ciclos de sala van en su propia pestaña. No compiten con
  *    los conciertos por el mismo lugar en la lista, porque ordenar una
  *    noche de club junto a un show del Movistar no compara nada.
+ * 4. Los festivales van en la suya (2026-09-01). Comparten con la fiesta
+ *    que no hay un artista de cartel, pero no se mezclan con ella: una
+ *    noche de club y tres días en el Simón Bolívar tampoco se comparan.
  *
  * Vive aparte de `events.ts` porque es política, no acceso a datos: acá no
  * se abre conexión a Supabase, así que se puede probar sin credenciales y
@@ -36,13 +39,16 @@ export const SOLO_CONCIERTOS = "event_type.is.null,event_type.eq.music";
 /** Fiestas y ciclos: la sala programándose a sí misma. */
 export const SOLO_FIESTAS = "event_type.eq.fiesta";
 
+/** Festivales: varios días, varios artistas, ninguno de cartel. */
+export const SOLO_FESTIVALES = "event_type.eq.festival";
+
 /**
- * Todo lo que es escena, sin separar. Lo usa el mapa: una sala con fiesta
- * está tan activa como una con concierto, y separarlas ahí no ayudaría a
- * nadie a saber dónde hay música esta noche.
+ * Todo lo que es escena, sin separar. Lo usa el mapa: una sala con fiesta o
+ * con festival está tan activa como una con concierto, y separarlas ahí no
+ * ayudaría a nadie a saber dónde hay música esta noche.
  */
 export const EN_CARTELERA =
-  "event_type.is.null,event_type.eq.music,event_type.eq.fiesta";
+  "event_type.is.null,event_type.eq.music,event_type.eq.fiesta,event_type.eq.festival";
 
 /** Lo mínimo que hace falta para ordenar por criterio editorial. */
 type ConOrigen = { is_local: boolean | null };

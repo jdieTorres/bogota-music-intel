@@ -4,6 +4,7 @@ import { GENEROS_SUGERIDOS } from "@/lib/admin/generos";
 import {
   EN_CARTELERA,
   SOLO_CONCIERTOS,
+  SOLO_FESTIVALES,
   SOLO_FIESTAS,
   generoVisible,
   priorizarLocales,
@@ -83,17 +84,22 @@ describe("filtros editoriales", () => {
     expect(SOLO_CONCIERTOS).toContain("event_type.eq.music");
   });
 
-  it("las dos pestañas no muestran lo mismo", () => {
-    // Si los conciertos dejaran pasar las fiestas, cada evento saldría en
-    // las dos pestañas y separarlas no habría servido de nada.
+  it("las tres pestañas no muestran lo mismo", () => {
+    // Si una dejara pasar lo de otra, el mismo evento saldría en dos
+    // pestañas y separarlas no habría servido de nada.
     expect(SOLO_CONCIERTOS).not.toContain("fiesta");
+    expect(SOLO_CONCIERTOS).not.toContain("festival");
     expect(SOLO_FIESTAS).toContain("event_type.eq.fiesta");
     expect(SOLO_FIESTAS).not.toContain("event_type.eq.music");
+    expect(SOLO_FIESTAS).not.toContain("event_type.eq.festival");
+    expect(SOLO_FESTIVALES).toContain("event_type.eq.festival");
+    expect(SOLO_FESTIVALES).not.toContain("event_type.eq.music");
   });
 
-  it("el mapa muestra las dos cosas, pero nunca lo que no es música", () => {
+  it("el mapa muestra las tres cosas, pero nunca lo que no es música", () => {
     expect(EN_CARTELERA).toContain("event_type.eq.music");
     expect(EN_CARTELERA).toContain("event_type.eq.fiesta");
+    expect(EN_CARTELERA).toContain("event_type.eq.festival");
     expect(EN_CARTELERA).toContain("event_type.is.null");
     expect(EN_CARTELERA).not.toContain("not_music");
   });

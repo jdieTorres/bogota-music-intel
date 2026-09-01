@@ -10,20 +10,24 @@ Traduce a código las dos decisiones editoriales que tomó Juan (2026-08-27):
 Son dos preguntas distintas y se resuelven por separado: `event_type`
 contesta la primera, `is_local` la segunda.
 
-Hay una tercera categoría además de esas dos: la **fiesta** —la noche o el
-ciclo que programa la sala, sin artista de cartel—. No es un concierto con
-el artista sin identificar; es que no hay a quién identificar. Se muestra
-en la cartelera, en su propia pestaña.
+Hay dos categorías más además de esas dos, y las dos comparten la misma
+forma: **no hay un artista de cartel a quien identificar**, que no es lo
+mismo que no haberlo podido identificar. La **fiesta** es la noche o el
+ciclo que programa la sala; el **festival** son varios días y varios
+artistas, casi siempre en un parque. Se separan entre sí porque ordenar una
+noche de club junto a Rock al Parque no compara nada. Las dos se muestran
+en la cartelera, cada una en su pestaña.
 
 El orden de las señales va de la más confiable a la más frágil, y la
 primera que contesta gana:
 
     1. lista curada de eventos (alguien lo verificó en la fuente)
     2. lista curada de ciclos  (fiestas, por nombre para que vuelvan solas)
-    3. categoría de la fuente  (la publicó la sala)
-    4. patrón en el título     (heurística nuestra)
-    5. lista curada de artistas (donde MusicBrainz no llega o se equivoca)
-    6. MusicBrainz             (para el origen del artista)
+    3. lista curada de festivales (por título completo, ver el módulo)
+    4. categoría de la fuente  (la publicó la sala)
+    5. patrón en el título     (heurística nuestra)
+    6. lista curada de artistas (donde MusicBrainz no llega o se equivoca)
+    7. MusicBrainz             (para el origen del artista)
 
 Nada de esto borra filas: la ingesta sigue guardando todo crudo y esto solo
 marca. Si mañana cambia el criterio, se reclasifica sin volver a scrapear.
@@ -39,13 +43,16 @@ from bogota_music_intel.exclusion_patterns import (
     categoria_no_musical,
     patron_no_musical,
 )
+from bogota_music_intel.festivales_curados import festival_de
 from bogota_music_intel.musicbrainz import candidatos_de_titulo, resolver_artista
 from bogota_music_intel.tipos_evento import (
+    FESTIVAL,
     FIESTA,
     FUENTE_ARTISTA_CURADO,
     FUENTE_ASUMIDO,
     FUENTE_CATEGORIA,
     FUENTE_CICLO,
+    FUENTE_FESTIVAL,
     FUENTE_MANUAL,
     FUENTE_MUSICBRAINZ,
     FUENTE_PATRON,
@@ -89,6 +96,17 @@ def clasificar(evento: dict, client: httpx.Client | None = None) -> Clasificacio
             is_local=None,
             classification_source=FUENTE_CICLO,
             detalle=f"ciclo «{ciclo.nombre}»: {ciclo.evidencia}",
+        )
+
+    festival = festival_de(evento["title"])
+    if festival is not None:
+        return Clasificacion(
+            event_type=FESTIVAL,
+            # Mismo motivo que la fiesta: no es que no sepamos de dónde es el
+            # artista, es que hay cincuenta y ninguno es el cartel.
+            is_local=None,
+            classification_source=FUENTE_FESTIVAL,
+            detalle=f"festival «{festival.nombre}»: {festival.evidencia}",
         )
 
     motivo = categoria_no_musical(evento.get("category"))

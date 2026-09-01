@@ -1,4 +1,9 @@
-import { SOLO_CONCIERTOS, SOLO_FIESTAS, generoVisible } from "@/lib/editorial";
+import {
+  SOLO_CONCIERTOS,
+  SOLO_FESTIVALES,
+  SOLO_FIESTAS,
+  generoVisible,
+} from "@/lib/editorial";
 import { supabase } from "@/lib/supabase";
 
 export type DatePrecision = "day" | "month" | "unknown";
@@ -11,7 +16,7 @@ export type EventoVenue = {
 
 /** null = todavía sin clasificar. No es lo mismo que "no es música": un
  *  evento sin clasificar se sigue mostrando. */
-export type TipoEvento = "music" | "fiesta" | "not_music" | null;
+export type TipoEvento = "music" | "fiesta" | "festival" | "not_music" | null;
 
 /** De dónde salió el evento. Un `manual` no tiene página de sala a la que
  *  remitir al lector, y por eso la base le exige `evidence`. */
@@ -141,6 +146,8 @@ export const getEventosProximos = () => proximos(SOLO_CONCIERTOS);
 export const getEventosSinFecha = () => sinFecha(SOLO_CONCIERTOS);
 export const getFiestasProximas = () => proximos(SOLO_FIESTAS);
 export const getFiestasSinFecha = () => sinFecha(SOLO_FIESTAS);
+export const getFestivalesProximos = () => proximos(SOLO_FESTIVALES);
+export const getFestivalesSinFecha = () => sinFecha(SOLO_FESTIVALES);
 
 export async function getEvento(id: string): Promise<Evento | null> {
   const { data, error } = await supabase

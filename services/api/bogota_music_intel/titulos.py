@@ -393,17 +393,23 @@ def normalizar_titulo(crudo: str, event_type: str | None = None, sala: str | Non
         return _unir(list(curado.artistas), curado.gira)
 
     grita = es_grito(limpio)
-    es_fiesta = event_type == "fiesta"
+    # Fiesta y festival comparten exactamente lo que le importa a esta
+    # función: **no hay un artista de cartel**, así que el título entero es
+    # el nombre del evento y no hay nada que partir. Se agrupan en una sola
+    # condición porque distinguirlos acá sería una diferencia sin efecto.
+    sin_cartel = event_type in ("fiesta", "festival")
 
     # El año va antes que el lugar: en "WWE Bogota 2026" la ciudad queda al
-    # descubierto recién cuando se quita el año. En una fiesta no se quita —
-    # ahí el año puede ser el nombre de la edición.
+    # descubierto recién cuando se quita el año. Sin cartel no se quita —
+    # ahí el año es el nombre de la edición: "Rock al Parque 2026" es una
+    # edición concreta y "Que Chimba Puñeta Vol. 4" también.
     base = _colapsar_duplicado(limpio)
-    cuerpo, cola = quitar_ruido_de_lugar(base if es_fiesta else _quitar_anio_final(base), sala)
+    cuerpo, cola = quitar_ruido_de_lugar(base if sin_cartel else _quitar_anio_final(base), sala)
 
-    # Una fiesta no tiene artista de cartel que separar de una gira: el
-    # nombre del ciclo es todo el título. Solo se le quita el ruido de sala.
-    if es_fiesta:
+    # Sin artista de cartel no hay artista que separar de una gira: el
+    # nombre del ciclo o del festival es todo el título. Solo se le quita el
+    # ruido de sala.
+    if sin_cartel:
         return titulo_caso(_quitar_punto_final(f"{cuerpo} {cola}".strip()), grita)
 
     anuncio = _PRESENTA.match(cuerpo)

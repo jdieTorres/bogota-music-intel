@@ -1,11 +1,12 @@
 import { EN_CARTELERA } from "@/lib/editorial";
+import type { TipoEvento } from "@/lib/events";
 import { supabase } from "@/lib/supabase";
 
 export type EventoEnSala = {
   id: string;
   title: string;
   starts_at: string | null;
-  event_type: "music" | "fiesta" | "not_music" | null;
+  event_type: TipoEvento;
 };
 
 export type SalaEnMapa = {

@@ -306,6 +306,7 @@ function Ficha({
             <option value="">todavía no sé</option>
             <option value="music">concierto</option>
             <option value="fiesta">fiesta o ciclo</option>
+            <option value="festival">festival</option>
             <option value="not_music">no es música</option>
           </select>
         </label>

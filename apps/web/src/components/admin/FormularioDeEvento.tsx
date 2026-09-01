@@ -24,6 +24,7 @@ import {
   desdeCampoDeFecha,
 } from "@/components/admin/ui";
 import { crearEvento } from "@/lib/admin/eventos";
+import type { TipoEvento } from "@/lib/events";
 import { getSalasPublicadas } from "@/lib/admin/salas";
 
 export function FormularioDeEvento({
@@ -40,7 +41,9 @@ export function FormularioDeEvento({
   const [precio, setPrecio] = useState("");
   const [boleteria, setBoleteria] = useState("");
   const [genero, setGenero] = useState<string | null>(null);
-  const [tipo, setTipo] = useState<"music" | "fiesta" | "not_music" | "">("music");
+  // "" es la opción "todavía no sé", que se guarda como null. Se separa
+  // del union porque un <select> no puede tener valor null.
+  const [tipo, setTipo] = useState<Exclude<TipoEvento, null> | "">("music");
   const [local, setLocal] = useState("");
   const [evidencia, setEvidencia] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -153,6 +156,7 @@ export function FormularioDeEvento({
           >
             <option value="music">concierto</option>
             <option value="fiesta">fiesta o ciclo</option>
+            <option value="festival">festival</option>
             <option value="not_music">no es música</option>
             <option value="">todavía no sé</option>
           </select>

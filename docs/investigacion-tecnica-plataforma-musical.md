@@ -685,3 +685,37 @@ La lista sigue siendo explícita y no un comodín, a propósito: el optimizador 
 Lo que se agregó no es la línea que faltaba sino el aviso: `moderacion_cli` compara los hosts que llegan contra `remotePatterns`, **leyéndola del propio `next.config.ts`** —mantener dos copias las desincronizaría— y lo dice en el log del cron. De paso salieron los dos hosts del radar (Deezer y Last.fm), que ya no existen.
 
 Generaliza: cuando se elige una lista blanca sobre un comodín, el costo real no es escribirla, es **enterarse tarde de que le falta una entrada**. Eso se paga una sola vez con un chequeo automático.
+
+### El festival como cuarta categoría (2026-09-01)
+
+`visitbogota` trajo, en su primer lote, seis eventos que el vocabulario existente no sabía nombrar: Rock al Parque, Salsa al Parque, Jazz al Parque, Hip Hop al Parque, Festival Cordillera y Todos Somos Ángeles Rock Fest. Caían en `music`, y ahí quedaban con `is_local` en null de forma permanente — no por una falla de MusicBrainz, sino porque **la pregunta no tiene respuesta**: un festival de cincuenta bandas no tiene un origen.
+
+Es la misma forma que ya tenía la `fiesta`, y por un momento pareció que alcanzaba con reusarla. No alcanza, por el mismo motivo por el que las fiestas se separaron de los conciertos: una noche de club y tres días en el Simón Bolívar no se comparan en una misma lista. Reusar `fiesta` habría deshecho la separación que la creó.
+
+#### El contraejemplo que definió la regla de emparejamiento
+
+La primera versión iba a buscar el nombre del festival como subcadena, igual que `ciclos_curados.py`. La base tenía el caso que lo desmiente:
+
+| Título | Qué es | Por qué |
+|---|---|---|
+| `Rock al Parque 2026` | festival | el título es el nombre del festival y nada más |
+| `Festival Orígenes presenta Sara Curruchich y Humazapas` | **concierto** | nombra a quién toca, y MusicBrainz los resuelve |
+
+El segundo lo publica el Teatro Jorge Eliécer Gaitán bajo `/agenda/concierto/`. Con emparejamiento por subcadena habría perdido su cartel —el normalizador deja de partir "Artista | Gira" cuando no hay cartel— y su origen, que ya estaba resuelto.
+
+De ahí la regla, más estricta que la de los ciclos y por un motivo concreto: **es festival cuando el título completo es el nombre del festival**, ignorando el año final. En cuanto el título nombra a alguien, es un concierto — aunque ocurra dentro de un festival.
+
+El año se ignora al comparar y se conserva al publicar. Son dos cosas distintas y las dos son deliberadas: ignorarlo hace que "Rock al Parque 2027" entre solo el año que viene; conservarlo mantiene la edición identificable, que es lo mismo que ya se hacía con "Que Chimba Puñeta Vol. 4".
+
+#### Lo que tocó
+
+- Migración `20260901000000_tipo_festival.sql`: amplía el `check` de `events.event_type` **y el de `canonical_events.event_type`**. Los dos, o el canónico rechaza lo que el crudo acepta.
+- `festivales_curados.py`, con `evidencia` obligatoria. La evidencia sale de la descripción de cada ficha, que en estos casos lo dice con todas las letras («el festival gratuito de rock más grande de América Latina»).
+- `classify.py`: la lista de festivales entra **después de los ciclos y antes de la categoría de la fuente**. Ese orden importa: visitbogota escribe "Conciertos" en todo lo suyo, así que si la categoría decidiera primero ningún festival suyo se marcaría.
+- `titulos.py`: `fiesta` y `festival` comparten condición (`sin_cartel`) porque para el normalizador piden exactamente lo mismo — no hay artista que separar de una gira.
+- Frontend: `SOLO_FESTIVALES`, `/festivales`, la tercera pestaña y la opción en los dos formularios de `/admin`. `EN_CARTELERA` (el mapa) los suma sin separar.
+- De paso, el union `"music" | "fiesta" | "not_music" | null` estaba escrito a mano en cuatro archivos del frontend. Se unificó en `TipoEvento`: agregar la cuarta categoría en cuatro lugares distintos es exactamente cómo se olvida uno.
+
+#### Detalle que no se resolvió, y por qué
+
+La ficha de Jazz al Parque **se contradice sobre la sede**: el campo de lugar dice Parque el Country y el cuerpo del texto dice Parque Metropolitano Simón Bolívar. No se corrige desde la lista curada: la sala sale de la fuente, y esta lista responde qué tipo de evento es, no dónde ocurre. Queda anotado en la `evidencia` de esa entrada para que quien lo vea en el mapa sepa que ya se detectó.

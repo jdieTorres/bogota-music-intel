@@ -19,12 +19,15 @@ from bogota_music_intel.exclusion_patterns import (
     categoria_no_musical,
     patron_no_musical,
 )
+from bogota_music_intel.festivales_curados import FESTIVALES, festival_de
 from bogota_music_intel.tipos_evento import (
+    FESTIVAL,
     FIESTA,
     FUENTE_ARTISTA_CURADO,
     FUENTE_ASUMIDO,
     FUENTE_CATEGORIA,
     FUENTE_CICLO,
+    FUENTE_FESTIVAL,
     FUENTE_MANUAL,
     FUENTE_MUSICBRAINZ,
     FUENTE_PATRON,
@@ -302,3 +305,71 @@ class TestOrigenDelArtista:
         assert resultado.event_type == MUSICA
         assert resultado.is_local is None
         assert resultado.consulto_red is False
+
+
+class TestFestivalesCurados:
+    """El cron empezó a traer festivales con `visitbogota` (2026-08-31), y
+    sin categoría propia caían en `music` con el origen sin resolver para
+    siempre — un festival no tiene UN artista al que preguntarle."""
+
+    def test_toda_entrada_documenta_su_evidencia(self):
+        for festival in FESTIVALES:
+            assert len(festival.evidencia) > 40, festival.nombre
+
+    def test_reconoce_el_festival_con_y_sin_el_anio_de_la_edicion(self):
+        # El año es la edición, no el nombre: así "Rock al Parque 2027" entra
+        # solo el año que viene, sin tocar la lista.
+        assert festival_de("Rock al Parque 2026").nombre == "Rock al Parque"
+        assert festival_de("Rock al Parque").nombre == "Rock al Parque"
+        assert festival_de("ROCK AL PARQUE 2026").nombre == "Rock al Parque"
+
+    def test_un_concierto_dentro_de_un_festival_no_es_el_festival(self):
+        # El caso real que obligó a comparar el título entero en vez de
+        # buscar subcadena: el Teatro Jorge Eliécer Gaitán publica un show
+        # con dos artistas nombrados bajo el paraguas de Festival Orígenes.
+        # Si matcheara, perdería su cartel y su origen.
+        assert festival_de("Festival Orígenes presenta Sara Curruchich y Humazapas") is None
+
+    def test_no_se_traga_un_concierto_que_solo_menciona_el_nombre(self):
+        assert festival_de("Aterciopelados en Rock al Parque") is None
+        assert festival_de("Rock al Parque: el documental") is None
+
+    def test_clasifica_sin_consultar_la_red(self):
+        # No hay artista de cartel, así que preguntarle a MusicBrainz por el
+        # título completo sería gastar una petición para nada.
+        def handler(request):
+            raise AssertionError("no debería consultar MusicBrainz")
+
+        with _cliente_falso(handler) as cliente:
+            resultado = clasificar(
+                _evento(source="visitbogota", title="Rock al Parque 2026", category="Conciertos"),
+                client=cliente,
+            )
+
+        assert resultado.event_type == FESTIVAL
+        assert resultado.classification_source == FUENTE_FESTIVAL
+        assert resultado.consulto_red is False
+
+    def test_el_origen_queda_en_null_a_proposito(self):
+        # Mismo criterio que la fiesta: no es "no sabemos de dónde es el
+        # artista", es que no hay un artista del cual afirmarlo. Marcarlo
+        # como internacional o local sería inventar.
+        resultado = clasificar(_evento(title="Festival Cordillera 2026"))
+        assert resultado.is_local is None
+
+    def test_gana_sobre_la_categoria_de_la_fuente(self):
+        # visitbogota escribe "Conciertos" en todo lo suyo. Si la categoría
+        # decidiera primero, ningún festival suyo se marcaría como tal.
+        resultado = clasificar(
+            _evento(source="visitbogota", title="Salsa al Parque 2026", category="Conciertos")
+        )
+        assert resultado.event_type == FESTIVAL
+
+    def test_ningun_festival_choca_con_un_ciclo(self):
+        # Las dos listas se consultan en orden y la primera gana. Si un
+        # nombre estuviera en las dos, el resultado dependería del orden del
+        # código en vez de de la evidencia.
+        from bogota_music_intel.ciclos_curados import ciclo_de
+
+        for festival in FESTIVALES:
+            assert ciclo_de(festival.nombre) is None, festival.nombre

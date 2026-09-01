@@ -13,6 +13,7 @@
  * funciones se llamaran sin sesión de admin, la base las rechaza.
  */
 
+import type { TipoEvento } from "@/lib/events";
 import { supabase } from "@/lib/supabase";
 
 export type EstadoCanonico = "borrador" | "publicado" | "descartado";
@@ -40,7 +41,7 @@ export type EventoEnCola = {
   category: string | null;
   ticket_url: string | null;
   image_url: string | null;
-  event_type: "music" | "fiesta" | "not_music" | null;
+  event_type: TipoEvento;
   is_local: boolean | null;
   evidence: string | null;
   source_snapshot: Record<string, unknown> | null;
@@ -257,7 +258,7 @@ export type EventoNuevo = {
    *  columna que llena el scraper — en el canónico, que es la copia
    *  editable, no en la fila cruda que el cron reescribe. */
   category?: string | null;
-  event_type: "music" | "fiesta" | "not_music" | null;
+  event_type: TipoEvento;
   is_local: boolean | null;
   /** Obligatoria: la base rechaza un `origin = 'manual'` sin evidencia. */
   evidence: string;
