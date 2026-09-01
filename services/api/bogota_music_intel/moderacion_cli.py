@@ -9,7 +9,7 @@ Corre después del scraping y de la clasificación, igual que `classify_cli`
 corre después de `scrape_cli`: la ingesta guarda crudo y esto arma encima la
 cola que el admin revisa.
 
-Hace tres cosas, y ninguna publica nada:
+Hace cinco cosas, y ninguna publica nada:
 
 1. **Abre borrador** para cada fila cruda que todavía no tiene canónico, y
    le anota una sugerencia de duplicado si se parece a algo ya publicado.
@@ -20,6 +20,8 @@ Hace tres cosas, y ninguna publica nada:
 4. **Baja la clasificación que llegó tarde**: un evento que MusicBrainz no
    resolvió el primer día y sí el segundo tiene que llegarle al canónico,
    que ya existía cuando eso pasó.
+5. **Rearma la foto de origen** del canónico al que el admin le acaba de
+   unir un duplicado. Sin eso ese evento dejaría de vigilarse.
 
 `--backfill` es la mudanza inicial: toma lo que ya está en la base y lo
 publica como canónico para que la cartelera no se vacíe al cambiar de
@@ -113,6 +115,42 @@ def _marcar_cambios(client, crudos, canonicos, salas, guardar: bool) -> int:
             ).eq("id", canonico["id"]).execute()
         marcados += 1
     return marcados
+
+
+def _rebaselinar_snapshots(client, crudos, canonicos, salas, guardar: bool) -> int:
+    """Le devuelve la foto de origen a un canónico que se quedó sin ella.
+
+    Pasa cuando el admin confirma un duplicado: `unificar_duplicado()` deja
+    `source_snapshot` en null a propósito, porque el canónico acaba de sumar
+    una fuente y la foto vieja ya no le corresponde. Si nadie la rearmara, ese
+    evento **dejaría de vigilarse para siempre** — `cambios()` con snapshot
+    vacío siempre devuelve vacío, así que la sala podría mover el precio y
+    nadie se enteraría.
+
+    Es silencioso a propósito: no es un cambio del origen, es la línea de base
+    que se vuelve a tomar.
+    """
+    por_canonico: dict[str, list[dict]] = {}
+    for evento in crudos:
+        if evento.get("canonical_id"):
+            por_canonico.setdefault(evento["canonical_id"], []).append(evento)
+
+    rearmados = 0
+    for canonico in canonicos:
+        if canonico.get("source_snapshot") is not None:
+            continue
+        fuentes = _ordenados(por_canonico.get(canonico["id"], []))
+        if not fuentes:
+            continue
+
+        foto = borrador_desde(fuentes, salas)["source_snapshot"]
+        print(f"  [FOTO NUEVA] {canonico['title']} — {len(fuentes)} fuente(s)")
+        if guardar:
+            client.table("canonical_events").update({"source_snapshot": foto}).eq(
+                "id", canonico["id"]
+            ).execute()
+        rearmados += 1
+    return rearmados
 
 
 def _avisar_huerfanos(crudos: list[dict], canonicos: list[dict]) -> int:

@@ -290,3 +290,35 @@ export async function crearEvento(evento: EventoNuevo) {
   if (error) throw new Error(`No se pudo crear el evento: ${error.message}`);
   return data as { id: string };
 }
+
+/**
+ * Confirma que un borrador es el mismo show que un canónico que ya existe.
+ *
+ * Las filas crudas del borrador pasan a colgar del canónico y el borrador
+ * desaparece. No se pierde nada: el canónico queda con más fuentes, que es
+ * justamente lo que le permite tomar el título de una y el precio de otra.
+ *
+ * Va por una función de Postgres y no por tres llamadas desde acá porque
+ * cortarse por la mitad dejaría filas crudas apuntando a un canónico
+ * borrado, o dos canónicos para el mismo show. Esa función además deja la
+ * foto de origen en null a propósito, y la ingesta la rearma en la corrida
+ * siguiente con las fuentes nuevas — si no, el canónico aparecería marcado
+ * como "la fuente cambió" sin que ninguna sala hubiera tocado nada.
+ */
+export async function unificarDuplicado(borradorId: string, canonicoId: string) {
+  const { error } = await supabase.rpc("unificar_duplicado", {
+    borrador_id: borradorId,
+    canonico_id: canonicoId,
+  });
+  if (error) throw new Error(`No se pudo unificar: ${error.message}`);
+}
+
+/** "No, son dos shows distintos". Solo borra la sugerencia; el borrador
+ *  sigue su camino normal hacia publicarse. */
+export async function descartarSugerencia(id: string) {
+  const { error } = await supabase
+    .from("canonical_events")
+    .update({ suggested_duplicate_of: null })
+    .eq("id", id);
+  if (error) throw new Error(`No se pudo descartar la sugerencia: ${error.message}`);
+}

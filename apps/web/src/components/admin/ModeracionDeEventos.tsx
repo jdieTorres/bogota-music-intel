@@ -29,10 +29,13 @@ import {
   type Pestaña,
   borrar,
   descartar,
+  descartarSugerencia,
+  getEvento,
   getEventos,
   guardar,
   publicar,
   resolverCambio,
+  unificarDuplicado,
 } from "@/lib/admin/eventos";
 
 export function ModeracionDeEventos({
@@ -215,6 +218,17 @@ function Ficha({
           {evento.venues?.name ?? "sala sin asignar"}
         </span>
       </div>
+
+      {evento.suggested_duplicate_of && (
+        <PosibleDuplicado
+          evento={evento}
+          ocupado={ocupado}
+          alUnificar={() =>
+            accion(() => unificarDuplicado(evento.id, evento.suggested_duplicate_of!))
+          }
+          alRechazar={() => accion(() => descartarSugerencia(evento.id))}
+        />
+      )}
 
       {/* Lo que movió la sala, antes de nada: es la razón por la que este
           evento volvió a la cola y hay que poder verlo sin desplegar nada. */}
@@ -454,3 +468,83 @@ function ConfirmarBorrado({
   );
 }
 
+/**
+ * "Esto se parece a algo que ya está publicado."
+ *
+ * La heurística de `deduplicacion.py` propone; acá se confirma. Se muestra
+ * **el otro evento, no solo su id**: sin ver contra qué se está comparando,
+ * confirmar es adivinar. Es toda la diferencia con lo que hacía `dedupe.ts`
+ * en el frontend, que unía a ciegas y por eso Akriila perdía "Tour Lucy".
+ */
+function PosibleDuplicado({
+  evento,
+  ocupado,
+  alUnificar,
+  alRechazar,
+}: {
+  evento: EventoEnCola;
+  ocupado: boolean;
+  alUnificar: () => void;
+  alRechazar: () => void;
+}) {
+  const [otro, setOtro] = useState<EventoEnCola | null>(null);
+  const [fallo, setFallo] = useState(false);
+
+  useEffect(() => {
+    let vigente = true;
+    getEvento(evento.suggested_duplicate_of!)
+      .then((e) => vigente && setOtro(e))
+      .catch(() => vigente && setFallo(true));
+    return () => {
+      vigente = false;
+    };
+  }, [evento.suggested_duplicate_of]);
+
+  return (
+    <div className="mt-4 rounded-md border border-accent/40 bg-background p-3">
+      <p className="text-xs text-muted">
+        Esto se parece a un evento que ya existe. ¿Es el mismo show visto por dos fuentes?
+      </p>
+
+      {fallo ? (
+        <p className="mt-2 text-xs text-red-400">
+          No se pudo cargar el otro evento. Mejor no unificar a ciegas.
+        </p>
+      ) : otro ? (
+        <div className="mt-2 space-y-1 rounded bg-surface p-2 text-xs">
+          <p className="font-medium">{otro.title}</p>
+          <p className="text-muted">
+            {fechaCompacta(otro.starts_at)} · {otro.venues?.name ?? "sala sin asignar"} ·{" "}
+            {otro.status}
+          </p>
+          <p className="text-muted">
+            {otro.events.length === 0
+              ? "cargado a mano"
+              : `${otro.events.length} fuente(s): ${otro.events.map((f) => f.source).join(", ")}`}
+          </p>
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-muted">Cargando el otro evento…</p>
+      )}
+
+      <p className="mt-2 text-xs leading-relaxed text-muted">
+        Si los unís, las fuentes de este pasan al otro y este desaparece. El otro queda con
+        más fuentes, así que vas a poder tomarle el título a una y el precio a otra.
+      </p>
+
+      <div className="mt-3 flex gap-2">
+        <button
+          disabled={ocupado || !otro}
+          onClick={alUnificar}
+          className={`${BOTON} bg-accent text-background disabled:opacity-40`}
+          title={!otro ? "Esperá a ver contra qué se compara" : undefined}
+        >
+          Sí, es el mismo
+        </button>
+        <button disabled={ocupado} onClick={alRechazar} className={BOTON_TENUE}>
+          No, son distintos
+        </button>
+      </div>
+    </div>
+  );
+}
