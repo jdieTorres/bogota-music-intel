@@ -62,8 +62,9 @@ export default async function Page() {
             detalle={
               // Es un estado esperable, no un error: una fiesta se reconoce
               // por su nombre de ciclo y esa lista se cura a mano, así que
-              // arranca corta y crece.
-              "Las fiestas se identifican por el nombre del ciclo, y esa lista se arma a mano. Si falta alguna, hay que agregarla en ciclos_curados.py."
+              // arranca corta y crece. Eso se explica acá y no en pantalla:
+              // al lector el nombre de un archivo nuestro no le dice nada.
+              "Las noches y ciclos de las salas van y vienen. Cuando alguna anuncie la próxima, aparece acá."
             }
           />
         }

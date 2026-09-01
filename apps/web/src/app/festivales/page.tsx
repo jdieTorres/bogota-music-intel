@@ -61,10 +61,11 @@ export default async function Page() {
           <EstadoVacio
             titulo="Todavía no hay festivales en cartelera"
             detalle={
-              // Mismo estado esperable que en fiestas: el festival se
-              // reconoce por su nombre y esa lista se cura a mano, así que
-              // arranca corta y crece.
-              "Los festivales se identifican por su nombre, y esa lista se arma a mano. Si falta alguno, se marca desde /admin o se agrega en festivales_curados.py."
+              // Es un estado esperable, no un error, y el texto se lo dice al
+              // lector sin explicarle cómo está hecho el sistema: cómo se
+              // reconoce un festival por dentro no es asunto suyo. La nota
+              // para quien mantiene esto va en el código, que es acá.
+              "Bogotá los tiene repartidos por el año: los “al Parque” del Distrito, el Cordillera. Cuando se acerque el próximo, aparece acá."
             }
           />
         }
