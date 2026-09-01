@@ -63,3 +63,32 @@ export function priorizarLocales<T extends ConOrigen>(eventos: T[]): T[] {
     (a, b) => Number(a.is_local === false) - Number(b.is_local === false),
   );
 }
+
+/**
+ * Categorías que no vale la pena mostrar como chip, porque no dicen nada
+ * que el lector no vea ya.
+ *
+ * El chip existe para el género —"Pop", "Rock/Punk/Metal", "Hip Hop/Rap"—.
+ * Pero `category` cumple dos papeles: además alimenta al clasificador, y
+ * desde que visitbogota escribe ahí su taxonomía (2026-09-01) puede traer
+ * "Conciertos", que en la pestaña de conciertos es puro ruido.
+ *
+ * Se filtra al mostrar y no al guardar: el clasificador necesita el valor.
+ */
+const CATEGORIAS_SIN_VALOR_VISIBLE = new Set([
+  "conciertos",
+  "concierto",
+  "musica",
+  "música",
+  "otros",
+  "otro",
+  "cultura",
+]);
+
+/** El género a mostrar, o null si la categoría no aporta nada. */
+export function generoVisible(category: string | null): string | null {
+  if (!category) return null;
+  return CATEGORIAS_SIN_VALOR_VISIBLE.has(category.trim().toLowerCase())
+    ? null
+    : category;
+}

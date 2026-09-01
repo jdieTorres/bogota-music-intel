@@ -4,6 +4,7 @@ import {
   EN_CARTELERA,
   SOLO_CONCIERTOS,
   SOLO_FIESTAS,
+  generoVisible,
   priorizarLocales,
 } from "@/lib/editorial";
 
@@ -94,5 +95,28 @@ describe("filtros editoriales", () => {
     expect(EN_CARTELERA).toContain("event_type.eq.fiesta");
     expect(EN_CARTELERA).toContain("event_type.is.null");
     expect(EN_CARTELERA).not.toContain("not_music");
+  });
+});
+
+describe("generoVisible", () => {
+  it("muestra el género cuando dice algo", () => {
+    expect(generoVisible("Rock/Punk/Metal")).toBe("Rock/Punk/Metal");
+    expect(generoVisible("Hip Hop/Rap")).toBe("Hip Hop/Rap");
+  });
+
+  it("esconde la categoría que no aporta nada", () => {
+    // visitbogota escribe su taxonomía en `category` desde el 2026-09-01,
+    // y "Conciertos" en la pestaña de conciertos es puro ruido.
+    expect(generoVisible("Conciertos")).toBeNull();
+    // "Otro" es el valor de Rockal Live para "otro género": tampoco dice nada.
+    expect(generoVisible("Otro")).toBeNull();
+  });
+
+  it("no se deja engañar por mayúsculas ni espacios", () => {
+    expect(generoVisible("  CONCIERTOS ")).toBeNull();
+  });
+
+  it("sin categoría no hay chip", () => {
+    expect(generoVisible(null)).toBeNull();
   });
 });

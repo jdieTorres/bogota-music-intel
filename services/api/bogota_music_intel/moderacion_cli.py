@@ -35,6 +35,7 @@ import argparse
 from datetime import UTC, datetime
 
 from bogota_music_intel.deduplicacion import agrupar_mismos_shows, es_el_mismo_show
+from bogota_music_intel.hosts_de_imagen import hosts_sin_permiso
 from bogota_music_intel.moderacion import (
     borrador_desde,
     cambios,
@@ -222,6 +223,23 @@ def _revisar_duplicados(client, crudos, canonicos, guardar: bool) -> int:
     return encontrados
 
 
+def _avisar_hosts_de_imagen(crudos: list[dict]) -> int:
+    """Avisa si llegó un afiche de un host que el frontend no tiene permitido.
+
+    `next/image` no degrada ante un host desconocido: lanza y rompe la
+    tarjeta del evento. Que se descubra acá y no cuando alguien abre la
+    cartelera es toda la diferencia — pasó el 2026-09-01 con visitbogota.
+    """
+    faltantes = hosts_sin_permiso(e.get("image_url") for e in crudos)
+    for host, cuantas in sorted(faltantes.items(), key=lambda kv: -kv[1]):
+        print(
+            f"  [HOST SIN PERMISO] {host} ({cuantas} imágenes) — agregalo a "
+            f"images.remotePatterns en apps/web/next.config.ts o next/image "
+            f"va a romper esas tarjetas"
+        )
+    return len(faltantes)
+
+
 def _avisar_huerfanos(crudos: list[dict], canonicos: list[dict]) -> int:
     """Un publicado que se quedó sin ninguna fuente. Puede ser una
     cancelación real o que la sala rehízo su web — las dos merecen que
@@ -379,6 +397,7 @@ def main() -> int:
         rearmados = _rebaselinar_snapshots(client, crudos, canonicos, salas, guardar)
         duplicados = _revisar_duplicados(client, crudos, canonicos, guardar)
         huerfanos = _avisar_huerfanos(crudos, canonicos)
+        _avisar_hosts_de_imagen(crudos)
         print(
             f"\n{abiertos} borradores nuevos, {marcados} con cambios en el origen, "
             f"{bajadas} con clasificación que llegó tarde, "

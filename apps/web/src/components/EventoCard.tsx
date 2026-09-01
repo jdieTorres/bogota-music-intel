@@ -2,12 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { IconNota } from "@/components/icons";
+import { generoVisible } from "@/lib/editorial";
 import { type Evento, nombreDelVenue } from "@/lib/events";
 import { horaDeEvento } from "@/lib/fechas";
 
 export function EventoCard({ evento }: { evento: Evento }) {
   const hora = horaDeEvento(evento.starts_at, evento.date_precision);
   const venue = nombreDelVenue(evento);
+  const genero = generoVisible(evento.category);
 
   return (
     <li>
@@ -39,9 +41,9 @@ export function EventoCard({ evento }: { evento: Evento }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
             {hora && <span className="font-mono">{hora}</span>}
             {evento.price_text && <span>{evento.price_text}</span>}
-            {evento.category && (
+            {genero && (
               <span className="rounded-full border border-border px-2 py-0.5">
-                {evento.category}
+                {genero}
               </span>
             )}
           </div>
