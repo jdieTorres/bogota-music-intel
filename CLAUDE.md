@@ -1,328 +1,150 @@
-# Bogotá Music Intel — contexto del proyecto
+# Bogotá Music Intel
 
-Plataforma de inteligencia musical enfocada en la escena de Bogotá/Colombia. Proyecto personal de Juan como vehículo de pivote de carrera: de desarrollo de software hacia periodismo, distribución y creación de contenido en la industria musical. Sirve como portafolio técnico + carta de presentación editorial + base de un producto sostenible a mediano plazo.
+Plataforma de inteligencia musical de la escena de Bogotá/Colombia. Proyecto
+personal de Juan, y su vehículo de pivote de carrera: de desarrollo de software
+hacia periodismo y creación de contenido en la industria musical.
 
-Slug de trabajo (placeholder, nombre final sin definir): **`bogota-music-intel`**.
+`bogota-music-intel` es un **slug de trabajo**, no el nombre final.
 
-**Principio editorial (definido por Juan, 2026-08-27):** la plataforma prioriza y promueve **los toques de artistas locales**. No es una cartelera genérica de eventos de la ciudad: si algo entra al producto, tiene que servir a ese propósito. Esto es criterio de diseño, no solo de filtrado — aplica al scraping, al ranking de la cartelera y a cómo se presenta cada evento.
+---
 
-En la práctica se traduce en cuatro categorías (`events.event_type`):
-- **`music`** — concierto con un artista de cartel. Se ordena poniendo primero a los locales.
-- **`fiesta`** — noche o ciclo que programa la sala, sin artista de cartel ("Noches Bomm", "THE JAZZ ROOM"). Es escena local por naturaleza. **Va en su propia pestaña** (`/fiestas`): ordenar una noche de club junto a un show del Movistar no compara nada.
-- **`festival`** — varios días y varios artistas, ninguno de cartel (Rock al Parque, Festival Cordillera). **Pestaña propia** (`/festivales`), agregada el 2026-09-01. Ver "El festival como cuarta categoría" más abajo.
-- **`not_music`** — comedia, lucha libre, teatro, danza. Fuera de la cartelera.
+## Lo primero que hay que entender
 
-Las tres primeras se muestran; la que se excluye es `not_music`. Y `fiesta` y `festival` comparten lo que las separa de `music`: **no hay un artista de cartel a quien preguntarle de dónde es**, que no es lo mismo que no haberlo podido resolver.
+**La plataforma prioriza y promueve los toques de artistas locales.** No es una
+cartelera genérica de eventos de la ciudad: si algo entra al producto, tiene
+que servir a ese propósito. Es criterio de diseño, no solo de filtrado — aplica
+al scraping, al ranking y a cómo se presenta cada evento.
 
-Hay además un cuarto caso que **no** es una categoría: los eventos que Juan borra desde `/admin`. Se bloquean en la ingesta —la lista vive en la tabla `blocked_source_events`, no en git— y ni siquiera llegan a la base. Ver **"Lo que no vuelve a entrar"** más abajo.
+**Ningún evento se publica solo.** El cron propone; lo que trae entra como
+borrador a una cola y Juan verifica, completa y publica. Lo que se muestra sale
+de `canonical_events`, no de `events`.
 
-Documentación completa en `docs/`:
-- `docs/proyecto-plataforma-musical-bogota.md` — diseño de producto: los 9 módulos, capas del mapa interactivo, ideas evaluadas y descartadas, priorización del MVP.
-- `docs/investigacion-tecnica-plataforma-musical.md` — investigación técnica: stack, estado real de APIs de música probadas una por una, legalidad de scraping de eventos/venues, auditoría de venues candidatos, plan de ejecución del MVP.
+---
 
-Hay además una skill del proyecto en `.claude/skills/`: **`/actualizar-estado`** pone al día este archivo y `docs/` con el estado real —lo que quedó a medias, el siguiente paso y las decisiones aún sin registrar—. Correrla al cerrar una fase o una sesión de trabajo. Es la vía preferida para actualizar este archivo: trae el procedimiento de verificación (qué mirar en el repo en vez de fiarse de la memoria de la conversación) y las reglas de redacción.
+## Dónde está cada cosa
 
-El trabajo de look & feel (identidad visual: paleta, tipografía, iconografía) tiene su propia carpeta, **`look&feel/`**, separada de `docs/` porque es material de diseño (paletas exploradas y descartadas, tokens, referencias visuales) y no investigación de producto o técnica. `look&feel/README.md` es la entrada — léelo antes de tocar `globals.css`, `layout.tsx` o cualquier componente de UI.
+Este archivo es el índice y las reglas transversales. **Lo específico de cada
+área vive en su propio `CLAUDE.md` — leerlo antes de trabajar ahí.**
 
-**Antes de tomar decisiones de arquitectura o de fuentes de datos, lee esos dos archivos.** Contienen hallazgos ya verificados (ej. qué APIs de música sirven de verdad, cuáles están muertas o bloqueadas para proyectos hobby/educativos, qué venues tienen scraping viable y cuáles no) — no los repitas desde cero ni asumas que Spotify API sigue teniendo audio-features (fue deprecado).
-
-## Stack técnico decidido
-- Frontend: Next.js (TypeScript) en Vercel (plan Hobby — ojo, es no comercial).
-- Backend: Python + FastAPI.
-- Base de datos: Supabase (Postgres + Auth + Storage).
-- Scraping/ingesta: GitHub Actions (cron), respetando robots.txt.
-- Mapas: MapLibre GL 6 + tiles de **OpenFreeMap** (sin API key ni límite de uso; se evaluó Protomaps pero no hizo falta). La atribución a OpenStreetMap se agrega a mano: el estilo no la trae.
-- Geocodificación: Nominatim (1 petición/segundo, User-Agent identificable), con coordenadas curadas a mano para lo que no está en OpenStreetMap.
-
-## Alcance del MVP (3 módulos priorizados)
-1. Mapa de escena en vivo
-2. Calendario agregador de eventos
-3. **Directorio / wiki de la escena local** — entró el 2026-08-31 en reemplazo del Radar de tendencias
-
-La API pública queda para fase futura. Ritmo de dedicación: medio tiempo.
-
-⚠️ **El Radar de tendencias salió del MVP y su código está borrado** (decisión de Juan, 2026-08-31). Su dato era prestado —Last.fm lo consulta cualquiera— y contradecía el principio editorial: el propio hallazgo del radar es que lo más escuchado en Colombia es internacional. Se borraron `radar.py`, `radar_cli.py`, `lastfm.py`, `deezer.py`, `/tendencias`, `trending.ts`, `TendenciaCard.tsx`, sus 9 tests, el link del nav y el paso del cron. **Está todo en el historial de git** si alguna vez vuelve. La justificación completa, incluidos los otros cuatro módulos evaluados, está en `docs/proyecto-plataforma-musical-bogota.md` § 5.
-  - Queda una cosa sin hacer y es decisión de Juan: **la tabla `trending_artists` sigue en la base con 215 filas**. La migración para soltarla está escrita (`20260831010000_baja_radar.sql`) y sin aplicar, porque borra datos que no se pueden recuperar y que no le hacen daño a nadie: 215 filas no pesan nada contra los 500 MB del plan gratuito.
-  - El secret `BMI_LASTFM_API_KEY` del repo ya no lo usa nadie. Se puede borrar cuando Juan quiera.
-
-## Convenciones de nombres
-- Repo: `bogota-music-intel`
-- Paquete backend (FastAPI): `bogota_music_intel`
-- Frontend: `apps/web` dentro del monorepo (o `bogota-music-intel-web` si se separa)
-- Prefijo de variables de entorno: `BOGOTA_MUSIC_INTEL_` o `bmi_`
-
-## Pendientes activos (no resueltos aún)
-- **Pasada final de look & feel antes del deploy** (decidido por Juan el 2026-08-28). La identidad Verde Neón queda como está y el trabajo sigue con ella, pero Juan quiere **cambiar cosas al final, justo antes de desplegar** — o sea dentro de la Fase 6, no antes. Consecuencia para quien retome: **no rediseñar por iniciativa propia en el medio**, y tampoco dar el look & feel por cerrado al llegar al deploy. Lo que ya está identificado para esa pasada: el tratamiento ilustrado que quedó fuera de la primera ronda (marco del mapa con textura y "cinta", squiggles junto a los títulos, chips tipo boleta), listado en `look&feel/README.md` § "Qué quedó fuera de esta ronda".
-- ~~Probar Napster API con queries reales de artistas colombianos.~~ **Cerrado el 2026-08-28: la API de Napster ya no existe** — sus tres dominios de desarrollo no resuelven DNS. Sale de las fuentes. (El Scout de emergentes que la iba a usar quedó descartado el 2026-08-31, con evidencia: Openwhyd no tiene a ninguno de los seis artistas locales curados — ver `docs/proyecto-plataforma-musical-bogota.md` § 5.) Detalle en `docs/investigacion-tecnica-plataforma-musical.md` § 2.1.
-- ~~Sacar la key gratuita de Last.fm.~~ **Hecho el 2026-08-28.** Sacada, guardada en `services/api/.env` (`bmi_lastfm_api_key`) y en el secret `BMI_LASTFM_API_KEY` del repo. En uso en producción.
-- ~~**Encontrar una forma real de traer el eje de Deezer.**~~ **Deja de ser pendiente el 2026-08-31**: el radar salió del MVP, así que ya no bloquea nada. El problema sigue sin resolver y la evidencia sigue en `docs/investigacion-tecnica-plataforma-musical.md` § 2.3, por si el módulo vuelve algún día.
-- Nombre e identidad de marca definitiva del proyecto (el placeholder de arriba es solo de trabajo). Entra en la misma pasada final de arriba.
-- ~~**Decisión abierta para Juan: ¿reabrir las fuentes distritales?**~~ **Resuelta el 2026-09-01: Juan las reabrió.** Entró `visitbogota` y el scraper de Idartes dejó de estar acotado a `/agenda/concierto/`. El motivo del cierre del 2026-08-28 —ensuciaban la cartelera— dejó de existir con la cola de moderación. Ver "Fase 2" en Estado de implementación.
-- **Fotos de las salas: Juan tiene que pasar URLs reales.** El panel de sala del mapa las muestra desde el 2026-08-29 y `fotos_curadas.py` está vacío (**0 de 13 salas publicadas**, recontado el 2026-09-01), así que todas salen con el ícono de respaldo. Ninguna fuente que scrapeamos publica foto del venue, así que no hay nada que automatizar: sirve el sitio oficial de la sala, su Instagram o Google Maps — una foto de la sala (fachada o interior), no un logo ni el afiche de un evento.
-- ~~Pregunta de producto sobre el título de un evento duplicado (Akriila pierde "Tour Lucy").~~ **Respondida el 2026-08-31 por el modelo de moderación**: el evento canónico cuelga de todas sus fuentes, así que puede tomar el título de una y el precio de otra sin inventar nada. Ver "Moderación" más abajo.
-
-### Acordados con Juan para después de Fase 4
-1. ~~**Filtrar lo que no son toques de artistas locales.**~~ **Hecho y en la base el 2026-08-27.** Las dos decisiones de producto que lo bloqueaban las tomó Juan: lo que no es música se excluye siempre; los internacionales no se excluyen, van en segundo plano. Cómo quedó y qué se midió: `docs/investigacion-tecnica-plataforma-musical.md`, sección 6.
-2. **Look & feel / personalidad de la web — primera ronda cerrada el 2026-08-28** (arrancó el 2026-08-27). Verificada en navegador y aceptada por Juan, con una **pasada final pendiente antes del deploy** (ver "Pendientes activos"). Juan lo quiere trabajar en conjunto y con calma; se estima varias sesiones, no un retoque puntual. Alcance y punto de partida en `docs/proyecto-plataforma-musical-bogota.md`, sección 8. Arrancó por el mapa (ver "Verde Neón" en decisiones transversales, que reemplaza lo que ahí se llamaba "Paleta oscura fija") y sigue en `look&feel/README.md`, que trae el registro completo: las 7 direcciones de paleta exploradas, por qué se descartaron las otras 6, y el detalle de tipografía e iconografía. El siguiente paso concreto está más abajo.
-
-### Las siete listas curadas (crecen con el conocimiento de escena de Juan)
-MusicBrainz resuelve bien al internacional consagrado y mal al local emergente, que es lo contrario de lo que esta plataforma necesita. Todas **crecen con cada corrida del cron**: un evento nuevo con un artista que las bases globales no conocen vuelve a caer en "sin origen", y decidir quién entra le toca a Juan. Al 2026-09-01 hay seis pobladas y una vacía a la espera de Juan (`fotos_curadas.py`, **0 de 13 salas publicadas**).
-
-- `services/api/bogota_music_intel/artistas_locales.py` — origen de artistas que MusicBrainz no cubre. Poblada el 2026-08-28 con el conocimiento de escena de Juan más lo verificable en las fuentes. **Locales**: Todo Copas, Ancestral Beats, El Kalvo, Mukangu, Atake Mapalé, Los Yoryis. **Internacionales**: pablopablo (España), Slaughter to Prevail (Rusia), El Plan de la Mariposa (Argentina). Con esto los eventos sin origen bajaron de 8 a **0**.
-  - **No hay API que reemplace esta lista** (verificado el 2026-08-28 llamando a las candidatas con estos mismos ocho artistas): Deezer y iTunes Search **no exponen país del artista** —ni el de Karol G—, y Wikidata, la única con el dato estructurado, solo tiene entidad para Todo Copas; además devuelve un lugar de Kenia al buscar "Mukangu". El problema no es haber elegido mal la fuente: el artista local emergente no está en las bases globales. La lista curada es la respuesta, no un parche. Detalle en `docs/investigacion-tecnica-plataforma-musical.md` § 2.2.
-  - `Ancestral Beats` es la única entrada sin evento en base: el suyo salió al acotar Idartes a conciertos. Se deja igual — es un dato verificado y barato, y aplica solo si vuelve a la cartelera. Las otras siete están todas en uso, con `classification_source = curated_artist`.
-  - ⚠️ **Corrección: `PABLOPABLO` no es colombiano**, contra lo que decía esta misma lista hasta el 2026-08-28. Es Pablo Drexler, hijo de Jorge Drexler y Ana Laan, con carrera en la escena alternativa española (Infobae, Rolling Stone en Español). Se había asumido por el contexto —tocaba en una sala local y MusicBrainz no lo resolvía— sin ninguna fuente. Es exactamente el error que esta lista existe para evitar, cometido al escribirla; de ahí que la regla pida fuente y no criterio. Dato que lo confirma solo: **Jorge Drexler toca en la misma cartelera**, ya clasificado como internacional.
-  - El campo `tambien_como` guarda cómo escribe mal el nombre la sala (Royal Center publica "SLAUHGTER TO PREVAIL"). El emparejamiento es exacto a propósito, así que sin eso la entrada nunca engancharía.
-- `services/api/bogota_music_intel/ciclos_curados.py` — fiestas y ciclos, **por nombre y no por id de evento**, para que la edición siguiente ("Vol. 5") entre sola.
-- `services/api/bogota_music_intel/festivales_curados.py` — festivales, **por título completo y no por subcadena**, porque "Festival Orígenes presenta Sara Curruchich y Humazapas" es un concierto y no el festival. Ver "El festival como cuarta categoría" más abajo. El año final se ignora, así que la edición siguiente entra sola.
-- `services/api/bogota_music_intel/coordenadas_curadas.py` — coordenadas de salas. ⚠️ **Ya no está completa: 9 de 13 salas publicadas ubicadas.** Era 9/9 hasta que la moderación de salas aprobó 4 nuevas (2026-09-01); el denominador creció y nadie movió el numerador. Las 4 que faltan están listadas en "Estado de implementación".
-- `services/api/bogota_music_intel/nombres_de_salas.py` — nombres corregidos cuando la fuente los publica mal (Rockal Live anuncia "Teatro Libre de Bogotá Sala Centro"; el teatro la llama **Sede Centro**). Corrige el nombre visible y **nunca el slug**, que sale del nombre crudo y es la identidad de la sala: es la clave de las coordenadas curadas y lo que evita que el upsert duplique filas.
-- `services/api/bogota_music_intel/fotos_curadas.py` — fotos de sala para el panel del mapa. **Vacía: 0 de 13 salas publicadas tienen foto** (columna `venues.photo_url`, migración `20260829000000_venue_photo.sql`, ya aplicada). Ninguna fuente que scrapeamos publica una foto del venue —los afiches de `events.image_url` son del show, no de la sala—, así que **está esperando que Juan pase URLs reales**; mientras tanto el panel muestra un ícono de respaldo, que es el hueco honesto de siempre. Aplicar con `python -m bogota_music_intel.fotos_cli [--dry-run]`. Ojo: si el host de la imagen no está en `images.remotePatterns` de `apps/web/next.config.ts`, Next.js la rechaza.
-- `services/api/bogota_music_intel/titulos_curados.py` — cómo se escribe de verdad un artista o un show cuando la sala lo publica mal. Dos niveles: `GRAFIAS` va por nombre de artista (sirve para cualquier evento futuro suyo: "Slauhgter"→Slaughter to Prevail, "Mad Profesor"→Mad Professor, "Ky Mani"→Ky-Mani Marley, "5 Seconds of Summers"→5 Seconds of Summer, "Alvaro Diaz"→Álvaro Díaz, "Atake Mapale"→Atake Mapalé, "Pablopablo"→pablopablo) y `TITULOS` va por título crudo exacto, solo para lo estructural que ninguna regla puede desarmar. Preferir siempre `GRAFIAS`: `TITULOS` deja de engancharse si la sala cambia una coma. Vivía en el frontend hasta el 2026-08-31; se mudó con el normalizador.
-
-Todas exigen un campo `evidencia`, y hay tests que lo verifican. La regla: la nacionalidad, la coordenada o la grafía tiene que venir de una fuente consultable, nunca de memoria.
-
-### Normalización de títulos (`services/api/bogota_music_intel/titulos.py`)
-Los títulos crudos se guardan formateados: **"Artista | Gira"**, con **" & " entre varios artistas de cartel** (la barra es solo para lo que viene *después* del artista).
-
-⚠️ **Corre en la ingesta, no al mostrar** — se movió el 2026-08-31. Se aplica cuando el cron abre el borrador, así que **el título guardado es el título publicado**: lo que el admin ve en la cola es exactamente lo que sale, y su corrección no la pisa ninguna transformación posterior. Vivía en el frontend (`tituloEvento.ts`) y ahí estaba mal ubicado: el admin editaba el título crudo mientras el visitante veía otro. Lo notó Juan mirando la pantalla de moderación. **El frontend ya no transforma nada: muestra `title` tal cual.**
-
-La regla que hay que tener en la cabeza antes de tocarlo: **solo se suben mayúsculas, nunca se bajan**, salvo que la fuente esté gritando el título entero. Una sala que escribió "Lucho Al Attaque" está diciendo algo; bajar esa 'A' a conector sería inventar.
-
-El detalle completo —las reglas, por qué cada una es estrecha, y qué se probó y falló— está en `docs/investigacion-tecnica-plataforma-musical.md` § 8. La lista curada es `titulos_curados.py`.
-
-### El festival como cuarta categoría (2026-09-01)
-El cron empezó a traer festivales cuando entró `visitbogota`: Rock al Parque, Salsa al Parque, Jazz al Parque, Hip Hop al Parque, Festival Cordillera y Todos Somos Ángeles Rock Fest. Sin categoría propia caían en `music` y quedaban con `is_local` en null **para siempre**, porque un festival no tiene UN artista al que preguntarle — exactamente el problema que la `fiesta` ya tenía resuelto.
-
-**Por qué no reusar `fiesta`, que comparte esa forma.** Una fiesta es la sala programándose a sí misma una noche; un festival son tres días en un parque con cincuenta bandas. Mezclarlos en la misma pestaña vuelve a hacer lo que separar conciertos de fiestas vino a evitar: poner en una misma lista cosas que no se comparan entre sí.
-
-⚠️ **El emparejamiento es por título completo, no por subcadena, y ahí está la trampa.** La base tiene el contraejemplo: el Teatro Jorge Eliécer Gaitán publica **"Festival Orígenes presenta Sara Curruchich y Humazapas"**, que no es el festival sino un concierto dentro del festival — con dos artistas nombrados que MusicBrainz sí resuelve. Buscar "Festival Orígenes" como subcadena le habría borrado el cartel y el origen. De ahí la regla, que hay que respetar al agregar entradas: **es festival cuando el título es el nombre del festival y nada más**; en cuanto nombra a quién toca, es un concierto.
-  - El año final se ignora al comparar ("Rock al Parque 2026" ≡ "Rock al Parque"), así que la edición del año que viene entra sola. Es el mismo criterio que los ciclos con su "Vol. 5".
-  - Pero el año **sí se conserva en el título publicado**: `normalizar_titulo` trata `festival` como trata `fiesta` —sin cartel que partir en "Artista | Gira"—, y ahí el año es el nombre de la edición, no ruido.
-
-La lista curada es `services/api/bogota_music_intel/festivales_curados.py`, con `evidencia` obligatoria como todas. Lo que no esté ahí se marca a mano en `/admin` → "Qué es" → festival. El detalle completo —el orden en la cascada del clasificador, qué archivos tocó y un dato contradictorio de la ficha de Jazz al Parque que quedó sin resolver a propósito— está en `docs/investigacion-tecnica-plataforma-musical.md` § 10.
-
-### El género de un evento (`category`) — cerrado el 2026-09-01
-La columna `category` **cumple dos papeles a la vez**, y confundirlos costó dos arreglos seguidos: alimenta al clasificador (`classify.py` la mira) y es lo que sale como género en la cartelera. Como dato de clasificación sirve; como campo rotulado "Género" es mentira en dos de las tres fuentes que lo llenan — Rockal Live escribe un género ("Pop"), visitbogota su taxonomía ("Conciertos") e Idartes una disciplina ("Música").
-
-Cómo quedó resuelto, en tres piezas que hay que entender juntas:
-
-- **Se guarda crudo y se filtra al leer.** `generoVisible()` en `apps/web/src/lib/editorial.ts` esconde las etiquetas que no dicen nada ("Conciertos", "Música", "Otro"). El tipo `Evento` **no expone `category`**: expone `genero`, ya filtrado. Si el valor crudo no llega a la vista, ningún componente puede equivocarse con él — se había intentado corregir sitio por sitio y se olvidó la página de detalle.
-- **El admin lo puede escribir**, en los dos formularios de `/admin`. Es opcional: vacío es el hueco honesto y el chip no sale. Escribe en `canonical_events.category`, la copia editable, así que **sobrevive a las corridas del cron** — el scraper reescribe `events`, no el canónico.
-- **El filtro es la red de seguridad, no el arreglo.** La respuesta a un evento sin chip es escribirle el género real, no ampliar la lista de palabras escondidas. El campo lo dice en su texto de ayuda, porque si no un evento sin chip no tendría explicación para quien lo está editando.
-
-En pantalla el chip va **pegado al título**, no en la fila de la hora y el precio: dice de qué es el toque, no cómo llegar.
-
-⚠️ **Casi ninguno lo trae, y ninguna fuente lo va a resolver.** Cuando se construyó el campo, de 49 publicados solo **7** traían un género usable —todos de Rockal Live, la única fuente que publica género de verdad— y 33 venían en null. Unas horas después ya eran **9**: Juan empezó a escribirlos y a corregir los "Conciertos" que la fuente había dejado. Los que falten hay que escribirlos a mano o no existen; **recontar antes de citar este número**, que se mueve con cada sesión de moderación. La lista de sugerencias del formulario está en `apps/web/src/lib/admin/generos.ts`, y es abierta (`datalist`, no `select`): existe para que no convivan "rock", "Rock" y "Rock/Punk/Metal", no para cerrar el vocabulario.
-
-El detalle —qué escribe cada fuente en `category`, y por qué el arreglo tuvo que ser en dos tiempos— está en `docs/investigacion-tecnica-plataforma-musical.md` § 10.
-
-### Moderación: el scraping propone, el admin publica (decidido el 2026-08-31)
-El diseño de la Fase 5 nueva. **Ningún evento se publica solo.** El cron sigue corriendo igual, pero lo que trae entra como **borrador** a una cola de revisión; Juan verifica, completa y publica. Detalle completo en `docs/investigacion-tecnica-plataforma-musical.md` § 9.
-
-**Estado al 2026-08-31: la base está hecha y corriendo.** Migración `20260831000000_moderacion.sql` aplicada, backfill corrido (**51 canónicos de 53 crudos** — se unieron Akriila y MADE4RAP, que llegaban por dos fuentes cada uno), paso `Moderation queue` en el cron, y **la cartelera, el mapa y el detalle ya leen `canonical_events`**, verificado en navegador: 39 conciertos, 2 fiestas y 41 eventos en el mapa, los mismos números que antes de la mudanza. (Esas tres cifras son la foto del día de la mudanza, que era el punto: comprobar que no se perdió nada. Las de hoy están en la tabla de "Estado de implementación".)
-
-⚠️ **Los del backfill tienen `reviewed_at` en null y eso es correcto: nadie los revisó.** Se publicaron para que la cartelera no se vaciara al cambiar de modelo, y es lo único que se publicó sin pasar por una persona. La página de detalle solo dice "revisados a mano" cuando `reviewed_at` existe — decir lo contrario sería inventar un dato, que es justo lo que el proyecto no permite. Al 2026-09-01 quedan **36 publicados así**, de 49: el número baja solo, a medida que Juan toca cada evento por otro motivo.
-
-Lo que falta de la Fase 5: el formulario de admin (paso 2), la cobertura (paso 3) y el directorio (paso 4).
-
-Lo que hay que tener en la cabeza antes de tocar la ingesta:
-
-- **Dos capas.** `events` sigue siendo el crudo, una fila por fuente, que el cron reescribe libre y el admin nunca toca. Encima va el **evento canónico**: una fila por show real, con los valores aprobados, colgando de una o varias filas crudas. Lo que se muestra sale del canónico.
-- **Las ediciones del admin van en columnas propias, nunca encima de las scrapeadas.** El scraper reescribe `title`, `starts_at` y `price_text` en cada corrida; una corrección hecha en el mismo campo se pierde al día siguiente. Que las columnas del admin sobrevivan no es una promesa: es lo que ya pasa con `event_type` e `is_local` desde el 2026-08-27, porque el upsert de `save_events` sube solo sus propias columnas.
-- **Toda sobrescritura del origen pasa por aprobación.** Si la sala mueve el precio o la fecha de algo ya publicado, el canónico y el crudo divergen, el evento vuelve a la cola etiquetado y Juan aprueba o rechaza. Lo mismo si desaparece de la cartelera: avisa en vez de esfumarse.
-- **El canónico es la identidad que faltaba.** Hoy el upsert garantiza unicidad solo dentro de una fuente, por eso el mismo show llega dos veces desde Royal Center y Rockal Live. Con esto, revisar es "publicar como nuevo" o "adjuntar a uno que ya existe", y eso cubre también el duplicado entre el cron y la carga manual.
-
-**Por qué se hace:** no es un problema de calidad sino de **sesgo de cobertura**. Las seis fuentes actuales tiran a salas grandes, donde tocan los internacionales; el toque local en un bar chico, anunciado solo por Instagram, es invisible para el pipeline — y promover ese toque es el propósito de la plataforma.
-
-⚠️ **Corrección de un dato que se llegó a proponer como titular editorial**: "de 44 conciertos en Bogotá, 7 son locales". Ese 16% **no mide la escena, mide qué salas scrapeamos**. Es honesto como "de lo que publican estas seis fuentes" y falso como afirmación sobre la ciudad.
-
-**Lo que cambia de sentido en el resto del proyecto:**
-
-- `eventos_excluidos.py` (la lista de eventos puntuales) **se retira**: "no lo quiero" pasa a ser "no lo publico", que es reversible y visible. Las **reglas** (`classify.py`, `exclusion_patterns.py`) en cambio ascienden: dejan de filtrar la cartelera y pasan a ordenar la cola.
-- La deduplicación **se mueve del frontend a la ingesta**, que era deuda técnica anotada. Y mejor: `dedupe.ts` deja de ser lógica de producto y pasa a ser un sugeridor en la pantalla de revisión, donde decide una persona y no una heurística.
-- La normalización de títulos **cambia de trabajo**: deja de tener que acertar y pasa a proponer un buen borrador. Las 5 entradas de `TITULOS` en `titulosCurados.ts` quedan sobrando; `GRAFIAS` sobrevive.
-- **El formulario de admin sube a prerequisito** (Supabase Auth). Lo necesitan la cola, la carga manual y el directorio. Un evento tiene fecha, así que editar un `.py` y correr un CLI no sirve — es una desviación consciente de "lo curado vive en git con tests", compensada haciendo `evidencia` obligatoria en la base.
-
-### Lo que no vuelve a entrar
-`services/api/bogota_music_intel/eventos_excluidos.py` filtra **antes de guardar**, por `(source, source_event_id)`. **Desde el 2026-08-31 la lista vive en la base** (`blocked_source_events`) y no en git: la escribe el botón de borrar del formulario, y una lista que el admin tiene que poder escribir no puede estar en el repo. El archivo quedó solo como el lector.
-
-Por qué en la ingesta y no como bandera de "no mostrar": borrar la fila no alcanza en una fuente activa. `save_events` hace upsert de todo lo que el scraper encuentra, así que un `DELETE` dura hasta la próxima corrida del cron y el evento vuelve solo. Se probó el 2026-08-28 con `Laura & Brenda` (Movistar Arena).
-
-Es una excepción consciente a "guardar crudo, filtrar en lectura": esa regla existe para no re-scrapear cuando cambia el **criterio editorial**, y acá no se aplica un criterio sino una decisión puntual de Juan sobre un evento concreto. Contrapartida: sacar una entrada de la lista no recupera el pasado, hay que esperar a que el scraper lo vuelva a ver. Cualquier cosa que se pueda expresar como regla —no es música, es fiesta, es internacional— va al clasificador, no acá.
-
-La limpieza de lo ya guardado sale gratis: `_prune_missing_events` borra los eventos futuros de una fuente que dejaron de aparecer en su cartelera, y un evento bloqueado deja de aparecer.
-
-⚠️ **El bloqueo es por `(fuente, id)`, así que una fuente nueva lo esquiva — y ya pasó.** `Laura & Brenda` se bloqueó el 2026-08-28 para `movistar_arena` y **volvió el 2026-09-01 por `visitbogota`**, con el mismo `source_event_id` (`laura-brenda`) pero otra fuente: hoy está de borrador en la cola. No es un bug —el bloqueo se anota sobre la fila cruda que se borró, y no puede saber de fuentes que todavía no existen—, pero sí una consecuencia que conviene tener presente: **cada fuente nueva reabre todo lo que Juan ya rechazó.** Encontrado el 2026-09-01 recontando la base.
-  - Es un argumento más para preferir "No va" (`descartado`) sobre "Borrar" cuando la razón es editorial y no "esto no existe": descartar deja el canónico, así que la segunda fuente se le adjunta como duplicado en vez de abrir un borrador nuevo.
-
-## Estado de implementación
-- **Fase 1 (infraestructura) — hecha.** Monorepo con `apps/web` (Next.js) y `services/api` (FastAPI), Supabase conectado, y GitHub Actions con cron diario que **ya corrió solo y en verde** el 2026-08-27 (ver "Lo que quedó a medias" para lo que ese éxito todavía no prueba).
-- **Fase 2 (scrapers) — hecha.** Seis fuentes activas en `services/api/bogota_music_intel/scrapers/`. `registry.py` es la fuente de verdad de qué venues son automatizables y cuáles requieren carga manual (con el motivo verificado de cada uno). Correr con `python -m bogota_music_intel.scrape_cli [--dry-run] [--source X]`.
-  - **`visitbogota` (agenda oficial del distrito) se sumó el 2026-08-31**, y es la primera fuente que entra bajo el modelo de moderación. Trae lo que el resto no ve: Rock al Parque, Hip Hop al Parque, Salsa al Parque, Jazz al Parque, y salas que no scrapeamos (Coliseo Medplus, con Gorillaz y Jamiroquai). Y **agrega eventos vendidos por Tuboleta sin tocar Tuboleta**.
-    - **Filtra por la categoría que publica la ficha** (`Categoría del evento`), desde el 2026-09-01. El parámetro `?tipo=` del listado se ignora, pero la ficha sí trae el valor y acierta — 13 de 13 comprobadas. Es lo contrario de Idartes, donde manda la ruta porque la etiqueta miente: **la confianza en una señal se mide fuente por fuente, no se hereda**.
-    - ⚠️ **Si una ficha falla, falla la fuente entera, a propósito.** Con `_prune_missing_events` de por medio, un lote incompleto no omite lo que falta: lo **borra**. Un día de atraso con reintento del cron cuesta menos que borrar eventos reales en silencio.
-    - ~~**Entra completa, sin filtrar por tipo, a propósito.**~~ Se probó filtrar en el origen y no se puede: el selector "Conciertos" del sitio manda `?tipo=103` y **devuelve exactamente la misma página que sin filtro**; el `@type` del JSON-LD es siempre `Event`, nunca `MusicEvent`; y la URL de la ficha es un slug sin tipo, así que tampoco sirve el truco de Idartes. Lo que no es música se descarta en la cola.
-    - **Es la primera fuente del proyecto que publica schema.org/Event**, contra lo que decía la auditoría de venues. De ahí salen fecha, descripción, imagen y sala.
-    - ⚠️ **Su `offers.price` no es un precio**: viene `"0"` con `url: {}` en todas las fichas revisadas. Importarlo anunciaría como gratis un show de $200.000. Hay un test que falla si alguien lo lee.
-  - ~~**No agregar fuentes distritales.**~~ **Juan revirtió esa decisión el 2026-09-01.** La había tomado el 2026-08-28 porque ensuciaban la cartelera; con la cola de moderación ese motivo desapareció. Consecuencia doble: entró `visitbogota`, y **el scraper de Idartes dejó de estar acotado a `/agenda/concierto/`**.
-    - Lo que no se tiró al desacotar Idartes es la señal: **la ruta de la ficha pasó de filtrar a clasificar**, que es donde vale más. Manda sobre la etiqueta del listado —que se contradice con su propia ficha— y se cae a la etiqueta solo cuando la ruta es la genérica `presentacion`, que es ambigua de verdad: ahí conviven un concierto y una ópera.
-    - Eso **recuperó a Ancestral Beats**, que era la única entrada de `artistas_locales.py` sin evento en base justamente porque el filtro lo dejaba fuera. Las agendas públicas —Idartes y equivalentes— programan de todo y meten teatro, danza y ópera en una cartelera de toques: de los 9 eventos que traía el Teatro Jorge Eliécer Gaitán, 5 no eran conciertos. La preferencia es ceñirse a **promotoras y venues**. Idartes se mantiene, pero acotado: su scraper toma **solo lo que está bajo `/agenda/concierto/`**.
-  - Ese filtro va por la URL de la ficha y **no** por la etiqueta de categoría del listado, porque la etiqueta se contradice con la propia ficha del evento (ver "Decisiones transversales"). Es estricto a propósito: una ruta que no conozcamos no entra, porque es más fácil notar que falta un concierto que descubrir teatro en la cartelera.
-- **Fase 3 (calendario) — hecha.** Listado por día y detalle en `apps/web` (Next.js 16, App Router). El frontend lee Supabase directo con la publishable key (RLS deja SELECT público); FastAPI queda como capa de ingesta y base de la API pública futura, no en el camino de lectura del calendario.
-- **Fase 4 (mapa) — hecha** (verificada en navegador real, dev y producción). `/mapa` con MapLibre GL 6 + tiles de OpenFreeMap (sin API key). La geocodificación es un paso aparte del scraping: `python -m bogota_music_intel.geocode_cli`. Eran **9 de 9 salas ubicadas** el 2026-08-27: las 4 que Nominatim no resolvía se curaron a mano en `coordenadas_curadas.py`, con la coordenada que pasó Juan desde Google Maps y verificada por geocodificación inversa contra la dirección que publica cada sala. ⚠️ **Hoy son 9 de 13**: la moderación de salas aprobó 4 nuevas y el denominador creció. El módulo está hecho; la cobertura no es completa y no hay que leerla como si lo fuera.
-- **Filtrado editorial — hecho, aplicado en la base y verificado en el servidor de desarrollo.** Clasifica en vez de borrar: `python -m bogota_music_intel.classify_cli [--dry-run] [--todas]`, que corre aparte del scraping y solo mira lo que llegó sin clasificar. La cartelera y el mapa leen esa clasificación (`apps/web/src/lib/editorial.ts` tiene el criterio; los tres consumidores lo importan de ahí). Detalle en `docs/investigacion-tecnica-plataforma-musical.md`, sección 6.
-- ~~**Fase 5 (radar de tendencias)**~~ — implementada el 2026-08-28 y **borrada el 2026-08-31** al salir del MVP. Ya no hay código ni ruta. **La Fase 5 ahora es otra cosa: moderación + directorio** (ver "Moderación" más arriba). Lo que sigue queda como registro de lo que existió, no como estado del producto. `/tendencias` en `apps/web`, alimentado por `python -m bogota_music_intel.radar_cli [--dry-run] [--limit N]`, corriendo solo en el cron (`Update trending radar`, verificado en verde con `workflow_dispatch`). Muestra **lo que se escucha en Colombia según Last.fm** (`geo.gettopartists`); el origen de cada artista se resuelve reusando `artistas_locales.py` + MusicBrainz, igual que la cartelera.
-  - **El otro eje —Deezer editorial "Música colombiana"— está pausado, no implementado a medias.** El código existe (`deezer.py`) pero no se llama: la editorial devuelve un chart distinto según la IP de quien pregunta, y desde GitHub Actions (donde corre la ingesta) no da el chart colombiano, sin ningún error que lo delate. Verificado comparando una corrida local (Bogotá) contra la corrida real en CI. Detalle completo y qué haría falta para retomarlo: `docs/investigacion-tecnica-plataforma-musical.md` § 2.3.
-  - Last.fm no tiene ese problema: `country=colombia` es un parámetro explícito de la consulta, no depende de dónde corre el servidor.
-
-**Estas cifras envejecen con cada corrida del cron y con cada sesión de triage de Juan: recontarlas con una consulta, no citarlas de memoria.** Recontadas el 2026-09-01 contra la base, después de la primera sesión de triage masivo:
-
-| | |
+| Ruta | Cuándo leerlo |
 |---|---|
-| Filas crudas | **102** — visitbogota 51, royal 12, movistar 10, lourdes 9, latino 8, rockal 8, idartes 4 |
-| Canónicos | **90** — 49 publicados, **37 borradores en cola**, 4 descartados |
-| Publicados | 45 conciertos + 4 fiestas + **0 festivales**; de los conciertos, **8 locales y 37 internacionales** |
-| Borradores | 31 música y **6 festivales**; ninguno con sugerencia de duplicado pendiente |
-| Salas | **22** — 13 publicadas, 9 descartadas, **0 por aprobar** |
-| Bloqueados | 24 `(fuente, id)` que no vuelven a entrar |
-| En pantalla | **40 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), 42 eventos en el mapa |
+| `ESTADO.md` | **Siempre al empezar.** Pendientes, cifras y lo que quedó a medias. |
+| `context/producto/CLAUDE.md` | Qué es el producto, el MVP, las fases. |
+| `context/editorial/CLAUDE.md` | Qué se publica, las cuatro categorías, el origen del artista, el género. |
+| `context/ingesta/CLAUDE.md` | Scrapers, fuentes, listas curadas, títulos, bloqueos, límites de API. |
+| `context/moderacion/CLAUDE.md` | El modelo canónico, la cola, `/admin`, salas, duplicados. |
+| `context/frontend/CLAUDE.md` | `apps/web`, Next.js 16, el mapa, el tema, imágenes. |
+| `context/infraestructura/CLAUDE.md` | Supabase, migraciones, CI, secrets, deploy. |
+| `context/look-and-feel/CLAUDE.md` | **Antes de tocar `globals.css`, `layout.tsx` o cualquier UI.** |
+| `context/archivo/CLAUDE.md` | Antes de proponer una fuente de datos de música o reabrir el radar. |
 
-⚠️ **Las filas crudas bajaron de 114 a 102 y eso no es una falla del scraping: es el botón de borrar.** Borrar elimina las filas crudas además del canónico, así que un triage a fondo *reduce* el crudo. Si alguien vuelve a ver bajar ese número, mirar primero `blocked_source_events` —que subió de 13 a 24— antes de sospechar de una fuente.
+**Las cifras y los pendientes van en `ESTADO.md`, no acá.** Este archivo y los
+`context/*/CLAUDE.md` son criterio que no caduca; `ESTADO.md` es la foto de
+hoy.
 
-El salto entre canónicos y pantalla ya no es solo deduplicación: **la mayor parte son los 37 borradores esperando revisión**. Es el modelo funcionando, no un atraso del pipeline.
+---
 
-⚠️ **`/festivales` se ve vacía y eso es correcto, no un bug.** Los 6 festivales están marcados pero siguen en borrador, y la cartelera solo lee lo publicado. Marcar no es publicar: publicarlos es decisión de Juan, seis clics en `/admin` → "Por revisar" → Publicar.
+## Stack
 
-**Las salas ya no tienen cola**: las 6 que estaban por aprobar se resolvieron el 2026-09-01 (quedaron 9 descartadas contra 3 que había). Esa parte del trabajo bloqueado en Juan está hecha.
+- **Frontend:** Next.js 16 (TypeScript) en Vercel, plan Hobby (⚠️ no
+  comercial). Lee Supabase directo.
+- **Backend:** Python + FastAPI (`services/api`, paquete
+  `bogota_music_intel`). Capa de ingesta, no de lectura.
+- **Base de datos:** Supabase (Postgres + Auth + Storage).
+- **Ingesta:** GitHub Actions (cron), respetando `robots.txt`.
+- **Mapas:** MapLibre GL 6 + tiles de OpenFreeMap (sin API key ni límite).
+- **Geocodificación:** Nominatim, más coordenadas curadas a mano.
 
-⚠️ **4 salas aprobadas siguen sin coordenada** — Coliseo Medplus, Parque el Country, Parque Metropolitano Simón Bolívar y Teatro Mayor Julio Mario Santo Domingo. **Ya dejó de ser hipotético**: se publicó un evento del Coliseo Medplus, así que `/mapa` hoy lo lista bajo el mapa como "sin ubicar" en vez de ponerle pin. Se arregla pegando el punto desde Google Maps en la ficha de la sala, en `/admin` → Salas.
+Monorepo: `apps/web` + `services/api`. Detalle en
+`context/infraestructura/CLAUDE.md`.
 
-**Las fiestas tienen `is_local = null` y eso es correcto, no un hueco**: una fiesta no tiene artista de cartel a quien preguntarle de dónde es. Al contar "sin origen resuelto" hay que mirar solo los conciertos, o la cuenta asusta sin motivo.
+---
 
-**No queda ningún publicado sin clasificar, ni ninguno sin origen resuelto** (verificado el 2026-09-01: 0 canónicos con `event_type` en null, 0 conciertos publicados con `is_local` en null). Carlos Vives —el que trajo el cron del 2026-08-30 y MusicBrainz no resolvió desde CI— se clasificó a mano el 2026-08-31 corriendo `classify_cli` local, que lo resuelve al instante: quedó como **local**.
+## Reglas duras
 
-⚠️ **Pero hay borradores de música con el origen sin resolver, y no son el mismo problema.** Son dos estados que se parecen en la base y se leen igual en la cola:
+No negociables. Cada una se pagó con un error, y varias con dos.
 
-- **MusicBrainz no se pudo consultar** (503, timeout). El evento queda con `event_type` en null, y por eso la próxima corrida lo vuelve a tomar: `classify_cli` pide justamente `event_type is null`. Este es el que se reintenta solo.
-- **MusicBrainz contestó y no reconoció al artista.** El evento queda `event_type = 'music'` con `is_local` en null y `classification_source = assumed_music`. **Este no se reintenta nunca**, y está bien que así sea: ya se preguntó y la respuesta fue "no lo conozco". Volver a preguntar todos los días no cambiaría nada.
+- **Nunca inventar un dato: un "no sabemos" honesto vale más que un valor
+  verosímil pero falso.** Decidió tres cosas distintas: no poner un pin en el
+  lugar equivocado, no relajar la búsqueda de Nominatim hasta que "acierte", y
+  no mostrar "12:00 a. m." cuando la fuente solo publicó fecha. Ante la duda,
+  se muestra el hueco.
+- **"No sé" y "confirmado que no" son estados distintos y no se colapsan.**
+  `is_local` es `null`/`true`/`false` y el ranking solo castiga al `false`; un
+  503 de MusicBrainz no se guarda como "artista desconocido"; un match con
+  puntaje alto pero nombre distinto se rechaza en vez de aceptarse a medias.
+  Cada vez que se juntan los dos estados, el sistema afirma algo que nadie
+  verificó.
+- **Guardar crudo, filtrar y clasificar en lectura.** La ingesta no descarta;
+  el criterio editorial se aplica al leer. Así, cuando cambie el criterio, no
+  hay que volver a scrapear el pasado.
+- **Ningún razonamiento sobre horas se hace sobre el texto ISO — hay que
+  convertir a hora de Bogotá primero.** Colombia es UTC-5 todo el año:
+  medianoche local es `T05:00:00Z` y un show de las 7 p. m. se guarda como
+  `T00:00:00Z` del día siguiente. Buscar `"T00:00:00"` en la cadena responde
+  sobre UTC y da lo contrario de lo que se busca. Este error ya se cometió dos
+  veces; los dos tienen test de regresión.
+- **El límite de peticiones de una API se respeta dentro del módulo que la
+  consulta, nunca en el llamador.** Dejarlo del lado del CLI parece más
+  flexible y falla.
+- **A una API se le pregunta llamándola, no leyendo su documentación.** La
+  investigación documental de APIs de música se armó leyendo docs oficiales, y
+  al llamarlas cuatro entradas resultaron falsas. Una duda que se pueda
+  contestar con un `GET` no merece más investigación documental.
+- **Y hay que llamarla desde donde va a correr en producción, no solo en
+  local.** Pasó con Deezer (geolocaliza por IP y desde CI devuelve otro chart,
+  sin error) y otra vez con MusicBrainz. Que le haya pasado a dos de tres
+  fuentes externas sugiere que **el default a asumir es que una API responde
+  distinto desde CI**. Si algo depende de una API y solo se probó local,
+  tratalo como no probado.
+- **Verificar el frontend en un navegador de verdad, no solo en el HTML
+  servido.** El mapa estuvo en negro con CI verde, tests pasando, `tsc` limpio
+  y build correcto.
+- **En pantalla no van nombres de archivo nuestros.** Al lector no le dicen
+  nada y le piden entender cómo está hecho el sistema. La nota para quien
+  mantiene el código va en el código. Vale para estados vacíos y mensajes de
+  error, que es donde da la tentación de explicar de más.
+- **La categoría que publica una fuente no siempre coincide con su propia
+  ficha**, y cuál de las dos señales sirve se mide fuente por fuente, no se
+  hereda.
+- **Una señal que sirve para filtrar suele servir mejor para clasificar.**
+  Antes de sacar una regla que dejó de hacer falta, preguntarse si el dato que
+  usaba sirve un paso más adelante.
+- **Una lista que hay que mantener a mano necesita algo que avise cuando le
+  falta una entrada.** Cuando se elige una lista blanca sobre un comodín, el
+  costo no es escribirla: es **enterarse tarde de que le falta algo**, y eso
+  se paga una vez con un chequeo automático.
+- **Lo curado exige `evidencia`, y hay tests que lo verifican.** La
+  nacionalidad, la coordenada o la grafía tiene que venir de una fuente
+  consultable, **nunca de memoria ni de criterio propio**.
+- **No evadir bloqueos anti-bots.** El `robots.txt` de Tuboleta bloquea
+  explícitamente a ClaudeBot/GPTBot; Bandsintown, Songkick e Instagram
+  bloquean igual. Para esas fuentes la vía es **pegar, no traer**: si el admin
+  pega una URL y nuestro servidor la va a buscar, sigue siendo nuestro agente
+  entrando donde no lo dejan.
+- **Las migraciones las aplica Juan a mano** en el SQL Editor de Supabase.
+  Ninguna sesión puede aplicar una por su cuenta: no hay CLI ni cadena de
+  conexión. Entregarla y pedirla, no darla por corrida.
+- **Antes de dar el CI por bueno, mirar los dos workflows.** `Tests` y
+  `Scraper cron` son distintos y uno no dice nada del otro.
 
-Eran 13 y **quedaron 7**: los 6 festivales salieron de esa cuenta al estrenarse la categoría `festival` el 2026-09-01, porque ahí el origen en null dejó de ser un hueco y pasó a ser la respuesta correcta —un festival no tiene artista de cartel—. Es un buen ejemplo de por qué la cuenta hay que leerla con cuidado: **la mitad de lo que parecía un problema de datos era vocabulario que faltaba**.
+---
 
-Los 7 que quedan sí son huecos de verdad, y los resuelve Juan a mano en `/admin` o curando en `artistas_locales.py`: Carteto de Nos, The Hayley Williams Show, HUMBE, Kris R, Laura & Brenda, Gorillaz y Expo Solar (este último probablemente ni siquiera sea música).
+## Mantener esta documentación
 
-Que casi no quede ninguno sin resolver **no significa que el problema esté cerrado**: se llegó ahí curando ocho artistas a mano, no porque MusicBrainz haya mejorado. Cada evento nuevo que traiga el cron puede volver a caer en "sin origen", y los locales emergentes son los que más probablemente caigan.
+La skill **`/actualizar-estado`** pone al día `ESTADO.md`, este archivo y los
+`context/*/CLAUDE.md` con el estado real. Correrla al cerrar una fase o una
+sesión de trabajo. Es la vía preferida: trae el procedimiento de verificación
+—qué mirar en el repo en vez de fiarse de la memoria de la conversación— y las
+reglas de redacción.
 
-**El mapa no cuenta lo mismo que la cartelera y no es un error** (surgió como duda el 2026-08-27): `getEscena` filtra por `starts_at >= hoy` y suma conciertos, fiestas y festivales en un solo número, mientras la cartelera los separa en tres pestañas. El mapa los junta a propósito: una sala con fiesta o con festival está tan activa como una con concierto, y para saber dónde hay música esta noche esa distinción no ayuda. Además, un evento sin fecha no puede pasar ese filtro —no se sabe si ya pasó o si viene—, así que el mapa nunca lo muestra; la cartelera sí puede, porque tiene dónde ponerlo. Hoy el único caso es THE JAZZ ROOM. Efecto lateral aceptado: el mapa no avisa que una sala tiene además eventos sin fecha confirmada.
+**Dónde escribir cada cosa**, que es lo que mantiene esto corto:
 
-### Lo que quedó a medias (pendientes operativos)
-- ~~🔴 La migración `20260901000000_tipo_festival.sql` está sin aplicar.~~ **Aplicada por Juan el 2026-09-01**, y los 6 festivales quedaron marcados en las dos capas ese mismo día. Se dejan dos cosas anotadas porque van a volver a hacer falta:
-  - **Las migraciones las aplica Juan a mano, en el SQL Editor de Supabase.** El proyecto no tiene CLI de Supabase ni cadena de conexión a Postgres —`services/api/.env` solo trae la URL REST y la service role key, y PostgREST no ejecuta DDL—, así que **ninguna sesión puede aplicar una migración por su cuenta**. Quien escriba la próxima tiene que entregarla y pedirla, no darla por corrida.
-  - **Marcar los 6 no fue escribir el valor a mano**: se corrió `clasificar()` sobre esas filas crudas y se guardó lo que decidió, `classification_source = curated_festival` incluido, para que el porqué quede auditable igual que en una corrida del cron. Ninguna gastó una petición a MusicBrainz. En el canónico se tocó **solo `event_type`**: ni `reviewed_at` ni el título, que son terreno del admin.
-- 🔴 **Los 5 commits del 2026-09-01 están sin pushear, así que el CI no corrió ninguno.** Lo más importante que queda sin ejercitar es **el paso `npm run lint` que se agregó al workflow `Tests` ese mismo día: nunca se ha ejecutado en CI**. Localmente pasa, pero eso es lo que también pasaba antes de descubrir que el frontend no tenía linter. Se comprobó que la config de `eslint-config-next` no usa linting con tipos, así que no debería necesitar `next typegen` antes — pero *no debería* no es *se verificó*. Al pushear, mirar que ese paso quede en verde.
-  - Tampoco pasó por CI nada del festival ni del género. Los 249 tests de backend y 42 de frontend, `ruff`, `tsc`, `eslint` y `build` están en verde **en la máquina de Juan**, que es exactamente la clase de prueba que este proyecto ya aprendió a no dar por suficiente (ver la regla de "probarla también desde donde va a correr en producción").
-- **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen falta las variables `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en el proyecto de Vercel. Vercel corre `npm run build`, así que el `prebuild` que copia el worker de MapLibre se dispara solo.
-- ~~**El workflow `Tests` está en rojo desde el 2026-08-29.**~~ **Arreglado el 2026-08-31.** Estuvo rojo en todos los push durante tres días sin que nadie lo notara. No fallaban los tests: fallaba `ruff`, con dos errores del commit del radar (`eb73a01`, Fase 5) — un import sin usar en `radar.py` y un `with` anidado en `tests/test_lastfm.py` (SIM117). Lo que queda como lección, y por eso no se borra: **pasó desapercibido porque `Scraper cron` sí estaba verde**, y era el workflow que se venía mirando. Son dos workflows distintos y uno no dice nada del otro. Antes de dar el CI por bueno, mirar los dos: `curl -s ".../actions/runs?per_page=20"` y agrupar por `name`.
-- 🔴 **La ruta de MusicBrainz en CI ya se ejercitó y no clasificó** — esto corrige lo que decía esta misma sección hasta el 2026-08-31 ("se sabrá la primera vez que el scraping traiga un evento nuevo"). Ya pasó: el cron del **2026-08-30T17:54Z** trajo un evento nuevo de verdad (`Carlos Vives & La Provincia Tour Al Sol`), el paso `Classify events` corrió 33 segundos y terminó **success**, y el evento sigue **sin clasificar** un día después. Local resuelve el mismo evento al instante y sin reintentos: `classify_cli --dry-run` devuelve «Carlos Vives → CO → local». O sea que el "success" del paso es el comportamiento diseñado —MusicBrainz falla, se deja sin clasificar para reintentar, no se tumba la corrida—, pero **el resultado desde CI no es el mismo que desde acá**.
-  - No está probada la causa: no se leyeron los logs de la corrida (hacen falta credenciales). La sospecha razonable es que MusicBrainz trate distinto a las IP de GitHub Actions, que es **exactamente el mismo patrón que ya se pagó con Deezer** (ver la regla de "probarla también desde donde va a correr en producción", más abajo). Es la segunda vez que aparece.
-  - ~~Cómo saber si se repite o fue transitorio: mirar si el próximo cron lo clasifica.~~ ⚠️ **Esa prueba ya no se puede hacer, y hay que decir por qué: se gastó.** El 2026-09-01T05:46Z una corrida **local** clasificó 74 eventos contra MusicBrainz —los 51 de visitbogota incluidos— y dejó la base sin nada pendiente. Hoy `classify_cli --dry-run` responde «No hay eventos sin clasificar», así que el paso `Classify events` del cron no tiene sobre qué fallar y su verde no prueba nada.
-    - **La próxima oportunidad es el próximo evento nuevo que traiga el cron**, y hay que mirarla antes de correr `classify_cli` local. Concretamente: después de una corrida de `Scraper cron`, consultar si quedó algo con `event_type` en null **antes** de tocar nada.
-    - Mientras tanto, lo único demostrado es que **MusicBrainz responde bien desde la máquina de Juan** (74 de 74, sin un solo 503, el 2026-09-01). Desde CI sigue sin haber una sola clasificación exitosa confirmada.
-- **El cron sí prueba los secrets y la ingesta.** La primera corrida de `Scraper cron` fue el **2026-08-27T23:35Z**, por `schedule` y no a mano, y terminó **success** ([corrida](https://github.com/jdieTorres/bogota-music-intel/actions/runs/33126812031)). Eso resuelve un pendiente viejo: **los secrets `BMI_SUPABASE_URL` y `BMI_SUPABASE_SERVICE_ROLE_KEY` quedaron ejercitados** —`scrape_cli` devuelve 1 si falla cualquier fuente, así que el verde significa que las seis guardaron contra Supabase de verdad—. Sigue corriendo solo: verde el 2026-08-29, el 2026-08-30 y el **2026-08-31T19:49Z**, que es la última corrida al momento de escribir esto (verificado el 2026-09-01).
-  - El cron declara `0 14 * * *` (9:00 en Bogotá) y corrió 23:35Z: GitHub retrasa los `schedule` bastante. No es un error de configuración, pero **no cuentes con la hora**.
-  - El 2026-08-28 se lanzó además a mano (`workflow_dispatch`) para probar la rotación de credenciales, y en esa corrida se estrenaron en CI el filtro de Idartes y el bloqueo de eventos: los 5 no-conciertos y `Laura & Brenda` no volvieron **por su fuente**. Es la confirmación de que bloquear en la ingesta hacía falta — un `DELETE` a secas los habría traído de vuelta en esa misma corrida. (Ojo: `Laura & Brenda` sí volvió después, el 2026-09-01, **por otra fuente**. Ver "Lo que no vuelve a entrar".)
-  - Para recontar sin token: `curl -s ".../actions/runs?per_page=100"` y mirar los `name`.
-- ~~**Rotar la secret key de Supabase.**~~ **Hecho y verificado el 2026-08-28.** Juan creó una clave nueva y eliminó la anterior. Verificado: la nueva funciona con privilegios de `service_role` (una escritura pasa, y RLS las bloquea para la publishable), y una corrida `workflow_dispatch` de `Scraper cron` posterior a la rotación quedó en verde — que es la prueba del secret de GitHub, porque `get_client()` lanza excepción si la credencial no sirve.
-  - Corrección de la nota vieja: daba como motivo que "el repo es público". **La clave nunca entró al repo** — ni en el árbol ni en toda la historia de git, donde los únicos aciertos de `service_role` son el nombre de la variable. `services/api/.env` está en `.gitignore` desde el principio y nunca estuvo rastreado. El riesgo real era solo haberla pegado en un chat, que igual alcanzaba para rotar.
-  - Para la próxima vez: las claves son de **formato nuevo** (`sb_secret_…` / `sb_publishable_…`), no los JWT viejos, así que se revocan una por una desde Project Settings → API Keys sin tocar el JWT secret del proyecto — y creando la nueva antes de borrar la vieja se rota sin ventana de caída. La secret vive en **dos lugares y solo dos**: `services/api/.env` y el secret `BMI_SUPABASE_SERVICE_ROLE_KEY` del repo (Vercel todavía no existe). La publishable del frontend **no se rota**: va en el bundle del navegador por diseño y RLS solo le permite SELECT.
-  - Queda sin verificar una sola cosa, porque no se ve desde fuera del dashboard: si el proyecto todavía expone las **claves legacy JWT** (`anon` / `service_role`). Son un juego de credenciales aparte que la rotación de las `sb_*` no toca.
-- Opcional: añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para que el CI prerenderice contra la base real en vez de contra placeholders.
-
-### Lo que ya está cerrado
-El look & feel del 2026-08-28 (Verde Neón, tipografía, iconografía, toggle claro/oscuro) está **commiteado, verificado y aceptado**: Juan lo miró en el navegador el 2026-08-28 — "se ve bien". Eso cierra la verificación que la sesión original no pudo hacer, porque corría en la nube sin shell. (Al 2026-09-01 la suite es de **249 tests de backend y 42 de frontend**; `tsc`, `eslint`, `ruff` y build en verde **en local**. `Tests` estuvo verde en CI en todos los push hasta el 2026-08-31 — pero lo del 2026-09-01 todavía no se pusheó, así que el CI no lo ha visto.)
-
-~~⚠️ `npm run lint` falla y el CI no lo mira.~~ **Arreglado el 2026-09-01, las dos mitades.** El frontend era el único lado sin linter en CI —`ruff` sí corría del lado de Python—, y por eso `ThemeToggle.tsx` estuvo violando `react-hooks/set-state-in-effect` desde el 2026-08-31 sin que nadie se enterara. Ahora el workflow `Tests` corre `npm run lint`.
-  - **El componente no se silenció, se rehízo**: leía `data-theme` del DOM en un `useEffect` y se copiaba a `useState`, que es la copia que la regla marca. Ahora lo lee con `useSyncExternalStore` + un `MutationObserver` sobre `<html>`. Es mejor además de más limpio: **el atributo es la fuente de verdad y ya no hay copia que pueda desfasarse** — antes, cualquier cosa que tocara `data-theme` dejaba el ícono mintiendo. El script inline del `<head>` no cambió; sigue fijando el tema antes del primer pintado.
-  - Verificado en navegador el 2026-09-01, que es lo que ni los tests ni el linter prueban: el toggle cambia el tema, el ícono acompaña, el modo sobrevive a navegar entre páginas en los dos sentidos y **la consola no tira ni un aviso de hidratación** — que era el riesgo real de `useSyncExternalStore`, porque el servidor devuelve "claro" y el cliente puede devolver "oscuro".
-
-**Queda congelado a propósito, no terminado.** Juan decidió el 2026-08-28 seguir adelante con esta identidad tal como está y **hacer una pasada de ajustes al final, antes del deploy** (Fase 6). Registrado como pendiente abajo. La diferencia importa: no hay que rediseñar por iniciativa propia en el medio, ni dar el look & feel por cerrado cuando llegue el deploy.
-
-**Dos de los tres módulos del MVP están hechos** (mapa y calendario). El tercero cambió el 2026-08-31: era el radar de tendencias —construido el 28 de agosto y sacado del alcance— y ahora es el **directorio de la escena local**, que sigue sin arrancar. La pasada final de look & feel sigue siendo condición para desplegar.
-
-**La Fase 5 quedó cerrada el 2026-09-01.** Lo que se hizo, en el orden en que se habilitó:
-
-1. ~~**La base de la moderación**~~ — hecha el 2026-08-31 (ver "Moderación" más arriba).
-2. ~~**El formulario de admin**~~ — `/admin`, hecho el 2026-08-31. Dos secciones separadas, **Eventos** y **Salas**, porque son dos ciclos de vida distintos: un evento caduca y una sala no; un evento se borra y se bloquea para que no vuelva, una sala se aprueba una vez y queda. Los módulos van igual de separados (`lib/admin/eventos.ts`, `lib/admin/salas.ts`, `lib/admin/sesion.ts`, `lib/admin/slug.ts`).
-   - **Confirmar duplicados** (2026-08-31): la heurística de `deduplicacion.py` anota `suggested_duplicate_of` y el admin decide. Al confirmar, las fuentes del borrador pasan al canónico y el borrador desaparece — `unificar_duplicado()`, en una transacción. El panel **muestra el otro evento, no solo su id**: sin ver contra qué se compara, confirmar es adivinar, que es justo lo que hacía `dedupe.ts` a ciegas.
-   - ⚠️ **Unificar deja `source_snapshot` en null a propósito**, y `moderacion_cli` lo rearma en la corrida siguiente. El canónico acaba de sumar una fuente, así que la foto vieja ya no le corresponde y marcaría un cambio falso; y sin el paso que la rearma, ese evento **dejaría de vigilarse para siempre**.
-   - **Las salas también se moderan** desde el 2026-08-31 (`venues.status`). Antes una sala nacía sola en cuanto un evento scrapeado la nombraba, con el nombre que le pone la fuente — de ahí venía `nombres_de_salas.py`. El scraper no cambió: `upsert_venues` no manda `status`, así que la sala nueva toma el default `borrador`. Mismo mecanismo que mantiene viva la clasificación de los eventos.
-   - **Carga manual**: evento nuevo (entra como borrador, a la misma cola, para que no haya un camino que se salte la revisión) y sala nueva (nace publicada: la crea quien aprobaría el borrador).
-   - **Campo de género, opcional, en los dos formularios** (2026-09-01). Ver "El género de un evento" más arriba: es el único dato de la ficha que ninguna fuente resuelve, así que si no lo escribe Juan no existe.
-   - ⚠️ **El slug de una sala creada a mano tiene que coincidir con el que genera `python-slugify`** en la ingesta, o el día que un scraper publique esa sala la crearía de nuevo y los eventos quedarían repartidos entre las dos copias. `lib/admin/slug.ts` lo replica y `slug.test.ts` lo compara contra 17 salidas reales de `python-slugify`, incluidas las que rompen lo obvio ("Ñoño's Pub" da `nono-s-pub`, no `nonos-pub`).
-   - **No hay borrado de salas, a propósito**: sus eventos la referencian por `venue_id` y el scraper la recrearía. `descartado` es la respuesta.
-   - Quién puede escribir lo decide la tabla `admins` y RLS, **no el frontend** (`20260831020000_admin.sql`). Se hizo con lista y no con "cualquiera autenticado" porque el registro público de Supabase Auth se configura en el panel y no en el repo: si mañana quedara abierto, `to authenticated` dejaría publicar a cualquiera que se registrara.
-   - **Tres pestañas** (2026-08-31): *Por revisar* (la cola que caduca), *En la cartelera* (lo publicado vigente, para corregir o sacar) y *Ya pasaron*. Y los mismos controles desde la página de cada evento, para quien está mirando la cartelera y ve algo mal.
-   - **Descartar y borrar son cosas distintas y conviene no confundirlas.** `descartado` saca de la cartelera y es reversible. **Borrar** elimina el canónico y sus filas crudas y anota `(source, source_event_id)` en `blocked_source_events`; sin ese bloqueo el borrado no sirve, porque el cron abre un borrador nuevo en la corrida siguiente — comprobado el 2026-08-31 al soltar el canónico de WWE. Las tres cosas van en la función `borrar_evento()` para que ocurran juntas o ninguna, y exige un motivo: un borrado que no registra por qué no se puede auditar.
-   - No hay política de DELETE sobre ninguna tabla. La única forma de borrar es esa función.
-   - Al resolver un cambio de la fuente, **tanto aceptar como rechazar actualizan `source_snapshot`**. El snapshot es "lo que ya vi de la fuente", no "lo que muestro": sin actualizarlo al rechazar, el mismo cambio volvería a la cola en cada corrida del cron para siempre.
-3. ~~**Cobertura**~~ — **arrancada el 2026-08-31 con `visitbogota`**, la primera de las cuatro fuentes abiertas. Quedan `ticketlive.com.co`, `mitaquilla.com.co` y `feverup.com`, más el pegado manual de texto o flyer.
-4. **El directorio** de salas y artistas — **es lo único del MVP que no ha arrancado**.
-
-Todo el diseño está en `docs/investigacion-tecnica-plataforma-musical.md` § 9.
-
-### Siguiente paso concreto (2026-09-01)
-
-Hay dos caminos y no compiten: **el directorio** es el módulo que falta del MVP, y **más fuentes** es lo que sigue tapando el sesgo de cobertura. El directorio es el que cierra el alcance.
-
-Antes de cualquiera de los dos hay trabajo de moderación acumulado que solo puede hacer Juan: **37 borradores en cola** (eran 60 el 2026-09-01 por la mañana; la primera sesión de triage resolvió 23). Las **salas ya no tienen cola**: las 6 que estaban por aprobar se resolvieron ese mismo día. No bloquea escribir código, pero sí bloquea que la cartelera muestre lo que ya se trajo.
-
-**Después queda la Fase 6 (pulido y deploy)**: desplegar a Vercel —que nunca se ha hecho—, la pasada final de look & feel, y mirar si el cron llega a clasificar solo lo que MusicBrainz le falló.
-
-Esperando a Juan, y nadie más lo puede destrabar:
-- **Pushear los 5 commits del 2026-09-01**, para que el CI los mire por primera vez (ver "Lo que quedó a medias").
-- **Publicar los 6 festivales**, que están marcados pero en borrador — hasta entonces `/festivales` se ve vacía.
-- **Las fotos de sala** (`fotos_curadas.py` vacío, 0 de 13 salas publicadas).
-- **Las coordenadas de las 4 salas** que aprobó sin punto en el mapa. Ya se nota: el Coliseo Medplus aparece hoy bajo el mapa como "sin ubicar".
-- **El género de los eventos publicados** (40 de 49 sin él al 2026-09-01). No es tarea de nadie más: ninguna fuente lo publica, así que o lo escribe Juan en `/admin` o el chip no existe.
-
-**Pregunta abierta que hay que hacerle a Juan, no resolver por cuenta propia: ¿se les devuelve el año al título de los festivales?** Los canónicos dicen "Rock al Parque" porque el normalizador les quitó el año cuando todavía eran `music`; los crudos dicen "Rock al Parque 2026". Ahora que son `festival` la regla es la contraria —el año es la edición y se conserva, como el "Vol. 4" de los ciclos—, así que el título quedó normalizado con un criterio que ya no aplica. **No se re-normalizaron porque 5 de los 6 tienen `reviewed_at`**: no hay forma de distinguir "Juan dejó ese título" de "Juan nunca lo miró", y pisar una edición del admin es exactamente lo que el modelo de moderación prohíbe. Si Juan confirma que el título no fue decisión suya, es una corrida y ya.
-
-⚠️ `apps/web` corre **Next.js 16**, que cambió convenciones respecto a versiones anteriores: `params`/`searchParams` son Promises, existen los helpers globales `PageProps<'/ruta'>` y `LayoutProps<'/ruta'>`, y Turbopack es el default. Antes de escribir código de frontend, leé la guía correspondiente en `apps/web/node_modules/next/dist/docs/` (así lo pide `apps/web/AGENTS.md`).
-
-⚠️ Turbopack deja a **MapLibre GL 6 sin su worker** y el mapa queda en negro **sin un solo error en consola** (dev y build por igual). Ya está resuelto con `apps/web/scripts/copiar-worker-maplibre.mjs` + `setWorkerUrl()`; el detalle está en `docs/investigacion-tecnica-plataforma-musical.md`, sección "Trampas del frontend". Si el mapa vuelve a quedar en negro, lo primero a mirar es si el navegador pide teselas — no si hay errores.
-
-Antes de tocar un parser, leé la sección "Trampas de datos" de `docs/investigacion-tecnica-plataforma-musical.md`: varias suposiciones razonables (la zona horaria que declara el sitio, la URL como identidad del evento) resultaron falsas contra los sitios reales y ya tienen tests de regresión en `services/api/tests/`.
-
-## Decisiones transversales tomadas durante la implementación (2026-08-27)
-Valen para todo el proyecto, no solo para el módulo donde salieron:
-
-- **En pantalla no van nombres de archivo nuestros.** Lo notó Juan el 2026-09-01: el estado vacío de `/festivales` decía "se agrega en `festivales_curados.py`", y el de `/fiestas` venía diciendo lo mismo de `ciclos_curados.py` desde que existe. Al lector el nombre de un archivo del repo no le dice nada, y le pide entender cómo está hecho el sistema para interpretar lo que ve. La nota para quien mantiene el código va **en el código**, que es donde la va a leer. Vale para cualquier texto que vea alguien que no somos nosotros — incluidos los estados vacíos y los mensajes de error, que es justo donde da la tentación de explicar de más.
-- **Nunca inventar un dato: un "no sabemos" honesto vale más que un valor verosímil pero falso.** Es el criterio que decidió tres cosas distintas: no poner un pin en el lugar equivocado (mejor listar la sala como "sin ubicar"), no relajar la búsqueda de Nominatim hasta que "acierte", y no mostrar "12:00 a. m." cuando la fuente solo publicó fecha. Ante la duda, se muestra el hueco.
-- **La categoría que publica una fuente no siempre coincide con su propia ficha.** Idartes listaba `'Fuera de sí'` como **Música** en la agenda de la que scrapeamos, y su ficha está en `/agenda/presentacion-de-danza/` describiéndola como «una obra interdisciplinar de danza y música»; a `'Ella'` la listaba como **Teatro** siendo también danza. Verificado el 2026-08-28: no es un bug del scraper, es la fuente contradiciéndose a sí misma. Por eso el filtro de esa fuente se hizo por **la URL de la ficha** y no por la etiqueta del listado — la ruta viene del enrutamiento del sitio y acertó en los nueve eventos revisados. Vale como advertencia general: cuando una fuente da dos señales de categoría, hay que mirar cuál de las dos genera el sitio y cuál escribe una persona.
-- **"No sé" y "confirmado que no" son estados distintos y no se colapsan.** Corolario del anterior, y ya decidió cuatro cosas en el filtrado editorial: `is_local` es `null`/`true`/`false` y el ranking solo castiga al `false`; `event_type` en `null` se sigue mostrando; un 503 de MusicBrainz no se guarda como "artista desconocido" sino que deja el evento sin clasificar para reintentarlo; y un match de la API con puntaje alto pero nombre distinto se rechaza en vez de aceptarse a medias. Cada vez que se juntan los dos estados, el sistema termina afirmando algo que nadie verificó.
-- **Excluir es caro y silencioso** — *y esto cambia de signo con la moderación (2026-08-31)*. Un evento que no aparece en la cartelera no deja ningún rastro para el usuario ni para nosotros, y por eso las reglas de exclusión se mantuvieron estrechas hasta ahora. **Cuando la cola de revisión exista, deja de ser cierto**: un evento mal filtrado sigue siendo visible para el admin, en su cajón. Ahí las reglas pueden volverse *más* agresivas, no menos. Mientras tanto, mientras se siga publicando directo, la regla vieja sigue mandando.
-- **Guardar crudo, filtrar y clasificar en lectura.** La ingesta no descarta eventos; el criterio editorial se aplica al leer. Así, cuando cambie el criterio, no hay que volver a scrapear el pasado. Es lo que permitió que el filtrado editorial se implementara como cuatro columnas nuevas y un paso de clasificación aparte, sin tocar los scrapers: reclasificar todo es `classify_cli --todas` y no cuesta nada.
-- ~~La deduplicación entre fuentes vive en el frontend.~~ **Saldada el 2026-08-31**, antes de lo previsto: la mudó el modelo de moderación. Vive en la ingesta (`services/api/bogota_music_intel/deduplicacion.py`) y cambió de papel — el evento canónico es la unidad deduplicada, y la heurística ya no decide sola: **sugiere** (`suggested_duplicate_of`) y confirma una persona. `apps/web/src/lib/dedupe.ts` se borró con sus 15 tests; la lógica y sus tests están del lado de Python.
-- **Verde Neón, con toggle real claro/oscuro — decidido el 2026-08-28, reemplaza la paleta oscura fija.** Se llegó ahí explorando con Claude Design: 7 direcciones de paleta (4 monocromáticas de marca tipo `#10a308`/`#cf720e`, 2 ajustes sobre un mockup y 2 experimentos de "caos" saturado) → se combinaron 4 mono+caos 1:1 → se probaron sobre fondo claro en vez de oscuro (los acentos neón puros se atenuaron para no rechinar contra el papel) → Juan eligió Verde Neón y ajustó el verde claro (`#c8f0b8`) y el oscuro (`#091d0d`) a mano. El registro completo con las paletas descartadas está en `look&feel/README.md`; los valores en `look&feel/tokens.css` y en `apps/web/src/app/globals.css`. Ya no es punto de partida — es la paleta activa, aunque el resto del tratamiento visual (texturas, ilustración) sigue abierto.
-  - **El toggle es real, no cosmético**: `apps/web/src/components/ThemeToggle.tsx` cambia `data-theme` en `<html>` y lo guarda en `localStorage`; un `<script>` inline en el `<head>` de `layout.tsx` lo fija antes de que el navegador pinte. Por defecto arranca en claro.
-    - ⚠️ **Tiene que ser un `<script>` crudo, no `next/script`.** Estuvo con `<Script strategy="beforeInteractive">` desde el 2026-08-28 y **no funcionaba como decía esta misma línea**: Next no lo emite como etiqueta ejecutable, lo encola en `self.__next_s` y lo corre su runtime al arrancar, así que el tema quedaba atado al bundle de JS y no podía aplicarse antes del primer pintado. Además tiraba un error de consola en cada navegación del cliente. Corregido el 2026-08-31 — detalle en `docs/investigacion-tecnica-plataforma-musical.md` § "Trampas del frontend".
-  - **El mapa es la excepción, y sigue siendo deliberada — no cambia con el toggle.** Desde el 2026-08-27 usa el estilo claro `liberty` de OpenFreeMap, elegido por Juan tras mirar cuatro en el navegador (`dark`, `fiord`, `liberty`, `bright`): un mapa casi negro leía como un hueco en la página. Con el toggle real de 2026-08-28 esto se confirmó explícitamente: los tokens `--popup-*` (mapa y su popup) **no** se sobreescriben en `[data-theme="oscuro"]`, así que se quedan en su propio "papel" claro tenga la página el modo que tenga.
-  - **El aro del marcador del mapa se corrigió al agregar el toggle**: usaba `border: 2px solid var(--background)`, que antes daba un aro oscuro fijo por accidente (la paleta era oscura fija) pero con el toggle se habría vuelto claro en modo claro y oscuro en modo oscuro — inconsistente, porque el mapa en sí no cambia. Ahora usa `var(--popup-surface)` (el mismo "papel" fijo del popup), así el marcador se ve igual en los dos modos.
-  - **El popup del mapa sigue siendo claro**, con los mismos tokens `--popup-*` de siempre, ahora coloreados en la familia de Verde Neón en vez de un crema neutro.
-- **Una señal que sirve para filtrar suele servir mejor para clasificar.** Cuando dejó de hacer falta filtrar Idartes en el origen, la tentación era borrar el filtro y listo. La ruta de la ficha era la única señal confiable de esa fuente, así que en vez de tirarla se la movió a `category` — ahora el evento entra igual y llega a la cola ya marcado. Vale para cualquier fuente futura: antes de sacar una regla que dejó de hacer falta, preguntarse si el dato que usaba sirve un paso más adelante.
-- **Una lista que hay que mantener a mano necesita algo que avise cuando le falta una entrada.** `images.remotePatterns` de `apps/web/next.config.ts` es explícita a propósito —el optimizador de Next descarga y sirve cualquier URL que se le permita, así que abrirla con un comodín lo convertiría en un proxy de imágenes para cualquiera—, pero al sumar visitbogota nadie agregó su host. `next/image` no degrada ante un host desconocido: **lanza y rompe la tarjeta**. Estuvo un día guardando 51 imágenes de un host no permitido y se supo cuando Juan abrió la página. Desde el 2026-09-01 `moderacion_cli` compara los hosts que llegan contra esa lista —leyéndola del propio `next.config.ts`, para no mantener dos copias que se desincronizarían— y lo avisa en el log del cron. La lección general: cuando se elige una lista blanca sobre un comodín, el costo no es escribirla sino **enterarse tarde de que le falta algo**, y eso se paga una vez con un chequeo automático. Detalle en `docs/investigacion-tecnica-plataforma-musical.md` § 10.
-- ⚠️ **"Borrar" y "No va" están a un clic de distancia y hacen cosas muy distintas.** Descartar es reversible; borrar elimina las filas crudas y **bloquea el evento para siempre**. En la primera sesión de triage masivo (2026-09-01) se borró con motivo "no music" un evento que sí era música — "Gaitán al Aire Vol. 57: Ancestral Beats" —, seguramente arrastrado por la tanda de teatro que lo rodeaba. Se recupera quitando su fila de `blocked_source_events` y esperando al cron. Si vuelve a pasar, conviene alejar el botón de borrar o pedir doble confirmación cuando el evento está clasificado como música.
-  - Dato de la misma sesión, al recontar el 2026-09-01: de los 24 bloqueos, **3 tienen como motivo «pq si»**. La función exige un motivo pero no puede exigir que sirva, y un borrado irreversible cuyo motivo no se puede auditar es justamente lo que el requisito venía a evitar. No es para arreglar con código: es para saber, cuando dentro de tres meses alguien se pregunte por qué no vuelve un evento, que en tres casos la respuesta no está escrita.
-- **Verificar el frontend en un navegador de verdad, no solo en el HTML servido.** El mapa estuvo en negro con CI verde, tests pasando, tsc limpio, build correcto y HTML servido bien. Ninguna de esas señales lo detecta.
-- **A una API se le pregunta llamándola, no leyendo su documentación.** Es el mismo criterio que el anterior, un nivel más abajo, y ya se pagó cuatro veces: la sección 2 de `docs/investigacion-tecnica-plataforma-musical.md` se armó leyendo docs oficiales y al llamarlas el 2026-08-28 **cuatro de sus entradas resultaron falsas** —Napster directamente no existe—. Antes, MusicBrainz devolvió 503 y `ReadTimeout` que su documentación no anticipa. Corolario práctico: una duda que se pueda contestar con un `GET` no merece más investigación documental. La de Napster llevaba meses abierta y se cerró en un segundo.
-- **Llamar a la API no alcanza si siempre se llama desde el mismo lugar — hay que probarla también desde donde va a correr en producción.** Corolario del punto anterior, descubierto el 2026-08-28 con Deezer: la editorial "Música colombiana" (id 498) se verificó llamándola de verdad, pero desde la máquina de Juan en Bogotá. Llamada desde GitHub Actions (donde corre la ingesta de verdad) la misma URL con el mismo id devolvió un chart genérico sin nada colombiano, sin ningún error. La fuente estaba geolocalizando por IP y nadie lo sabía porque nunca se había llamado desde fuera de Colombia. Quedó pausada — detalle en `docs/investigacion-tecnica-plataforma-musical.md` § 2.3. Vale para cualquier fuente futura que pueda personalizar contenido (charts, precios, disponibilidad): no basta con haberla llamado una vez.
-  - **Segunda vez, el 2026-08-31, y con otra API**: MusicBrainz resuelve «Carlos Vives» al instante desde acá y no lo resolvió desde GitHub Actions (ver "Lo que quedó a medias"). Que le haya pasado a dos de las tres fuentes externas del proyecto sugiere que **el default a asumir es que una API responde distinto desde CI**, no al revés. Si algo depende de una API y solo se probó local, tratalo como no probado.
-
-## Reglas duras (no negociables, ya decididas en investigación previa)
-- **Ningún razonamiento sobre horas se hace sobre el texto ISO — hay que convertir a hora de Bogotá primero.** Colombia es UTC-5 todo el año: medianoche local es `T05:00:00Z` y un show de las 7 p. m. se guarda como `T00:00:00Z` del día siguiente. Buscar `"T00:00:00"` en la cadena responde sobre UTC y da lo contrario de lo que se busca. Este error ya se cometió dos veces (el desfase de 5 horas de Idartes y la detección de "sin hora publicada"); los dos tienen test de regresión, en `services/api/tests/` y en `apps/web/src/lib/fechas.test.ts`.
-- **El límite de peticiones de una API se respeta dentro del módulo que la consulta, nunca en el llamador.** Dejarlo del lado del CLI parece más flexible y falla: la primera versión del clasificador espaciaba desde el bucle y dejaba escapar dos peticiones pegadas al arrancar, y MusicBrainz devolvió 503 a la cuarta consulta tumbando la corrida entera. Con el control adentro de `musicbrainz.py`, las 52 consultas pasaron limpias. Vale igual para Nominatim.
-- No evadir el bloqueo anti-bots-IA de Tuboleta (robots.txt bloquea explícitamente a ClaudeBot/GPTBot). No construir scraper para ese sitio. **Bandsintown y Songkick bloquean igual** (verificado el 2026-08-31); ya estaban cerradas por API y ahora también por robots.txt.
-  - **La moderación no reabre esto.** Que el dato caiga en una cola de revisión en vez de publicarse no cambia qué tenemos permitido pedir. Para esas fuentes y para Instagram la vía es **pegar, no traer**: el admin copia el texto o el flyer en el formulario. La distinción es real y no hay que difuminarla — si el admin pega una URL y *nuestro servidor* la va a buscar, sigue siendo nuestro agente entrando donde no lo dejan; si pega el contenido, no hay robot.
-  - **Sí hay cuatro fuentes abiertas sin explotar** (auditadas el 2026-08-31): `visitbogota.co` —la agenda oficial del distrito, que agrega eventos vendidos por Tuboleta sin tocar Tuboleta—, `ticketlive.com.co`, `mitaquilla.com.co` y `feverup.com`. Detalle en `docs/investigacion-tecnica-plataforma-musical.md` § 3.
-- Ningún venue auditado publica schema.org/Event — todos los parsers de scraping son a medida por sitio, no hay atajo genérico.
-- Instagram/Facebook: robots.txt de Instagram bloquea rastreo de perfiles incluso sin login — tratar como fuente manual, no pipeline automatizado.
+- Un hecho que caduca (una cifra, un pendiente, algo sin desplegar) → `ESTADO.md`.
+- Una regla o un criterio de un área → el `CLAUDE.md` de esa área.
+- Una regla que vale para todo el proyecto → "Reglas duras", acá.
+- Una investigación, una medición o el relato de un bug → el `.md` de detalle
+  de la carpeta correspondiente.
+- Algo que dejó de estar vivo → `context/archivo/`.
+- Si está en el código, en los tests o en el historial de git → **en ningún
+  lado**.

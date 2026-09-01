@@ -8,7 +8,7 @@ El motivo no es de calidad sino de **sesgo de cobertura**: las seis fuentes
 que scrapeamos tiran a salas grandes, donde tocan los internacionales. El
 toque local en un bar chico, anunciado solo por Instagram, es invisible para
 el pipeline — y promover ese toque es el propósito de la plataforma. Diseño
-completo en `docs/investigacion-tecnica-plataforma-musical.md` § 9.
+completo en `context/moderacion/diseno.md`.
 
 Este módulo es lógica pura sobre diccionarios: no abre conexión a Supabase,
 así que se puede probar sin credenciales. Lo que habla con la base es

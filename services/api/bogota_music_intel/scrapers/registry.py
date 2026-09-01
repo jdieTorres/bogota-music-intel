@@ -30,7 +30,7 @@ class ManualVenue:
 
 
 # Venues auditados donde el scraping automático no es viable (verificado
-# 2026-08-27, ver docs/investigacion-tecnica-plataforma-musical.md sección 4).
+# 2026-08-27, ver context/ingesta/fuentes-y-legalidad.md).
 # Requieren carga manual periódica hasta que cambie su situación técnica.
 MANUAL_VENUES: list[ManualVenue] = [
     ManualVenue(

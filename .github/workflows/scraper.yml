@@ -50,7 +50,7 @@ jobs:
       # no tenga que decidirlos a mano.
       #
       # No publica nada: eso lo hace una persona. Ver
-      # docs/investigacion-tecnica-plataforma-musical.md § 9.
+      # context/moderacion/diseno.md.
       - name: Moderation queue
         if: '!cancelled()'
         env:

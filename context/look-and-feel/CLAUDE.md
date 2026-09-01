@@ -1,6 +1,10 @@
-# Look & feel — Bogotá Music Intel
+# Look & feel — identidad visual
 
-Registro del trabajo de identidad visual (paleta, tipografía, iconografía) acordado con Juan. Arrancó el 2026-08-27 (ver `docs/proyecto-plataforma-musical-bogota.md`, sección 8, para el punto de partida y las preguntas abiertas originales) y la paleta/tipografía se decidieron el 2026-08-28 en esta sesión.
+> **Leer esto antes de tocar `globals.css`, `layout.tsx` o cualquier
+> componente de UI.** Los valores vivos están en `context/look-and-feel/tokens.css`
+> y en `apps/web/src/app/globals.css`.
+
+Registro del trabajo de identidad visual (paleta, tipografía, iconografía) acordado con Juan. Arrancó el 2026-08-27 (ver `context/producto/diseno-del-producto.md`, sección 8, para el punto de partida y las preguntas abiertas originales) y la paleta/tipografía se decidieron el 2026-08-28 en esta sesión.
 
 ## Referencias de partida
 
@@ -77,6 +81,38 @@ El mockup interactivo tiene un tratamiento ilustrado más fuerte que todavía no
 
 También sigue sin definirse: el nombre y la identidad de marca final del proyecto (placeholder `bogota-music-intel`).
 
+## El estado: congelado a propósito, no terminado
+
+La primera ronda quedó **commiteada, verificada en navegador y aceptada por
+Juan** el 2026-08-28. Pero Juan decidió ese mismo día seguir adelante con esta
+identidad tal como está y **hacer una pasada de ajustes al final, justo antes
+de desplegar** — dentro de la Fase 6, no antes.
+
+Dos consecuencias para quien retome, y las dos importan:
+
+- **No rediseñar por iniciativa propia en el medio.**
+- **No dar el look & feel por cerrado al llegar al deploy.** Lo que ya está
+  identificado para esa pasada es lo de "Qué quedó fuera de esta ronda", más
+  el nombre y la identidad de marca definitivos.
+
+Juan lo quiere trabajar en conjunto y con calma: son varias sesiones, no un
+retoque puntual.
+
+## El mapa es la excepción deliberada
+
+**El mapa no cambia con el toggle.** Usa el estilo claro `liberty` de
+OpenFreeMap desde el 2026-08-27, elegido por Juan tras mirar cuatro en el
+navegador (`dark`, `fiord`, `liberty`, `bright`): un mapa casi negro leía como
+un hueco en la página.
+
+Los tokens `--popup-*` (el mapa y su popup) **no se sobreescriben en
+`[data-theme="oscuro"]`**, así que se quedan en su propio "papel" claro tenga
+la página el modo que tenga. De ahí que el aro del marcador use
+`var(--popup-surface)` y no `var(--background)`: con `--background` se vería
+distinto en cada modo mientras el mapa se ve igual.
+
 ## Ojo al implementar
 
-Esta paleta y estos cambios de código se armaron en una sesión de Claude que corre en la nube, sin shell en la máquina de Juan — no pasaron por `npm run build`, `tsc` ni la suite de tests. Antes de dar esto por bueno: correr el dev server y mirarlo en un navegador real (el proyecto ya tiene precedente de que el mapa se vea mal con CI en verde y build limpio), correr los tests y `tsc`, y probar el toggle claro/oscuro a mano.
+Correr el dev server y mirarlo en **un navegador real**: el proyecto ya tiene
+precedente de que el mapa se vea mal con CI en verde y build limpio. Los
+tests, `tsc` y el linter no prueban nada de esto.

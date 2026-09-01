@@ -1,7 +1,7 @@
 -- Fase 5: radar de tendencias.
 --
 -- Dos fuentes distintas y complementarias, verificadas llamándolas de
--- verdad el 2026-08-28 (docs/investigacion-tecnica-plataforma-musical.md
+-- verdad el 2026-08-28 (context/archivo/apis-de-musica.md
 -- sección 2.2):
 --   - deezer_editorial: editorial "Música colombiana" (id 498) de Deezer.
 --     Contesta qué ES música colombiana, sin key.
