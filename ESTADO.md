@@ -14,25 +14,26 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 - **Publicar los 6 festivales.** Están marcados pero en borrador, así que
   `/festivales` se ve vacía — es correcto, no un bug. Son seis clics en
   `/admin` → "Por revisar" → Publicar.
-- **49 borradores en cola** esperando triage (eran 37; `moderacion_cli` abrió
-  12 el 2026-09-02, 10 de visitbogota y 2 de Idartes). No bloquea escribir
-  código, pero sí bloquea que la cartelera muestre lo que ya se trajo.
-- **Fotos de las salas: 0 de 13 publicadas.** `fotos_curadas.py` está vacío y
+- **43 borradores en cola** esperando triage. No bloquea escribir código, pero
+  sí bloquea que la cartelera muestre lo que ya se trajo.
+- **Fotos de las salas: 0 de 18 publicadas.** `fotos_curadas.py` está vacío y
   todas salen con el ícono de respaldo. **Ninguna fuente que scrapeamos
   publica foto del venue**, así que no hay nada que automatizar: sirve el
   sitio oficial de la sala, su Instagram o Google Maps — una foto de la sala
   (fachada o interior), no un logo ni el afiche de un evento.
-- **Coordenadas de 4 salas: Coliseo Medplus, Parque el Country, Parque
-  Metropolitano Simón Bolívar y Teatro Mayor Julio Mario Santo Domingo.** Ya
-  se nota: se publicó un evento del Coliseo Medplus, así que `/mapa` lo lista
-  bajo el mapa como "sin ubicar". Se arregla pegando el punto desde Google
-  Maps en `/admin` → Salas.
+- **Coordenadas: 9 de 18 salas publicadas sin punto** — Coliseo Medplus, La
+  Media Torta, Parque el Country, Parque Metropolitano Simón Bolívar, Proyecto
+  Kinder, Teatro Astor Plaza, Teatro Cafam, Teatro Colón y Teatro Mayor Julio
+  Mario Santo Domingo. Eran 4: el denominador creció al aprobar salas nuevas
+  el 2026-09-02 y nadie movió el numerador. Ya se nota — `/mapa` las lista
+  debajo como "sin ubicar". Se arregla pegando el punto desde Google Maps en
+  `/admin` → Salas.
 - **El género de los eventos publicados: 40 de 49 sin él.** Ninguna fuente lo
   publica: o lo escribe Juan en `/admin` o el chip no existe.
-- **El origen de 7 borradores de música**: Carteto de Nos, The Hayley Williams
-  Show, HUMBE, Kris R, Laura & Brenda, Gorillaz y Expo Solar (este último
-  probablemente ni siquiera sea música). Se resuelven a mano en `/admin` o
-  curando en `artistas_locales.py`.
+- **El origen de los borradores de música sin resolver.** Se resuelven a mano
+  en `/admin` o curando en `artistas_locales.py`. Uno de ellos, **Expo Solar
+  Colombia 2026, no es música** y está en la cola por el fallo de
+  `Ferias MICE` que se describe abajo.
 
 ### Preguntas abiertas — hay que hacérselas a Juan, no resolverlas por cuenta propia
 
@@ -89,6 +90,46 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   paso se resuelve la duda que estaba anotada como "*no debería* no es *se
   verificó*": el linter corre **antes** de `npx next typegen` y no lo necesita.
   También pasaron por CI el festival y el género.
+- 🟠 **Afinar el filtro de `visitbogota`: sigue llegando a la cola mucho que
+  no es música.** Lo pidió Juan el 2026-09-02 después de otra sesión de
+  triage. La medida que lo respalda: de los **30 bloqueos que existen, 22 son
+  de visitbogota, y 20 con motivo «no music»** — o sea que dos tercios del
+  trabajo de borrado que ha hecho una persona lo genera una sola fuente. Ahí
+  hay Feria del Hogar, SOFA, Expo Agrofuturo, Cicla de cine, Semana del
+  bienestar, Wedding Open House y dos congresos.
+
+  Dos pistas concretas, las dos verificadas contra fichas reales:
+
+  1. **`Ferias MICE` no engancha, aunque `ferias` y `mice` están las dos en la
+     lista.** `categoria_no_musical()` compara la cadena entera contra
+     `CATEGORIAS_NO_MUSICALES`, así que una etiqueta compuesta se escapa. Hoy
+     mismo **`Expo Solar Colombia 2026` está en la cola como `assumed_music`**
+     por esto. Es el arreglo chico y seguro.
+  2. **La ficha publica tres niveles de etiquetas y el scraper solo lee el
+     primero.** El regex `_CATEGORIA` corta justo en «Categorías», que es el
+     segundo bloque, y hay un tercero («Subcategorías»). Comparadas:
+
+     | Ficha | Categoría del evento | Categorías | Subcategorías |
+     |---|---|---|---|
+     | Expo Solar | Ferias MICE | *(vacío)* | *(vacío)* |
+     | Tortazo Jazz | Conciertos | Cultura | Teatros Museos Música y Arte |
+
+     ⚠️ **Son dos fichas, no una muestra.** Antes de construir sobre esto hay
+     que mirar bastantes más y ver si de verdad discrimina — es exactamente el
+     error que ya se pagó dos veces en este proyecto, dar por buena una señal
+     con pocos casos.
+
+  El contexto que hace falta para no equivocarse: **`Categoría del evento` casi
+  no discrimina en el corpus real** — 52 de las 55 fichas dicen «Conciertos».
+  Eso no contradice lo que dice `context/ingesta/CLAUDE.md` (la etiqueta
+  *acierta* cuando dice algo distinto), pero sí matiza para qué sirve: es
+  buena para descartar lo que ella misma marca como otra cosa, y no alcanza
+  para lo que mete bajo «Conciertos».
+
+  Y el aviso de siempre antes de tocar `PATRONES_NO_MUSICALES`: el archivo ya
+  advierte que **la Feria de las Flores y la Feria de Cali SÍ son eventos con
+  música**. Un patrón sobre «feria» o «festival» es justamente el que se lleva
+  por delante lo que la plataforma existe para promover.
 - **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen
   falta `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en
   el proyecto de Vercel.
@@ -113,15 +154,15 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 
 | | |
 |---|---|
-| Filas crudas | **111** — visitbogota 61, royal 12, movistar 10, lourdes 9, latino 8, rockal 7, idartes 4 |
-| Canónicos | **102** — 49 publicados, **49 borradores en cola**, 4 descartados |
+| Filas crudas | **108** — visitbogota 55, royal 12, movistar 10, lourdes 9, latino 8, rockal 8, idartes 6 |
+| Canónicos | **96** — 49 publicados, **43 borradores en cola**, 4 descartados |
 | Publicados | 45 conciertos + 4 fiestas + **0 festivales**; de los conciertos, **8 locales y 37 internacionales** |
-| Borradores | 49; **12 sin clasificar**, que son la prueba pendiente de MusicBrainz en CI |
-| Salas | **22** — 13 publicadas, 9 descartadas, **0 por aprobar** |
-| Coordenadas | **9 de 13 salas publicadas ubicadas** |
-| Fotos de sala | **0 de 13** |
+| Borradores | 43 — 31 música, 6 festivales, **6 sin clasificar** (la prueba pendiente de MusicBrainz en CI) |
+| Salas | **31** — 18 publicadas, 13 descartadas, **0 por aprobar** |
+| Coordenadas | **9 de 18 salas publicadas ubicadas** |
+| Fotos de sala | **0 de 18** |
 | Precio | **19 de 49 publicados** lo tienen |
-| Bloqueados | 24 `(fuente, id)` que no vuelven a entrar |
+| Bloqueados | **30** `(fuente, id)`; 22 son de visitbogota |
 | En pantalla | **40 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), 42 eventos en el mapa |
 | Tests | 275 backend + 53 frontend, verdes **en local**; el CI vio 249+42 (`e02bc5e`) |
 
