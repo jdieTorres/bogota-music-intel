@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-01**.
+Última actualización: **2026-09-02**.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -11,24 +11,12 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-- 🔴 **Aplicar `20260902010000_precio_backfill_canonico.sql`, y correr
-  `moderacion_cli` solo después.** La primera migración ya está aplicada y el
-  scraper ya trajo los montos buenos al crudo, pero **7 eventos publicados de
-  Latino Power siguen sin precio en pantalla** (Todo Copas, Mukangu & Atake
-  Mapalé & Los Yoryis, Estelares, Shing02, Juantxo Skalari, Que Chimba Puñeta,
-  Poder Femenino). La migración les baja el precio desde el crudo y de paso
-  rebasea `source_snapshot`.
-  - ⚠️ **El orden importa.** Si se corre `moderacion_cli` antes, marca ~20
-    eventos publicados como "la sala movió el precio", que es falso: la sala
-    no movió nada, cambió lo que sabemos leer. La migración rebasea la foto
-    justamente para que eso no pase.
 - **Publicar los 6 festivales.** Están marcados pero en borrador, así que
   `/festivales` se ve vacía — es correcto, no un bug. Son seis clics en
   `/admin` → "Por revisar" → Publicar.
-- **37 borradores en cola** esperando triage, más **12 que va a abrir
-  `moderacion_cli`** en su próxima corrida (10 de visitbogota y 2 de Idartes,
-  vistos en `--dry-run` el 2026-09-02). No bloquea escribir código, pero
-  sí bloquea que la cartelera muestre lo que ya se trajo.
+- **49 borradores en cola** esperando triage (eran 37; `moderacion_cli` abrió
+  12 el 2026-09-02, 10 de visitbogota y 2 de Idartes). No bloquea escribir
+  código, pero sí bloquea que la cartelera muestre lo que ya se trajo.
 - **Fotos de las salas: 0 de 13 publicadas.** `fotos_curadas.py` está vacío y
   todas salen con el ícono de respaldo. **Ninguna fuente que scrapeamos
   publica foto del venue**, así que no hay nada que automatizar: sirve el
@@ -81,14 +69,17 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   La sospecha razonable es que MusicBrainz trate distinto a las IP de GitHub
   Actions, que es **el mismo patrón que ya se pagó con Deezer**. Segunda vez
   que aparece.
-  - ⚠️ **La prueba se gastó.** El 2026-09-01T05:46Z una corrida **local**
-    clasificó 74 eventos contra MusicBrainz y dejó la base sin nada
-    pendiente, así que el paso del cron no tiene sobre qué fallar y su verde
-    no prueba nada.
-  - **La próxima oportunidad es el próximo evento nuevo que traiga el cron, y
-    hay que mirarla antes de correr `classify_cli` local.** Concretamente:
-    después de una corrida de `Scraper cron`, consultar si quedó algo con
-    `event_type` en null **antes** de tocar nada.
+  - ✅ **La prueba volvió a estar disponible el 2026-09-02, y hay que no
+    gastarla.** La corrida del scraper de ese día dejó **12 filas crudas con
+    `event_type` en null** (10 de visitbogota, 2 de Idartes), así que el paso
+    `Classify events` del próximo `Scraper cron` sí va a tener sobre qué
+    trabajar. Se había gastado el 2026-09-01, cuando una corrida local
+    clasificó 74 eventos y dejó la base sin nada pendiente.
+  - 🚫 **No correr `classify_cli` local hasta que el cron haya corrido.** Es
+    lo único que hay que hacer —o más bien no hacer— para que la prueba
+    sirva. Después de la corrida de CI, consultar cuántas siguen en null: si
+    siguen 12, MusicBrainz tampoco funciona desde CI esta vez; si bajaron,
+    el problema era transitorio.
   - Lo único demostrado hoy: MusicBrainz responde bien desde la máquina de
     Juan (74 de 74, sin un solo 503, el 2026-09-01).
 - ✅ **Cerrado el 2026-09-01: el CI vio todo lo del 2026-09-01.** Se pushearon
@@ -118,17 +109,18 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-2026-09-01 contra la base, después de la primera sesión de triage masivo.
+2026-09-02 contra la base, después de la corrida del scraper y de `moderacion_cli`.
 
 | | |
 |---|---|
-| Filas crudas | **102** — visitbogota 51, royal 12, movistar 10, lourdes 9, latino 8, rockal 8, idartes 4 |
-| Canónicos | **90** — 49 publicados, **37 borradores en cola**, 4 descartados |
+| Filas crudas | **111** — visitbogota 61, royal 12, movistar 10, lourdes 9, latino 8, rockal 7, idartes 4 |
+| Canónicos | **102** — 49 publicados, **49 borradores en cola**, 4 descartados |
 | Publicados | 45 conciertos + 4 fiestas + **0 festivales**; de los conciertos, **8 locales y 37 internacionales** |
-| Borradores | 31 música y **6 festivales**; ninguno con sugerencia de duplicado pendiente |
+| Borradores | 49; **12 sin clasificar**, que son la prueba pendiente de MusicBrainz en CI |
 | Salas | **22** — 13 publicadas, 9 descartadas, **0 por aprobar** |
 | Coordenadas | **9 de 13 salas publicadas ubicadas** |
 | Fotos de sala | **0 de 13** |
+| Precio | **19 de 49 publicados** lo tienen |
 | Bloqueados | 24 `(fuente, id)` que no vuelven a entrar |
 | En pantalla | **40 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), 42 eventos en el mapa |
 | Tests | 275 backend + 53 frontend, verdes **en local**; el CI vio 249+42 (`e02bc5e`) |
