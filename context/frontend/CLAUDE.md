@@ -50,6 +50,25 @@ lateral aceptado: el mapa no avisa que una sala tiene eventos sin fecha.
 **Una sala sin coordenada se lista bajo el mapa como "sin ubicar"**, no se le
 pone un pin aproximado.
 
+## El precio se escribe en lucas
+
+240.000 se muestra como **`$240 lks`**, que es como se habla de plata acá. La
+base guarda pesos enteros; la conversión es de presentación y vive en
+`src/lib/precio.ts`.
+
+- **El decimal se conserva**: 33.900 → `$33,9 lks`. Redondear a "34 lks"
+  muestra un número que nadie va a pagar. Los redondos salen limpios, sin ",0".
+- **Un rango lleva un solo `$` y un solo `lks`**: `$33,9 – 120 lks`. Repetirlos
+  no entra en el ancho de una tarjeta.
+- **Un piso sin techo dice que es un piso**: `Desde $77 lks`. Rockal Live
+  publica `startingPrice`, y mostrarlo pelado afirmaría que el show cuesta eso.
+- En la ficha del evento **la etiqueta es `$`**, no "Precio".
+
+⚠️ **`Evento` no expone `price_kind`/`price_min`/`price_max`: expone `precio`,
+ya escrito.** Mismo motivo que `category` — son tres campos que hay que leer
+juntos para no afirmar de más, y ese razonamiento no puede estar repetido en
+cada componente.
+
 ## Imágenes
 
 `images.remotePatterns` de `apps/web/next.config.ts` es **explícita a

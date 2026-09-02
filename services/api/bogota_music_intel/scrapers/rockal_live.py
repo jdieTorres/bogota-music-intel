@@ -2,6 +2,7 @@ import json
 import re
 from datetime import datetime
 
+from bogota_music_intel.precios import SIN_DATO, desde_piso
 from bogota_music_intel.scrapers import http
 from bogota_music_intel.scrapers.models import ScrapedEvent
 
@@ -47,6 +48,10 @@ def scrape() -> list[ScrapedEvent]:
                 ends_at=_parse_iso(item.get("end")),
                 date_precision="day",
                 price_text=f"${price:,.0f} COP" if isinstance(price, (int, float)) else None,
+                # El campo se llama `startingPrice`, y el nombre es el dato: es
+                # el más barato, no el precio. Entra como 'desde' para que la
+                # cartelera no afirme un precio que la fuente no publicó.
+                **(desde_piso(price).as_row() if desde_piso(price) else SIN_DATO),
                 category=item.get("subCategory") or item.get("category"),
                 image_url=item.get("image"),
                 city="Bogotá",

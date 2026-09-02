@@ -43,9 +43,14 @@ from bogota_music_intel.moderacion import (
 )
 from bogota_music_intel.storage import get_client
 
+# ⚠️ Tiene que incluir todo `CAMPOS_VIGILADOS`, o el campo que falte se lee
+# como null: el borrador nace sin ese dato y la detección de cambios lo da por
+# "igual que siempre" para siempre. Hay un test que lo verifica — se escribió
+# después de que las tres columnas de precio se agregaran acá tarde.
 CAMPOS_CRUDOS = (
     "id,source,source_event_id,venue_id,title,starts_at,ends_at,date_precision,"
-    "description,price_text,category,ticket_url,image_url,event_type,is_local,canonical_id"
+    "description,price_text,price_kind,price_min,price_max,category,ticket_url,"
+    "image_url,event_type,is_local,canonical_id"
 )
 CAMPOS_SALAS = "id,name"
 CAMPOS_CANONICOS = (

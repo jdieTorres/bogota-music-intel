@@ -5,6 +5,7 @@ from typing import Any, Literal
 from bogota_music_intel.scrapers.text import normalize_city
 
 DatePrecision = Literal["day", "month", "unknown"]
+PriceKind = Literal["gratis", "unico", "rango", "desde", "con_costo"]
 
 
 @dataclass
@@ -18,7 +19,15 @@ class ScrapedEvent:
     ends_at: datetime | None = None
     date_precision: DatePrecision = "day"
     description: str | None = None
+    # Lo que publicó la fuente, tal cual. Se conserva como evidencia cruda; lo
+    # que se muestra sale de los tres campos de abajo.
     price_text: str | None = None
+    # El precio interpretado. Ver `bogota_music_intel.precios`: `price_kind` en
+    # None significa que no sabemos si cuesta, que no es lo mismo que
+    # 'con_costo' ("cuesta, no sabemos cuánto").
+    price_kind: PriceKind | None = None
+    price_min: int | None = None
+    price_max: int | None = None
     category: str | None = None
     ticket_url: str | None = None
     image_url: str | None = None

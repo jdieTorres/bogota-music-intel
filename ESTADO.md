@@ -11,10 +11,23 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
+- 🔴 **Aplicar `20260902010000_precio_backfill_canonico.sql`, y correr
+  `moderacion_cli` solo después.** La primera migración ya está aplicada y el
+  scraper ya trajo los montos buenos al crudo, pero **7 eventos publicados de
+  Latino Power siguen sin precio en pantalla** (Todo Copas, Mukangu & Atake
+  Mapalé & Los Yoryis, Estelares, Shing02, Juantxo Skalari, Que Chimba Puñeta,
+  Poder Femenino). La migración les baja el precio desde el crudo y de paso
+  rebasea `source_snapshot`.
+  - ⚠️ **El orden importa.** Si se corre `moderacion_cli` antes, marca ~20
+    eventos publicados como "la sala movió el precio", que es falso: la sala
+    no movió nada, cambió lo que sabemos leer. La migración rebasea la foto
+    justamente para que eso no pase.
 - **Publicar los 6 festivales.** Están marcados pero en borrador, así que
   `/festivales` se ve vacía — es correcto, no un bug. Son seis clics en
   `/admin` → "Por revisar" → Publicar.
-- **37 borradores en cola** esperando triage. No bloquea escribir código, pero
+- **37 borradores en cola** esperando triage, más **12 que va a abrir
+  `moderacion_cli`** en su próxima corrida (10 de visitbogota y 2 de Idartes,
+  vistos en `--dry-run` el 2026-09-02). No bloquea escribir código, pero
   sí bloquea que la cartelera muestre lo que ya se trajo.
 - **Fotos de las salas: 0 de 13 publicadas.** `fotos_curadas.py` está vacío y
   todas salen con el ícono de respaldo. **Ninguna fuente que scrapeamos
@@ -48,6 +61,11 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   aplicar**, porque borra datos irrecuperables que no le hacen daño a nadie:
   215 filas no pesan nada contra los 500 MB del plan gratuito.
 - **¿Se borra el secret `BMI_LASTFM_API_KEY`?** Ya no lo usa nadie.
+- **¿Se suelta `canonical_events.price_text`?** Desde el 2026-09-02 no la lee
+  nadie: el precio sale de `price_kind`/`price_min`/`price_max`. Se conservó
+  porque soltarla borra datos irrecuperables, que es decisión tuya y no de una
+  migración. En `events` **sí se queda**: ahí es la evidencia cruda de lo que
+  publicó la fuente.
 
 ---
 
@@ -113,7 +131,7 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 | Fotos de sala | **0 de 13** |
 | Bloqueados | 24 `(fuente, id)` que no vuelven a entrar |
 | En pantalla | **40 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), 42 eventos en el mapa |
-| Tests | 249 backend + 42 frontend, verdes **en CI** (`e02bc5e`, 2026-09-01T21:36Z) |
+| Tests | 275 backend + 53 frontend, verdes **en local**; el CI vio 249+42 (`e02bc5e`) |
 
 Cómo leerlas sin equivocarse:
 

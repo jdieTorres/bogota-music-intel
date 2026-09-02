@@ -24,6 +24,8 @@ import {
   desdeCampoDeFecha,
   fechaCompacta,
 } from "@/components/admin/ui";
+import { CampoDePrecio } from "@/components/admin/CampoDePrecio";
+import { formatearPrecio, type PrecioEvento } from "@/lib/precio";
 import {
   type Correccion,
   type EventoEnCola,
@@ -187,7 +189,9 @@ function Ficha({
   const [campos, setCampos] = useState<Correccion>({
     title: evento.title,
     starts_at: evento.starts_at,
-    price_text: evento.price_text,
+    price_kind: evento.price_kind,
+    price_min: evento.price_min,
+    price_max: evento.price_max,
     category: evento.category,
     ticket_url: evento.ticket_url,
     event_type: evento.event_type,
@@ -284,14 +288,14 @@ function Ficha({
             className={CAMPO}
           />
         </label>
-        <label>
-          <Rotulo>Precio</Rotulo>
-          <input
-            value={campos.price_text ?? ""}
-            onChange={(e) => editar({ price_text: e.target.value || null })}
-            className={CAMPO}
-          />
-        </label>
+        <CampoDePrecio
+          valor={{
+            price_kind: campos.price_kind ?? null,
+            price_min: campos.price_min ?? null,
+            price_max: campos.price_max ?? null,
+          }}
+          alCambiar={(p: PrecioEvento) => editar(p)}
+        />
         <CampoDeGenero valor={campos.category ?? null} alCambiar={(g) => editar({ category: g })} />
 
         <label>
@@ -347,7 +351,8 @@ function Ficha({
                 </a>
                 <p className="mt-1">{fuente.title}</p>
                 <p className="text-muted">
-                  {fuente.starts_at ?? "sin fecha"} · {fuente.price_text ?? "sin precio"}
+                  {fuente.starts_at ?? "sin fecha"} ·{" "}
+                  {formatearPrecio(fuente) ?? fuente.price_text ?? "sin precio"}
                 </p>
               </li>
             ))}

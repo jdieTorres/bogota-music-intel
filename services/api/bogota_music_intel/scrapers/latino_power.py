@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from bogota_music_intel.precios import SIN_DATO, desde_montos
 from bogota_music_intel.scrapers.http import DEFAULT_HEADERS
 from bogota_music_intel.scrapers.models import ScrapedEvent
 
@@ -28,6 +29,22 @@ def _parse_datetime(value: str | None) -> datetime | None:
         return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=BOGOTA_TZ)
     except ValueError:
         return None
+
+
+def _precio(item: dict) -> dict:
+    """El monto real, que NO es el que publica `cost`.
+
+    La API manda los dos: `cost` es un texto ya redondeado a miles —dice "$34"
+    para una boleta de 33.900— y `cost_details.values` trae el número de
+    verdad. Tomar `cost` publicaba el precio dividido por mil, y así estuvieron
+    7 eventos hasta el 2026-09-02.
+
+    `values` es un arreglo porque un evento puede vender varias boletas, así
+    que de ahí sale el rango sin pedirle nada más a la fuente.
+    """
+    detalle = item.get("cost_details") or {}
+    precio = desde_montos(detalle.get("values") or [])
+    return precio.as_row() if precio else SIN_DATO
 
 
 def scrape() -> list[ScrapedEvent]:
@@ -56,6 +73,7 @@ def scrape() -> list[ScrapedEvent]:
                         date_precision="day",
                         description=_clean(item.get("excerpt")),
                         price_text=_clean(item.get("cost")),
+                        **_precio(item),
                         image_url=(item.get("image") or {}).get("url"),
                         city=venue.get("city") or "Bogotá",
                         venue_address=_clean(venue.get("address")),

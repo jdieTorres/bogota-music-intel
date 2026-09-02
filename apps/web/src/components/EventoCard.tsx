@@ -46,7 +46,7 @@ export function EventoCard({ evento }: { evento: Evento }) {
           <p className="truncate text-sm text-muted">{venue}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
             {hora && <span className="font-mono">{hora}</span>}
-            {evento.price_text && <span>{evento.price_text}</span>}
+            {evento.precio && <span>{evento.precio}</span>}
           </div>
         </div>
       </Link>

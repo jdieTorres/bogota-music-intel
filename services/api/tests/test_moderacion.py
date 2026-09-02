@@ -8,6 +8,7 @@ from bogota_music_intel.deduplicacion import (
     titulo_equivalente,
 )
 from bogota_music_intel.moderacion import (
+    CAMPOS_VIGILADOS,
     borrador_desde,
     cambios,
     clasificacion_pendiente,
@@ -170,3 +171,24 @@ class TestClasificacionTardia:
 
     def test_sin_fuentes_no_hay_nada_que_bajar(self):
         assert clasificacion_pendiente({"event_type": None, "is_local": None}, []) == {}
+
+
+class TestCamposQueSePiden:
+    """La lista de columnas del CLI tiene que cubrir lo que se vigila.
+
+    Se escribió después de que las tres columnas de precio se agregaran a
+    `CAMPOS_VIGILADOS` y no a `CAMPOS_CRUDOS`, el 2026-09-02. El fallo es
+    silencioso y de los peores: la columna que falta se lee como null, así que
+    el borrador nace sin ese dato **y** la detección de cambios lo compara
+    null contra null y concluye que la fuente no movió nada — para siempre.
+
+    Es la misma lección de `images.remotePatterns`: una lista que se mantiene
+    a mano necesita algo que avise cuando le falta una entrada.
+    """
+
+    def test_campos_crudos_cubre_todo_lo_vigilado(self):
+        from bogota_music_intel.moderacion_cli import CAMPOS_CRUDOS
+
+        pedidos = {c.strip() for c in CAMPOS_CRUDOS.split(",")}
+        faltan = set(CAMPOS_VIGILADOS) - pedidos
+        assert not faltan, f"CAMPOS_CRUDOS no pide: {sorted(faltan)}"

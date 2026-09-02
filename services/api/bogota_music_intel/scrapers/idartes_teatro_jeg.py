@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup
 
+from bogota_music_intel.precios import SIN_DATO, desde_etiqueta
 from bogota_music_intel.scrapers import http
 from bogota_music_intel.scrapers.models import ScrapedEvent
 
@@ -76,6 +77,16 @@ def disciplina(source_url: str, etiqueta_del_listado: str | None) -> str | None:
     return DISCIPLINA_POR_RUTA.get(ruta) or etiqueta_del_listado
 
 
+def _precio(texto: str | None) -> dict:
+    """La etiqueta de Idartes, o nada si no la reconocemos.
+
+    Una etiqueta que no está en la lista devuelve "sin dato" en vez de
+    forzarse: adivinar qué quiso decir la sala es peor que no decir nada.
+    """
+    precio = desde_etiqueta(texto)
+    return precio.as_row() if precio else SIN_DATO
+
+
 def scrape() -> list[ScrapedEvent]:
     response = http.get(AGENDA_URL)
     soup = BeautifulSoup(response.text, "lxml")
@@ -109,6 +120,10 @@ def scrape() -> list[ScrapedEvent]:
                 date_precision="day" if starts_at else "unknown",
                 description=description_tag.get_text(strip=True) if description_tag else None,
                 price_text=price_tag.get_text(strip=True) if price_tag else None,
+                # Idartes no publica montos: escribe 'Entrada libre' o
+                # 'Entrada con costo'. La segunda no es ruido — dice que
+                # cuesta, aunque no cuánto, y eso es más que un campo vacío.
+                **_precio(price_tag.get_text(strip=True) if price_tag else None),
                 category=disciplina(
                     source_url,
                     category_tag.get_text(strip=True) if category_tag else None,

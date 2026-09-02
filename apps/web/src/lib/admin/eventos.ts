@@ -14,6 +14,7 @@
  */
 
 import type { TipoEvento } from "@/lib/events";
+import type { ClasePrecio } from "@/lib/precio";
 import { supabase } from "@/lib/supabase";
 
 export type EstadoCanonico = "borrador" | "publicado" | "descartado";
@@ -28,6 +29,9 @@ export type FuenteCruda = {
   title: string;
   starts_at: string | null;
   price_text: string | null;
+  price_kind: ClasePrecio | null;
+  price_min: number | null;
+  price_max: number | null;
 };
 
 export type EventoEnCola = {
@@ -37,7 +41,12 @@ export type EventoEnCola = {
   title: string | null;
   starts_at: string | null;
   description: string | null;
+  /** Crudo de la fuente, solo para mirar. Lo que se publica sale de los tres
+   *  campos de abajo — ver `lib/precio.ts`. */
   price_text: string | null;
+  price_kind: ClasePrecio | null;
+  price_min: number | null;
+  price_max: number | null;
   category: string | null;
   ticket_url: string | null;
   image_url: string | null;
@@ -53,11 +62,13 @@ export type EventoEnCola = {
 };
 
 const CAMPOS = `
-  id, status, origin, title, starts_at, description, price_text, category,
+  id, status, origin, title, starts_at, description, price_text,
+  price_kind, price_min, price_max, category,
   ticket_url, image_url, event_type, is_local, evidence, source_snapshot,
   change_detail, change_detected_at, suggested_duplicate_of,
   venues ( slug, name ),
-  events ( source, source_url, title, starts_at, price_text )
+  events ( source, source_url, title, starts_at, price_text,
+           price_kind, price_min, price_max )
 `;
 
 /** Los campos que el admin puede corregir a mano. */
@@ -67,7 +78,9 @@ export type Correccion = Partial<
     | "title"
     | "starts_at"
     | "description"
-    | "price_text"
+    | "price_kind"
+    | "price_min"
+    | "price_max"
     | "category"
     | "ticket_url"
     | "event_type"
@@ -251,7 +264,11 @@ export type EventoNuevo = {
   title: string;
   venue_id: string;
   starts_at: string | null;
-  price_text?: string | null;
+  /** El precio como rango. Ver `lib/precio.ts`: `price_kind` en null es "no
+   *  sabemos si cuesta", que no es lo mismo que 'con_costo'. */
+  price_kind?: ClasePrecio | null;
+  price_min?: number | null;
+  price_max?: number | null;
   ticket_url?: string | null;
   /** El género que sale como chip en la cartelera. Opcional: vacío es el
    *  hueco honesto, y el chip no aparece. Va en `category`, la misma

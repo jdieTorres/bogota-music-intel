@@ -74,6 +74,21 @@ entero. Una sala que escribió "Lucho Al Attaque" está diciendo algo; bajar esa
 
 Detalle en `context/ingesta/titulos.md`.
 
+## El precio
+
+Se guarda como **rango**, no como cadena: casi ningún toque tiene un precio
+único —varía por localidad, y un festival vende varias boletas—, así que un
+solo número afirma algo falso. Tres columnas (`price_kind`, `price_min`,
+`price_max`) y cinco clases, en `services/api/bogota_music_intel/precios.py`.
+
+La distinción que importa: **`con_costo`** es "cuesta, no sabemos cuánto" y
+**`price_kind` en null** es "no sabemos si cuesta". Es la regla de no colapsar
+"no sé" con "confirmado que no", aplicada al precio.
+
+⚠️ **Una fuente puede publicar el precio dos veces y que una de las dos esté
+redondeada**, y eso ya costó un bug de tres ceros. Antes de tocar el precio de
+un scraper, leer `context/ingesta/precios.md`.
+
 ## Lo que no vuelve a entrar
 
 `eventos_excluidos.py` filtra **antes de guardar**, por
@@ -119,6 +134,8 @@ evento sin clasificar para reintentarlo.
   cobertura del 2026-09-01.
 - `context/ingesta/listas-curadas.md` — qué guarda cada lista y la regla de
   emparejamiento de cada una. **Leerlo antes de agregar una entrada.**
+- `context/ingesta/precios.md` — qué publica cada fuente, el bug de los
+  miles, y por qué un 0 no baja el piso de un rango.
 - `context/ingesta/titulos.md` — las reglas del normalizador y por qué cada
   una es estrecha.
 - `context/archivo/apis-de-musica.md` — las APIs evaluadas y descartadas. No

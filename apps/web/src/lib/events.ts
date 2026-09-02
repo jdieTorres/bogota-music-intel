@@ -4,6 +4,7 @@ import {
   SOLO_FIESTAS,
   generoVisible,
 } from "@/lib/editorial";
+import { formatearPrecio, type PrecioEvento } from "@/lib/precio";
 import { supabase } from "@/lib/supabase";
 
 export type DatePrecision = "day" | "month" | "unknown";
@@ -36,7 +37,18 @@ export type Evento = {
   ends_at: string | null;
   date_precision: DatePrecision;
   description: string | null;
-  price_text: string | null;
+  /**
+   * El precio ya escrito para pantalla ("$33,9 – 120 lks", "Entrada libre"),
+   * o `null` si no hay nada honesto que decir.
+   *
+   * **Las columnas crudas son `price_kind`/`price_min`/`price_max` y no se
+   * exponen acá, por el mismo motivo que `category`:** son tres campos que hay
+   * que leer juntos para no afirmar de más —un `desde` mostrado pelado dice
+   * que el show cuesta el mínimo—, y ese razonamiento no puede estar repetido
+   * en cada componente. Si el crudo no llega a la vista, ninguna vista se
+   * puede equivocar con él.
+   */
+  precio: string | null;
   ticket_url: string | null;
   image_url: string | null;
   /**
@@ -72,7 +84,7 @@ export type Evento = {
 
 const CAMPOS = `
   id, title, starts_at, ends_at, date_precision, description,
-  price_text, category, ticket_url, image_url,
+  price_kind, price_min, price_max, category, ticket_url, image_url,
   event_type, is_local, origin, evidence, reviewed_at,
   venues ( slug, name, city ),
   events ( source, source_url )
@@ -118,13 +130,23 @@ async function proximos(filtroEditorial: string): Promise<Evento[]> {
     .order("starts_at", { ascending: true });
 
   if (error) throw new Error(`No se pudieron cargar los eventos: ${error.message}`);
-  return (data ?? []).map(conGenero);
+  return (data ?? []).map(paraLaVista);
 }
 
-/** Deriva `genero` y suelta la columna cruda, para que no llegue a la vista. */
-function conGenero(fila: Record<string, unknown>): Evento {
-  const { category, ...resto } = fila as { category: string | null };
-  return { ...resto, genero: generoVisible(category) } as unknown as Evento;
+/** Deriva `genero` y `precio`, y suelta las columnas crudas de las que salen.
+ *
+ *  Las dos siguen la misma regla: lo que llega a la vista ya está interpretado,
+ *  porque interpretar en el componente es lo que hizo que un chip dijera
+ *  "Género: Conciertos" y se arreglara sitio por sitio olvidando uno. */
+function paraLaVista(fila: Record<string, unknown>): Evento {
+  const { category, price_kind, price_min, price_max, ...resto } = fila as {
+    category: string | null;
+  } & PrecioEvento;
+  return {
+    ...resto,
+    genero: generoVisible(category),
+    precio: formatearPrecio({ price_kind, price_min, price_max }),
+  } as unknown as Evento;
 }
 
 /** Los que la fuente publicó sin fecha reconocible. Se muestran aparte en
@@ -139,7 +161,7 @@ async function sinFecha(filtroEditorial: string): Promise<Evento[]> {
     .order("title", { ascending: true });
 
   if (error) throw new Error(`No se pudieron cargar los eventos: ${error.message}`);
-  return (data ?? []).map(conGenero);
+  return (data ?? []).map(paraLaVista);
 }
 
 export const getEventosProximos = () => proximos(SOLO_CONCIERTOS);
@@ -158,7 +180,7 @@ export async function getEvento(id: string): Promise<Evento | null> {
     .maybeSingle();
 
   if (error) throw new Error(`No se pudo cargar el evento: ${error.message}`);
-  return data ? conGenero(data as Record<string, unknown>) : null;
+  return data ? paraLaVista(data as Record<string, unknown>) : null;
 }
 
 /** El nombre de la sala, o el hueco honesto si todavía no se le asignó

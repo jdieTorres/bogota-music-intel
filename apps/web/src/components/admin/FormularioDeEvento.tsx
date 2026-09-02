@@ -23,7 +23,9 @@ import {
   Rotulo,
   desdeCampoDeFecha,
 } from "@/components/admin/ui";
+import { CampoDePrecio } from "@/components/admin/CampoDePrecio";
 import { crearEvento } from "@/lib/admin/eventos";
+import type { PrecioEvento } from "@/lib/precio";
 import type { TipoEvento } from "@/lib/events";
 import { getSalasPublicadas } from "@/lib/admin/salas";
 
@@ -38,7 +40,11 @@ export function FormularioDeEvento({
   const [titulo, setTitulo] = useState("");
   const [sala, setSala] = useState("");
   const [fecha, setFecha] = useState("");
-  const [precio, setPrecio] = useState("");
+  const [precio, setPrecio] = useState<PrecioEvento>({
+    price_kind: null,
+    price_min: null,
+    price_max: null,
+  });
   const [boleteria, setBoleteria] = useState("");
   const [genero, setGenero] = useState<string | null>(null);
   // "" es la opción "todavía no sé", que se guarda como null. Se separa
@@ -64,7 +70,7 @@ export function FormularioDeEvento({
         title: titulo.trim(),
         venue_id: sala,
         starts_at: desdeCampoDeFecha(fecha),
-        price_text: precio.trim() || null,
+        ...precio,
         ticket_url: boleteria.trim() || null,
         category: genero?.trim() || null,
         event_type: tipo || null,
@@ -131,10 +137,7 @@ export function FormularioDeEvento({
           </span>
         </label>
 
-        <label>
-          <Rotulo>Precio</Rotulo>
-          <input value={precio} onChange={(e) => setPrecio(e.target.value)} className={CAMPO} />
-        </label>
+        <CampoDePrecio valor={precio} alCambiar={setPrecio} />
 
         <label>
           <Rotulo>Boletería</Rotulo>
