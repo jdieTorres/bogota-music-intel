@@ -130,15 +130,25 @@ No negociables. Cada una se pagó con un error, y varias con dos.
 
 ---
 
-## Mantener esta documentación
+## Las dos skills del proyecto
 
-La skill **`/actualizar-estado`** pone al día `ESTADO.md`, este archivo y los
-`context/*/CLAUDE.md` con el estado real. Correrla al cerrar una fase o una
-sesión de trabajo. Es la vía preferida: trae el procedimiento de verificación
-—qué mirar en el repo en vez de fiarse de la memoria de la conversación— y las
-reglas de redacción.
+- **`/actualizar-estado`** pone al día `ESTADO.md`, este archivo y los
+  `context/*/CLAUDE.md` con el estado real. Correrla al cerrar una fase o una
+  sesión de trabajo. Es la vía preferida: trae el procedimiento de
+  verificación —qué mirar en el repo en vez de fiarse de la memoria de la
+  conversación— y las reglas de redacción.
+- **`/commitear`** commitea y pushea con el estilo de mensaje de este
+  proyecto, parte el trabajo en varios commits cuando son asuntos distintos, y
+  **verifica el CI después** — que es la mitad que se olvida.
 
-**Dónde escribir cada cosa**, que es lo que mantiene esto corto:
+Se trabaja **directo sobre `main`**, sin ramas ni PRs.
+
+⚠️ **Preguntarle a Juan antes de correr cualquiera de las dos**, y antes de
+correr los CLI que tocan la base. Él decide el momento.
+
+## Dónde escribir cada cosa
+
+Es lo que mantiene esta documentación corta:
 
 - Un hecho que caduca (una cifra, un pendiente, algo sin desplegar) → `ESTADO.md`.
 - Una regla o un criterio de un área → el `CLAUDE.md` de esa área.
