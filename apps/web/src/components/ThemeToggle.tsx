@@ -9,7 +9,8 @@ const CLAVE_STORAGE = "bmi-theme";
 type Modo = "claro" | "oscuro";
 
 /**
- * Toggle claro/oscuro de Verde Neón (2026-08-28).
+ * Toggle claro/oscuro del sitio (2026-08-28; la paleta que alterna cambió
+ * entera en el rediseño del 2026-09-07, este componente no).
  *
  * **El valor real vive en el atributo `data-theme` de `<html>`**, puesto
  * antes de hidratar por el script inline de `layout.tsx` para que no haya

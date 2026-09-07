@@ -15,7 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { IconNota } from "@/components/icons";
+import { IconNota, MARCA_SALA_SVG } from "@/components/icons";
 import type { SalaEnMapa } from "@/lib/venues";
 
 // maplibre-gl 6 resuelve su worker con `import.meta.url` y descarta el valor si
@@ -150,6 +150,11 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
       const marcador = document.createElement("button");
       marcador.type = "button";
       marcador.className = "marcador-sala";
+      // El punto verde pasó a ser la marca del masthead: Juan pidió que el
+      // mismo ícono que identifica al sitio identifique a cada sala. Va como
+      // cadena y con colores fijos — el porqué de las dos cosas está en
+      // `MARCA_SALA_SVG`.
+      marcador.innerHTML = MARCA_SALA_SVG;
       marcador.setAttribute("aria-label", `${sala.name}, ${sala.eventos.length} eventos`);
       // El panel debajo del mapa es la única forma de ver el detalle: el
       // click reemplaza al popup flotante que había antes.

@@ -3,7 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ChipBoleta } from "@/components/ChipBoleta";
 import { ControlesDeAdmin } from "@/components/ControlesDeAdmin";
+import { IconNota } from "@/components/icons";
 
 import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
@@ -34,66 +36,110 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
   const titulo = evento.title;
 
   return (
-    <article className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
+    <article className="mx-auto max-w-5xl px-5 pb-16 pt-8">
       <Link
         href="/"
-        className="font-mono text-xs uppercase tracking-widest text-muted transition-colors hover:text-foreground"
+        className="text-sm text-muted transition-colors hover:text-foreground"
       >
-        ← Cartelera
+        ← Volver a la cartelera
       </Link>
 
-      <header className="mt-6">
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {titulo}
-        </h1>
-        <p className="mt-3 text-lg text-muted">{venue}</p>
-      </header>
-
-      {evento.image_url && (
-        <div className="relative mt-8 aspect-[3/2] w-full overflow-hidden rounded-lg bg-surface">
-          <Image
-            src={evento.image_url}
-            alt=""
-            fill
-            sizes="(max-width: 768px) 100vw, 768px"
-            className="object-contain"
-            priority
-          />
-        </div>
-      )}
-
-      <dl className="mt-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2">
-        <Dato etiqueta="Fecha">
-          {evento.starts_at ? (
-            <span className="inline-block first-letter:uppercase">
-              {fechaLarga(evento.starts_at)}
-            </span>
+      {/* Dos columnas y no una pila: el afiche a lo ancho de la página dejaba
+          dos bandas enormes arriba y abajo —los afiches llegan verticales— y
+          empujaba todos los datos abajo del pliegue. Al lado, el afiche se ve
+          entero y la ficha se lee de una. En móvil se apila. */}
+      <div className="mt-6 grid gap-8 md:grid-cols-[minmax(0,22rem)_1fr] md:gap-12">
+        <div className="md:sticky md:top-8 md:self-start">
+          {evento.image_url ? (
+            // Sin fondo: los afiches llegan en proporciones distintas de
+            // cada fuente, y una caja clara detrás de uno vertical se ve como
+            // un recuadro roto en vez de como un afiche.
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm">
+              <Image
+                src={evento.image_url}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 352px"
+                className="object-contain"
+                priority
+              />
+            </div>
           ) : (
-            "Por confirmar"
+            <div className="flex aspect-[4/5] w-full items-center justify-center rounded-sm bg-surface text-muted">
+              <IconNota className="h-12 w-12" />
+            </div>
           )}
-        </Dato>
-        <Dato etiqueta="Hora">{hora ?? "Por confirmar"}</Dato>
-        <Dato etiqueta="Lugar">{venue}</Dato>
-        <Dato etiqueta="$">{evento.precio ?? "Sin publicar"}</Dato>
-        {evento.genero && <Dato etiqueta="Género">{evento.genero}</Dato>}
-      </dl>
 
-      {evento.description && (
-        <p className="mt-8 text-pretty leading-relaxed text-muted">
-          {evento.description}
-        </p>
-      )}
+          {evento.ticket_url && (
+            <a
+              href={evento.ticket_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-accent px-5 py-3 font-medium text-background transition-opacity hover:opacity-90"
+            >
+              Ver boletería ↗
+            </a>
+          )}
+        </div>
 
-      {evento.ticket_url && (
-        <a
-          href={evento.ticket_url}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-8 inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 font-medium text-background transition-opacity hover:opacity-90"
-        >
-          Ver boletería ↗
-        </a>
-      )}
+        <div className="min-w-0">
+          <header>
+            {/* La marca de local no puede desaparecer al abrir el evento: es
+                la señal que ordena toda la cartelera, y si solo vive en la
+                fila parece un adorno del listado en vez de un dato del
+                evento.
+
+                ⚠️ Contra `true` a propósito: `is_local` tiene tres estados y
+                un `null` es "todavía no lo sabemos", no "no es local". Ver el
+                mismo comentario en `EventoCard`. */}
+            {evento.is_local === true && (
+              <p className="font-hand text-xl leading-none text-accent-3">
+                de la escena local
+              </p>
+            )}
+            <h1 className="mt-2 text-balance font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
+              {titulo}
+            </h1>
+            <p className="mt-3 text-lg text-muted">
+              {venue}
+              {evento.genero && (
+                <>
+                  {" · "}
+                  <span className="text-accent-2">{evento.genero}</span>
+                </>
+              )}
+            </p>
+          </header>
+
+          <dl className="mt-8 border-t border-border">
+            <Dato etiqueta="Fecha">
+              {evento.starts_at ? (
+                <span className="inline-block first-letter:uppercase">
+                  {fechaLarga(evento.starts_at)}
+                </span>
+              ) : (
+                <SinDato>La fuente no publicó fecha</SinDato>
+              )}
+            </Dato>
+            <Dato etiqueta="Hora">
+              {hora ?? <SinDato>La fuente no publicó hora</SinDato>}
+            </Dato>
+            <Dato etiqueta="Precio">
+              {evento.precio ? (
+                <ChipBoleta>{evento.precio}</ChipBoleta>
+              ) : (
+                <SinDato>La fuente no publicó precio</SinDato>
+              )}
+            </Dato>
+          </dl>
+
+          {evento.description && (
+            <p className="mt-8 max-w-prose text-pretty leading-relaxed text-muted">
+              {evento.description}
+            </p>
+          )}
+        </div>
+      </div>
 
       <Procedencia evento={evento} />
 
@@ -110,13 +156,32 @@ function Dato({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-surface px-4 py-3">
-      <dt className="font-mono text-[11px] uppercase tracking-widest text-muted">
-        {etiqueta}
-      </dt>
-      <dd className="mt-1 text-sm">{children}</dd>
+    // Fila con filete, no celda con fondo. La rejilla de celdas tintadas
+    // leía como un panel de administración; una ficha de datos se lee mejor
+    // como una lista de dos columnas.
+    <div className="flex items-baseline gap-4 border-b border-border py-2.5">
+      <dt className="w-20 shrink-0 text-sm text-muted">{etiqueta}</dt>
+      <dd className="min-w-0 flex-1 text-sm">{children}</dd>
     </div>
   );
+}
+
+/**
+ * El hueco, dicho en voz alta.
+ *
+ * "Por confirmar" y "Sin publicar" sonaban a que el dato existe y está en
+ * camino. La mayoría de las veces no: la sala nunca lo publicó, y decir
+ * quién no lo publicó es más honesto y además le dice al lector dónde
+ * buscarlo. Es la misma regla que impide mostrar "12:00 a. m." cuando la
+ * fuente solo dio la fecha.
+ *
+ * Va en cursiva y con el gris completo, no atenuado: `text-muted/70` daba
+ * 2.99 de contraste sobre el papel y esto es texto de cuerpo, que necesita
+ * 4.5. La cursiva es la que hace la diferencia con un dato real, no el
+ * desvanecido.
+ */
+function SinDato({ children }: { children: React.ReactNode }) {
+  return <span className="text-muted italic">{children}</span>;
 }
 
 /**

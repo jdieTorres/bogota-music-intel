@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Cartelera, EstadoVacio, SinConexion } from "@/components/Cartelera";
+import { EncabezadoDePagina } from "@/components/EncabezadoDePagina";
 import { PestanasCartelera } from "@/components/PestanasCartelera";
 import {
   type Evento,
@@ -34,24 +35,23 @@ export default async function Page() {
   const salas = new Set(proximas.map(nombreDelVenue));
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
-      <section className="mb-8 sm:mb-10">
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Fiestas y ciclos
-        </h1>
-        <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-muted">
-          Las noches que programan las salas: sin artista de cartel, pero
-          escena local igual que un toque.
-        </p>
-        {proximas.length > 0 && (
-          <p className="mt-5 font-mono text-xs uppercase tracking-widest text-muted">
-            {proximas.length} {proximas.length === 1 ? "fiesta" : "fiestas"} ·{" "}
-            {salas.size} {salas.size === 1 ? "sala" : "salas"}
-          </p>
-        )}
-      </section>
+    // `max-w-5xl`: el riel de fechas ocupa 7rem de la izquierda, así que la
+    // columna de toques queda en una medida de lectura sana aunque el
+    // contenedor sea ancho. Con `max-w-3xl` el riel se comía un tercio.
+    <div className="mx-auto max-w-5xl px-5 pb-16">
+      <EncabezadoDePagina
+        titulo="Fiestas y ciclos"
+        bajada="Las noches que programan las salas: sin artista de cartel, pero escena local igual que un toque."
+      />
 
-      <PestanasCartelera activa="fiestas" />
+      <PestanasCartelera
+        activa="fiestas"
+        conteo={
+          proximas.length > 0
+            ? `${proximas.length} ${proximas.length === 1 ? "fiesta" : "fiestas"} en ${salas.size} ${salas.size === 1 ? "sala" : "salas"}`
+            : undefined
+        }
+      />
 
       <Cartelera
         proximos={proximas}

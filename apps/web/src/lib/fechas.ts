@@ -46,6 +46,37 @@ export function horaDeEvento(iso: string | null, precision: string): string | nu
   }).format(fecha);
 }
 
+/**
+ * La fecha partida en piezas, para el riel de fechas de la cartelera:
+ * `{ diaSemana: "vie", numero: "11", mes: "sep" }`.
+ *
+ * Existe porque el riel apila las tres piezas con tamaños y pesos distintos,
+ * y de una sola cadena formateada ("viernes, 11 de septiembre") no se pueden
+ * separar sin partir texto a mano, que en español se rompe con los meses de
+ * una palabra y con la coma del locale.
+ *
+ * ⚠️ El mediodía del mismo truco que `tituloDeDia` no es opcional: la clave
+ * llega como `YYYY-MM-DD` y a medianoche el huso corre la fecha un día hacia
+ * atrás al formatear. Colombia es UTC-5 todo el año.
+ */
+export function piezasDeDia(claveISO: string): {
+  diaSemana: string;
+  numero: string;
+  mes: string;
+} {
+  const fecha = new Date(`${claveISO}T12:00:00-05:00`);
+  const parte = (opciones: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("es-CO", { timeZone: TZ, ...opciones })
+      .format(fecha)
+      .replace(".", "");
+
+  return {
+    diaSemana: parte({ weekday: "short" }),
+    numero: parte({ day: "numeric" }),
+    mes: parte({ month: "short" }),
+  };
+}
+
 export function esHoy(claveISO: string): boolean {
   const hoy = new Intl.DateTimeFormat("en-CA", {
     timeZone: TZ,

@@ -1,48 +1,74 @@
 @import "tailwindcss";
 
-/* Verde Neón — decidido con Juan el 2026-08-28 en la sesión de look & feel.
-   Reemplaza la paleta oscura fija original. Claro es el modo por defecto
-   (el que se sirve en el primer render, antes de que cualquier script
-   corra); oscuro se activa con `data-theme="oscuro"` en <html>, que pone
-   `ThemeToggle.tsx` — ver ese componente y el script inline en
-   `layout.tsx` para cómo se decide el valor inicial sin parpadeo. */
+/* --- Paleta ---------------------------------------------------------------
+   Rediseño del 2026-09-07, con permiso explícito de Juan para pasar por
+   encima del brief de look & feel del 2026-08-28.
+
+   **Qué cambió y por qué.** Verde Neón usaba el verde como *fondo*: la
+   página entera era un campo de menta saturada en claro y de verde botella
+   en oscuro. Un color de marca ocupando el 100% de la superficie deja de
+   leerse como marca y pasa a leerse como filtro, y nada que se pose encima
+   puede verse profesional. Es la causa raíz de que el sitio pareciera un
+   tema y no una publicación.
+
+   Acá el verde sigue siendo la identidad, pero ocupa **el 5% de la
+   superficie**: el suelo es papel en claro y casi negro en oscuro, los dos
+   con la misma sombra verde de antes para no perder el ADN. El acento se
+   gasta en lo que importa —el enlace, la pestaña activa, el sello de hoy— y
+   por eso vuelve a gritar cuando aparece.
+
+   Claro es el modo por defecto (el que se sirve en el primer render, antes
+   de que corra cualquier script); oscuro se activa con `data-theme="oscuro"`
+   en <html>, que pone `ThemeToggle.tsx` — ver ese componente y el script
+   inline de `layout.tsx` para cómo se decide sin parpadeo. */
 :root {
-  --background: #c8f0b8;
-  --surface: #d9f6cc;
-  --surface-hover: #c0edae;
-  --border: #a9dd93;
-  --foreground: #0d2a10;
-  --muted: #3f5c3a;
-  --accent: #128a0a;
-  --accent-2: #0e8fae; /* acento "salvaje" — teal, para chips y detalles */
-  --accent-3: #d81b73; /* acento "salvaje" — magenta, para detalles puntuales */
+  --background: #f1f4ec; /* papel con una sombra de verde, no beige */
+  --surface: #fafcf7;
+  --surface-hover: #eaefe3;
+  --border: #dbe2d3;
+  --foreground: #10160f;
+  --muted: #59654f;
+  --accent: #12760f;
+  /* Medido, no elegido a ojo: #0e7f9c daba 4.17 sobre el papel y el género
+     se escribe en tamaño de cuerpo, así que no llegaba al 4.5 de WCAG AA.
+     Este da 5.05. */
+  --accent-2: #0c7189;
+  --accent-3: #c2185b; /* magenta: la marca de escena local, y nada más */
 
   /* Tono del mapa: el mapa (`/mapa`) es MapLibre con el estilo `liberty`,
-     que es claro y no cambia con el toggle — esa decisión es de antes del
-     look & feel actual y sigue en pie. Por eso este token NO se
-     sobreescribe en `[data-theme="oscuro"]` más abajo: el aro del
-     marcador se queda siempre en su propio "papel" claro, tenga la
-     página el modo que tenga. (Hasta el 2026-08-29 acompañaban a este
-     token otros cuatro para el popup de MapLibre; salieron al reemplazar
-     el popup por el panel debajo del mapa, que sí sigue el tema normal
-     del sitio.) */
-  --popup-surface: #eef9e6;
+     que es claro y no cambia con el toggle — esa decisión es del 2026-08-27
+     y sigue en pie. Por eso este token NO se sobreescribe en
+     `[data-theme="oscuro"]` más abajo: el aro del marcador se queda siempre
+     en su propio "papel" claro, tenga la página el modo que tenga. */
+  --popup-surface: #f7faf4;
+
+  /* --- Sistema de forma ---------------------------------------------------
+     Un solo sistema en todo el sitio: **casi nada tiene esquinas
+     redondeadas**. El afiche y los bloques van con `rounded-sm` (2px), y
+     `rounded-full` queda reservado para lo que de verdad es una pastilla —
+     pestañas y sellos. La tarjeta con borde redondeado de 12px era lo que
+     hacía que cada fila leyera como un widget suelto en vez de como una
+     entrada de cartelera. */
+
+  /* Papel: el grano de la capa de textura. Sube en oscuro porque sobre un
+     fondo casi negro el mismo valor no se ve. */
+  --grano-opacidad: 0.035;
 }
 
-/* Modo oscuro: mismo Verde Neón, mismo rol de cada token, valores propios
-   para que el contraste siga funcionando (no son los tokens claros con el
-   brillo invertido a lo bruto — el acento y los dos "salvajes" se aclaran
-   para seguir contrastando sobre un fondo casi negro). */
+/* Oscuro: el mismo papel llevado a casi negro. No es el claro con el brillo
+   invertido a lo bruto — el acento se aclara para seguir contrastando, y la
+   sombra verde del fondo baja para que el afiche no se tiña. */
 :root[data-theme="oscuro"] {
-  --background: #091d0d;
-  --surface: #102a15;
-  --surface-hover: #17351c;
-  --border: #1f4527;
-  --foreground: #eaf7e6;
-  --muted: #8fb389;
-  --accent: #3ddc2e;
-  --accent-2: #3fd0ee;
-  --accent-3: #ff4fae;
+  --background: #0b0f0b;
+  --surface: #141a13;
+  --surface-hover: #1b2319;
+  --border: #262f24;
+  --foreground: #eef2ea;
+  --muted: #94a08e;
+  --accent: #4ae63a;
+  --accent-2: #4fd4ef;
+  --accent-3: #ff5fb0;
+  --grano-opacidad: 0.06;
 }
 
 @theme inline {
@@ -56,12 +82,19 @@
   --color-accent-2: var(--accent-2);
   --color-accent-3: var(--accent-3);
 
-  /* Work Sans para cuerpo de texto: mantiene fecha/sala/precio legibles
-     sin competir con los titulares. Fredoka (titulares) y Caveat (acentos
-     manuscritos, uso puntual) generan `font-display` y `font-hand` por la
-     misma convención de Tailwind 4 que ya daba `font-mono` más abajo. */
+  /* Bricolage Grotesque reemplaza a Fredoka en los titulares. Fredoka es
+     una geométrica redondeada de ascendentes cortas: daba lo "cercano" del
+     brief pero peleaba de frente con lo "profesional", y era la señal más
+     fuerte de que esto parecía una app juvenil. Bricolage es una grotesca
+     contemporánea con irregularidades a propósito — tiene carácter sin
+     perder autoridad, que es exactamente el cruce que se buscaba.
+
+     Work Sans se queda en el cuerpo: mantiene fecha/sala/precio legibles sin
+     competir. Caveat sobrevive para dos usos y ni uno más (la etiqueta de
+     marca y la marca de escena local); era la pieza que más rápido se
+     volvía decorativa. */
   --font-sans: var(--font-work-sans);
-  --font-display: var(--font-fredoka);
+  --font-display: var(--font-bricolage);
   --font-hand: var(--font-caveat);
   --font-mono: var(--font-geist-mono);
 }
@@ -91,37 +124,81 @@ body {
 }
 
 /* --- Mapa de la escena ---------------------------------------------------
-   El marcador usa los tokens `--popup-*`, fijos independientemente del
-   modo (ver el comentario en `:root` arriba): el mapa es siempre claro.
+   El marcador es la marca del sitio, y sus colores van fijos dentro del
+   propio SVG (ver `MARCA_SALA_SVG` en `icons.tsx`): el mapa es siempre
+   claro, así que un color que siguiera el tema desaparecería en modo
+   oscuro sobre un mapa que no cambió.
    El detalle de la sala ya no es un popup de MapLibre —se reemplazó el
    2026-08-29 por el panel debajo del mapa (`PanelSala` en
    `MapaEscena.tsx`), que sí seguía el tema de la página como el resto de
    las tarjetas del sitio—, así que el CSS del popup salió de acá. */
 
 .marcador-sala {
-  /* `padding: 0` porque desde el 2026-09-07 el marcador es un <button> y no
-     un <div>: el relleno propio del botón deformaría el círculo de 14px. */
+  /* `padding: 0` porque el marcador es un <button> y no un <div>: el relleno
+     propio del botón deformaría el ícono. */
   padding: 0;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--accent);
-  /* El aro es del tono "papel" del popup, no de `--background`: el mapa es
-     siempre claro sin importar el modo de la página, así que un aro que
-     tomara `--background` se volvería oscuro en modo oscuro y se perdería
-     contra el mapa (que sigue siendo claro). Con `--popup-surface` el
-     marcador se ve igual en los dos modos. */
-  border: 2px solid var(--popup-surface);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+  /* 26px: a 14px —lo que medía el punto verde— el aro y el trazo interior de
+     la marca se empastan y no se distingue de un círculo cualquiera. A 26
+     se lee el dibujo sin taparle el mapa a nadie. */
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: none;
+  line-height: 0;
   cursor: pointer;
+  /* La sombra reemplaza al aro que traía el punto verde: separa el ícono de
+     las calles y los parques, que traen sus propios verdes. */
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.35));
+  transition: transform 0.12s ease;
 }
 
-/* La franja lateral roja de cada tarjeta solo aparece al pasar el mouse. */
+.marcador-sala:hover,
+.marcador-sala:focus-visible {
+  transform: scale(1.15);
+}
+
+.marcador-sala svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Movimiento reducido: se apagan todas las transiciones del sitio. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* --- Grano de papel ------------------------------------------------------
+   La textura de papel es una de las cinco referencias que Juan mandó y la
+   única que se puede traer sin una imagen: un SVG de ruido embebido, a muy
+   baja opacidad, encima de todo.
+
+   Va sobre un pseudo-elemento `fixed` y `pointer-events-none` a propósito,
+   nunca sobre un contenedor que hace scroll: un filtro de ruido sobre algo
+   que se desplaza obliga al navegador a repintar en cada frame y se lleva
+   por delante los FPS en un celular. Fijo se pinta una vez.
+
+   `feTurbulence` con `baseFrequency` alta da grano fino; una frecuencia
+   baja daría nubes en vez de grano. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grano-opacidad);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23r)'/%3E%3C/svg%3E");
+}
+
+/* Sin grano para quien pidió menos movimiento visual: la textura no se
+   mueve, pero sí es ruido de alto contraste sobre el texto. */
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    display: none;
   }
 }

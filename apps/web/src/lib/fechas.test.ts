@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { horaDeEvento, tieneHoraPublicada } from "@/lib/fechas";
+import { horaDeEvento, piezasDeDia, tieneHoraPublicada } from "@/lib/fechas";
 
 describe("tieneHoraPublicada", () => {
   // Bogotá es UTC-5 todo el año. La trampa: comparar el texto ISO contra
@@ -38,5 +38,23 @@ describe("horaDeEvento", () => {
 
   it("no muestra hora si la precisión no es de día", () => {
     expect(horaDeEvento("2026-10-03T01:00:00+00:00", "unknown")).toBeNull();
+  });
+});
+
+describe("piezasDeDia", () => {
+  it("parte la fecha en día de semana, número y mes", () => {
+    expect(piezasDeDia("2026-09-11")).toEqual({
+      diaSemana: "vie",
+      numero: "11",
+      mes: "sept",
+    });
+  });
+
+  // Regresión: la clave es YYYY-MM-DD y formatearla a medianoche hace que el
+  // huso de Bogotá (UTC-5 todo el año) corra la fecha al día anterior. Ya se
+  // pagó dos veces en este proyecto con razonamientos sobre horas.
+  it("no corre el día hacia atrás en el primero del mes", () => {
+    expect(piezasDeDia("2026-09-01").numero).toBe("1");
+    expect(piezasDeDia("2026-09-01").mes).toBe("sept");
   });
 });

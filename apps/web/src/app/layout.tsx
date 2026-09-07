@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Caveat, Fredoka, Geist_Mono, Work_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Caveat, Geist_Mono, Work_Sans } from "next/font/google";
 import "./globals.css";
 
 import { BrandMark } from "@/components/icons";
@@ -12,10 +12,12 @@ const workSans = Work_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
-const fredoka = Fredoka({
-  variable: "--font-fredoka",
+// Bricolage Grotesque es variable: se pide el rango de pesos completo que se
+// usa en vez de instancias sueltas, y el navegador baja un solo archivo.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
 });
 
 const caveat = Caveat({
@@ -78,29 +80,38 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es-CO"
       suppressHydrationWarning
-      className={`${workSans.variable} ${fredoka.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${workSans.variable} ${bricolage.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
-        <header className="border-b border-border">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5">
-            <Link href="/" className="group flex items-center gap-3">
-              <BrandMark className="h-9 w-9 shrink-0" />
+        {/* Masthead: filete abajo y nada más. La barra con fondo propio y
+            sombra es lenguaje de aplicación; una publicación se separa de su
+            contenido con una línea. `z-20` porque el riel de fechas de la
+            cartelera es sticky con `z-10` y tiene que pasar por debajo. */}
+        <header className="relative z-20 border-b border-border">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
+            <Link href="/" className="group flex items-center gap-2.5">
+              <BrandMark className="h-7 w-7 shrink-0" />
               <span className="flex items-baseline gap-2">
-                <span className="font-display text-lg font-semibold tracking-tight">
+                <span className="font-display text-base font-bold tracking-tight sm:text-lg">
                   Cartelera de Bogotá
                 </span>
-                <span className="hidden font-hand text-lg text-accent-2 sm:inline">
+                {/* El único resto manuscrito del header, y va ladeado: es la
+                    pizca de lo "cercano" que el resto del masthead no da. */}
+                <span className="hidden origin-left -rotate-3 font-hand text-lg text-accent-2 sm:inline">
                   escena en vivo
                 </span>
               </span>
             </Link>
-            <nav className="flex items-center gap-4 text-sm">
+            <nav className="flex items-center gap-5 text-sm">
+              {/* En móvil no se muestra: va al mismo sitio que el logo, y dos
+                  enlaces a la portada en una barra de 390px obligaban al
+                  nombre de marca a partirse en dos líneas. */}
               <Link
                 href="/"
-                className="text-muted transition-colors hover:text-foreground"
+                className="hidden text-muted transition-colors hover:text-foreground sm:inline"
               >
                 Cartelera
               </Link>
@@ -117,14 +128,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
         <main className="flex-1">{children}</main>
 
-        <footer className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-5 py-8 text-xs leading-relaxed text-muted">
-            <p>
+        <footer className="mt-16 border-t border-border">
+          <div className="mx-auto max-w-5xl px-5 py-10 text-xs leading-relaxed text-muted">
+            <p className="max-w-md">
               Cartelera recogida automáticamente de los sitios oficiales de cada
               sala. Confirmá fecha, hora y precio en el enlace de boletería antes
               de comprar.
             </p>
-            <p className="mt-2">
+            <p className="mt-3">
               Proyecto personal ·{" "}
               <a
                 href="https://github.com/jdieTorres/bogota-music-intel"
