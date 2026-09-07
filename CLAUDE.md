@@ -102,6 +102,11 @@ No negociables. Cada una se pagó con un error, y varias con dos.
 - **Verificar el frontend en un navegador de verdad, no solo en el HTML
   servido.** El mapa estuvo en negro con CI verde, tests pasando, `tsc` limpio
   y build correcto.
+- **Y "de verdad" incluye que la pestaña esté visible.** Chrome no le da
+  frames de `requestAnimationFrame` a una pestaña oculta, así que un canvas
+  —el mapa— no renderiza y **parece roto sin estarlo**. El 2026-09-07 eso
+  costó un pendiente en rojo por un bug que no existía. Antes de diagnosticar
+  cualquier cosa que dibuje, mirar `document.visibilityState`.
 - **En pantalla no van nombres de archivo nuestros.** Al lector no le dicen
   nada y le piden entender cómo está hecho el sistema. La nota para quien
   mantiene el código va en el código. Vale para estados vacíos y mensajes de

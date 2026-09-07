@@ -141,25 +141,26 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
   `sb_*` del 2026-08-28 no tocó.
-- 🔴 **El mapa no pinta teselas: `/mapa` es un rectángulo vacío con los
-  marcadores y los controles encima.** Detectado el 2026-09-07 verificando en
-  el navegador los arreglos de foco, y **confirmado que no lo causó esa
-  sesión**: revirtiendo a `HEAD` los dos archivos tocados y recargando se ve
-  idéntico. Es exactamente el síntoma que `MapaEscena.tsx` describe arriba del
-  `setWorkerUrl` —dibuja canvas, marcadores y controles y nunca aparece una
-  tesela, sin un solo error en consola—, **pero el worker ya está**: se copia
-  a `public/maplibre/` al arrancar y `getWorkerUrl()` devuelve valor. Así que
-  el arreglo del worker no explica esto por sí solo.
-  - Descartado: no hay errores en consola, WebGL 2.0 está activo y el estilo
-    de OpenFreeMap responde 200.
-  - **Lo que falta, y es el siguiente paso: mirar las peticiones de red y ver
-    si el navegador llega a pedir una tesela.** Eso parte el problema en dos
-    —no las pide (worker o estilo) o las pide y fallan (red, CORS, respuesta)—
-    y hoy no se sabe cuál de las dos es. No se investigó más porque no era el
-    encargo de la sesión.
-  - Es la segunda vez que el mapa se queda sin teselas con el CI verde, que es
-    de donde salió la regla dura de verificar el frontend en un navegador de
-    verdad. Volvió a cobrarse la misma pieza.
+- ✅ **Cerrado el 2026-09-07: el mapa no está roto.** Lo que se había
+  anotado como "`/mapa` no pinta teselas" era un **artefacto de la
+  verificación**, no del sitio. La pestaña estaba **oculta**
+  (`document.visibilityState === "hidden"`) mientras se miraba con la
+  automatización del navegador, y Chrome no le da frames de
+  `requestAnimationFrame` a una pestaña oculta: MapLibre no renderiza, y
+  como las teselas se piden **durante** el render, nunca se piden. Lo único
+  que quedaba en pantalla era el color de fondo del estilo del primer frame.
+  - Demostrado forzando el render a mano, sin `requestAnimationFrame`: seis
+    teselas en estado `loaded`, `isStyleLoaded()` en `true`, cero errores, y
+    el mapa se ve completo —calles, cerros, etiquetas y los nueve
+    marcadores—. El worker está bien y el arreglo del `setWorkerUrl` sigue
+    haciendo lo suyo.
+  - **Las dos señales que despistaron, para no volver a caer:** las
+    peticiones de tesela salen **desde el worker**, así que no aparecen en
+    el panel de red de la extensión —de ahí "no pide ni una tesela"— y la
+    petición del propio worker se queda mostrando `pending` para siempre por
+    lo mismo. Ninguna de las dos es síntoma de nada.
+  - **Falta que Juan lo confirme a ojo** en una ventana normal de Chrome, que
+    es la única verificación que esta sesión no pudo hacer.
 - **Opcional:** añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para
   que el CI prerenderice contra la base real en vez de contra placeholders.
 

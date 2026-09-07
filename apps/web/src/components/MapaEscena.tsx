@@ -26,6 +26,12 @@ import type { SalaEnMapa } from "@/lib/venues";
 //
 // Se pregunta primero para no pisar una resolución nativa, si algún día
 // Turbopack o maplibre arreglan el caso.
+//
+// ⚠️ El síntoma de arriba —canvas y marcadores sin teselas, sin error en
+// consola— tiene una segunda causa, y no está en este archivo: una pestaña
+// oculta. Chrome no le da frames de `requestAnimationFrame`, MapLibre no
+// renderiza, y como las teselas se piden durante el render, nunca se piden.
+// Antes de sospechar del worker, mirar `document.visibilityState`.
 if (!getWorkerUrl()) {
   setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 }
