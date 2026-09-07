@@ -186,40 +186,19 @@ la página el modo que tenga. De ahí que el aro del marcador use
 `var(--popup-surface)` y no `var(--background)`: con `--background` se vería
 distinto en cada modo mientras el mapa se ve igual.
 
-## Cómo se revisa: `npm run capturas`
+## Cómo se revisa
 
-```
-npm run dev        # en otra terminal
-npm run capturas
-```
+**Con `npm run capturas`, no a ojo en el navegador.** Levanta Chromium
+headless y deja 30 PNG con las cinco pantallas públicas en los dos modos y en
+las dos vistas. No es comodidad: mirar el sitio en una pestaña oculta hace que
+el mapa **parezca roto sin estarlo**, y eso ya costó un pendiente en rojo.
 
-Deja 30 PNG en `apps/web/capturas/` (en `.gitignore`, se regeneran): las
-cinco pantallas públicas × claro/oscuro × escritorio/móvil, más la página
-entera en escritorio. Corre sobre Chromium headless con Playwright.
+**Y no es opcional al implementar.** El proyecto ya tiene precedente de que el
+mapa se vea mal con CI en verde y build limpio: los tests, `tsc` y el linter
+no prueban nada de lo que se ve.
 
-**No es solo comodidad, y por eso existe.** Mirar el sitio con la
-automatización sobre el Chrome de Juan tiene una trampa: la pestaña suele
-estar **oculta**, y Chrome no le da frames de `requestAnimationFrame` a una
-pestaña oculta. El mapa entonces no renderiza y **parece roto sin estarlo**
-— el 2026-09-07 eso costó un pendiente en rojo por un bug que no existía.
-Chromium headless siempre renderiza, así que estas capturas no mienten sobre
-el canvas.
-
-Dos cosas que el script hace a propósito y conviene no deshacer:
-
-- **Fija el modo antes de que corra nada de la página**, igual que el script
-  inline de `layout.tsx`, para no capturar el parpadeo del otro modo.
-- **Espera al mapa aparte.** MapLibre dibuja canvas, marcadores y controles
-  mucho antes de tener teselas; sin esa espera la captura sale con el
-  rectángulo vacío y vuelve a parecer el bug que no era.
-
-De la página completa **solo se genera la de escritorio**: la cartelera en
-móvil da una tira de más de 16.000px que al abrirla se reduce a algo
-ilegible.
-
-**Y esto no es opcional al implementar.** El proyecto ya tiene precedente de
-que el mapa se vea mal con CI en verde y build limpio: los tests, `tsc` y el
-linter no prueban nada de lo que se ve.
+Cómo se corre y qué hace el script a propósito, en
+`context/look-and-feel/capturas.md`.
 
 ## Ver también
 
@@ -227,4 +206,6 @@ linter no prueban nada de lo que se ve.
   direcciones de paleta y por qué quedó a medias. Histórico.
 - `context/look-and-feel/iconografia.md` — las medidas del set, lo que se
   aprendió dibujándolo y la excepción de color del marcador.
+- `context/look-and-feel/capturas.md` — cómo se corre `npm run capturas`, qué
+  hace el script a propósito y qué no cubre.
 - `context/look-and-feel/tokens.css` — los valores vivos.

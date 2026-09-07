@@ -110,7 +110,7 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   costó un pendiente en rojo por un bug que no existía. Antes de diagnosticar
   cualquier cosa que dibuje, mirar `document.visibilityState` — o mejor,
   usar `npm run capturas`, que corre sobre Chromium headless y siempre
-  renderiza (`context/look-and-feel/CLAUDE.md`).
+  renderiza (`context/look-and-feel/capturas.md`).
 - **En pantalla no van nombres de archivo nuestros.** Al lector no le dicen
   nada y le piden entender cómo está hecho el sistema. La nota para quien
   mantiene el código va en el código. Vale para estados vacíos y mensajes de
