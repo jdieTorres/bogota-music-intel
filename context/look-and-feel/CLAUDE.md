@@ -4,29 +4,21 @@
 > componente de UI.** Los valores vivos están en `context/look-and-feel/tokens.css`
 > y en `apps/web/src/app/globals.css`.
 
-Registro del trabajo de identidad visual (paleta, tipografía, iconografía) acordado con Juan. Arrancó el 2026-08-27 (ver `context/producto/diseno-del-producto.md`, sección 8, para el punto de partida y las preguntas abiertas originales) y la paleta/tipografía se decidieron el 2026-08-28 en esta sesión.
+La identidad visual acordada con Juan: paleta, tipografía, estructura e
+iconografía. **Lo que está acá es lo vigente**; el detalle y lo histórico
+viven en los archivos de "Ver también", al final.
 
-## Referencias de partida
+## De dónde viene esto
 
-Juan envió 5 imágenes como norte visual: el mapa ilustrado `#ColombiaMeSuena`, una historia de Instagram de Bogotá Plan ("Planes en Bogotá"), el póster de gira "El Oro y los Espejos", el flyer "Fête de la Musique" de Bogotá Plan × Alliance Française, y el póster "Rock al Parque 30 años". La lectura común entre las cinco: paleta cálida y saturada (naranja/rojo/amarillo sobre un fondo oscuro o de papel), ilustración a mano por encima de foto o vector plano, tipografía con carácter como protagonista (burbuja, hand-lettering, stamped), grano/textura de papel, y convenciones de flyer independiente (sellos circulares, fila de auspiciantes). Es lenguaje de quien hace la gráfica del toque, no el de un dashboard.
+La identidad arrancó el 2026-08-27 con una primera ronda —**Verde Neón**— que
+el rediseño del 2026-09-07 reemplazó entera. Las referencias que la
+originaron, las 7 direcciones de paleta que se evaluaron y por qué quedó
+congelada están en `context/look-and-feel/verde-neon.md`. **Leerlo solo si hay
+que entender de dónde salió un color**; para trabajar hoy no hace falta.
 
-El brief de Juan: una app amigable a la vista, "hasta desordenada y despreocupada", dirigida a jóvenes y a editoriales periodísticas independientes — pero sin aparentar ser "cool" a propósito. El caos tenía que sentirse fresco, no forzado.
-
-## Cómo se llegó a Verde Neón
-
-1. **Primera propuesta (mockup de `/mapa`)**: un canvas de diseño con el marco del mapa ilustrado (textura, "cinta" decorativa, squiggles) y una hoja de tokens extraídos de las 5 referencias. Sirvió para fijar el vocabulario visual, no la paleta final.
-2. **7 direcciones de paleta**, para reaccionar contra opciones concretas en vez de en abstracto:
-   - 4 monocromáticas de marca (un solo color hace identidad, como pidió Juan con ejemplos `#10a308` y `#cf720e`): **Verde Escena**, **Cobre Cálido**, **Azul Media Noche**, **Vinotinto**.
-   - 1 ajuste fresco sobre el mockup original: **Mockup Fresco**.
-   - 2 experimentos de caos exagerado: **Caos Naranja**, **Caos Ácido**.
-3. **4 combinaciones mono + caos, 1:1**: Juan pidió cruzar cada mono con una paleta de caos, manteniendo fondo y color de marca de la mono y sumando 2 acentos "salvajes" literales de la paleta caos emparejada — **Cobre Punk**, **Vino Punk**, **Verde Neón**, **Medianoche Neón**.
-4. **De oscuro a claro**: las 4 combinaciones estaban sobre fondo oscuro. Juan pidió explorar fondo claro, porque un fondo más claro potencia mejor la energía de escena local que buscaba. Los acentos "salvajes", pensados para fondo negro, rechinaban sobre papel claro (el cian `#2ee8ff` y el amarillo `#ffe600` puros pierden contraste) — se oscurecieron y desaturaron manteniendo la misma familia de color (cian → `#0e8fae`, amarillo → `#e0a900`, magenta → `#d81b73`).
-5. **Mockup interactivo con tweaks**: en vez de construir 6 mockups sueltos (3 paletas × 2 modos), un solo artboard con dos controles (paleta / modo) que recolorea todo en vivo — la manera correcta de explorar esto en Claude Design.
-6. **Elección final**: Juan eligió **Verde Neón** y ajustó a mano el verde claro a `#c8f0b8` y el oscuro a `#091d0d` (más saturados que la propuesta inicial).
-7. **Toggle real**: a diferencia de las demás decisiones de look & feel (que fijan un único modo), Juan pidió que claro/oscuro sea una función real del sitio, no solo un token fijo — ver `apps/web/src/components/ThemeToggle.tsx`.
-
-El mockup interactivo completo (con las 3 paletas finalistas × 2 modos, más la hoja de tokens y el resumen de las 7 direcciones) queda publicado en Claude Design:
-**https://claude.ai/code/artifact/6630d970-baba-4cd1-a337-2453e7bcbfa3**
+Lo único de aquella ronda que sigue siendo una decisión viva: **claro/oscuro
+es una función real del sitio**, no un token fijo
+(`apps/web/src/components/ThemeToggle.tsx`).
 
 ## Segunda ronda: el rediseño del 2026-09-07
 
@@ -132,11 +124,10 @@ como norte el 2026-09-07: aro exterior en `--accent`, motivo interior en
 repiten pieza por pieza, así que en fila se leen como familia y no como
 dibujos sueltos.
 
-Las medidas compartidas, para que un ícono nuevo entre sin tener que
-deducirlas: aro `r=19` con `strokeWidth 2.5`; motivo interior con
-`strokeWidth 2.2` y `strokeLinecap="round"`; **todo el contenido dentro de un
-radio de 14 desde el centro**, que es lo que evita que el trazo toque el aro
-al reducirse a 20px.
+Las medidas compartidas del set —el radio del aro, los grosores de trazo y el
+margen que evita que el motivo lo toque al reducirse— están en
+`context/look-and-feel/iconografia.md`. **Mirarlas antes de dibujar uno
+nuevo**, junto con lo que se aprendió rehaciendo los tres de categoría.
 
 | Ícono | Qué identifica | Dónde sale |
 |---|---|---|
@@ -147,19 +138,6 @@ al reducirse a 20px.
 | `IconNota` | evento sin afiche | fila de cartelera y ficha |
 | `IconSun` / `IconMoon` | el `ThemeToggle` | masthead |
 
-### Lo que se aprendió dibujándolos
-
-Los tres de categoría se rehicieron mirándolos ampliados, no en el editor:
-
-- **El confeti agrupado no es confeti.** La primera versión ponía las tiras
-  abajo y los puntos arriba, y a 20px eso lee como dos manchas. Las piezas
-  van repartidas por todo el disco y en ángulos distintos: si se ordenan,
-  deja de ser confeti.
-- **La curva arruinó la tarima dos veces.** Un techo curvo sobre una línea
-  lee como campana o como sombrero — es una forma que el ojo ya tiene
-  asignada. Lo que la vuelve un escenario son dos postes rectos, una viga
-  recta y unas patas que la levantan del piso.
-
 ### Dos decisiones de fondo
 
 - **El ícono de categoría va en la pestaña, no en cada fila.** Dentro de una
@@ -168,20 +146,9 @@ Los tres de categoría se rehicieron mirándolos ampliados, no en el editor:
 - **La sala no tiene ícono propio: es `BrandMark`.** Repetir el dibujo con
   otro nombre solo abriría la puerta a que los dos se desincronicen.
 
-### El marcador del mapa es la excepción de color
-
-`MARCA_SALA_SVG` es `BrandMark` dibujado dos veces, con colores **fijos** y
-como cadena de texto. Las dos cosas son a propósito:
-
-1. El marcador se crea con `document.createElement` porque MapLibre pide un
-   elemento del DOM; renderizar el componente a texto obligaría a meter
-   `react-dom/server` en el bundle del cliente para dibujar nueve puntos.
-2. El mapa usa el estilo claro `liberty` y **no cambia con el toggle**. Con
-   `var(--foreground)` el punto central se volvería casi blanco en modo
-   oscuro y desaparecería sobre un mapa que sigue siendo claro.
-
-Mide 26px y no 14 como el punto verde que reemplazó: a 14 el aro y el trazo
-interior se empastan y no se distingue de un círculo cualquiera.
+⚠️ **El marcador del mapa es la excepción de color**: sus colores van fijos
+dentro del SVG y no en tokens, porque el mapa no cambia con el toggle. El
+porqué, en `context/look-and-feel/iconografia.md`.
 
 ## Qué queda abierto
 
@@ -196,19 +163,15 @@ interior se empastan y no se distingue de un círculo cualquiera.
 - **El grano de papel sí sobrevivió** (`body::after` en `globals.css`), a una
   opacidad mucho más baja que la de la primera ronda.
 
-## Por qué la primera ronda quedó a medias
+## Cómo se trabaja el look & feel
 
-La primera ronda quedó **commiteada, verificada en navegador y aceptada por
-Juan** el 2026-08-28, pero congelada a propósito: él decidió ese mismo día
-seguir con esa identidad tal cual y dejar la pasada de ajustes para el final,
-dentro de la Fase 6. Esa pasada terminó siendo el rediseño del 2026-09-07, y
-llegó antes de lo previsto porque Juan la pidió expresamente.
-
-Lo que sigue vigente de aquella decisión es el modo de trabajo: **el look &
-feel no se rediseña por iniciativa propia**, y no se da por cerrado al llegar
-al deploy. Juan lo quiere trabajar en conjunto y con calma — son varias
-sesiones, no un retoque puntual. Lo que queda para esa pasada está arriba, en
-"Qué queda abierto".
+- **No se rediseña por iniciativa propia.** La primera ronda se congeló a
+  propósito y la segunda la pidió Juan expresamente; las dos veces la decisión
+  fue suya.
+- **No se da por cerrado al llegar al deploy.** Lo que falta está arriba, en
+  "Qué queda abierto".
+- Juan lo quiere trabajar en conjunto y con calma: son varias sesiones, no un
+  retoque puntual.
 
 ## El mapa es la excepción deliberada
 
@@ -254,8 +217,14 @@ De la página completa **solo se genera la de escritorio**: la cartelera en
 móvil da una tira de más de 16.000px que al abrirla se reduce a algo
 ilegible.
 
-## Ojo al implementar
+**Y esto no es opcional al implementar.** El proyecto ya tiene precedente de
+que el mapa se vea mal con CI en verde y build limpio: los tests, `tsc` y el
+linter no prueban nada de lo que se ve.
 
-Correr el dev server y mirarlo en **un navegador real**: el proyecto ya tiene
-precedente de que el mapa se vea mal con CI en verde y build limpio. Los
-tests, `tsc` y el linter no prueban nada de esto.
+## Ver también
+
+- `context/look-and-feel/verde-neon.md` — la primera ronda: referencias, las 7
+  direcciones de paleta y por qué quedó a medias. Histórico.
+- `context/look-and-feel/iconografia.md` — las medidas del set, lo que se
+  aprendió dibujándolo y la excepción de color del marcador.
+- `context/look-and-feel/tokens.css` — los valores vivos.
