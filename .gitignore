@@ -20,8 +20,5 @@ Thumbs.db
 # Supabase local
 .supabase/
 
-# Grafo de conocimiento (graphify) — se regenera con `graphify update .`
-graphify-out/
-
 # Capturas de look & feel (npm run capturas) — se regeneran
 apps/web/capturas/

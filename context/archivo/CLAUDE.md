@@ -4,8 +4,8 @@ Nada de acá está vivo. **No se carga como contexto de trabajo**: existe para
 que no se vuelva a evaluar lo ya evaluado, ni se reconstruya lo que se sacó a
 propósito.
 
-Antes de proponer una fuente de datos de música o de reabrir el radar, mirar
-acá.
+Antes de proponer una fuente de datos de música, de reabrir el radar o de
+instalar algo que prometa ahorrar tokens, mirar acá.
 
 - **`apis-de-musica.md`** — el estado verificado de las APIs de música, una
   por una. Cuatro entradas de la investigación documental resultaron falsas al
@@ -20,3 +20,10 @@ acá.
   borraron `radar.py`, `radar_cli.py`, `lastfm.py`, `deezer.py`,
   `/tendencias`, `trending.ts`, `TendenciaCard.tsx`, sus 9 tests, el link del
   nav y el paso del cron. **Está todo en el historial de git.**
+- **`grafo-de-conocimiento.md`** — la skill `/graphify`, instalada y sacada el
+  2026-09-07. Costó 292.666 tokens de entrada en su única corrida y no devolvió
+  ninguno: el `/context` mostró la ventana al 6 %, así que no había presión de
+  contexto que aliviar. Los hooks que lo disparaban solo vivían en un
+  `.claude/settings.json` que hubo que revertir, y nada avisaba cuando el grafo
+  quedaba viejo. **Antes de instalar algo que prometa ahorrar tokens, medir con
+  `/context`.**

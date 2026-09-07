@@ -36,7 +36,7 @@ Este archivo es el índice y las reglas transversales. **Lo específico de cada
 | `context/frontend/CLAUDE.md` | `apps/web`, Next.js 16, el mapa, el tema, imágenes. |
 | `context/infraestructura/CLAUDE.md` | Supabase, migraciones, CI, secrets, deploy. |
 | `context/look-and-feel/CLAUDE.md` | **Antes de tocar `globals.css`, `layout.tsx` o cualquier UI.** |
-| `context/archivo/CLAUDE.md` | Antes de proponer una fuente de datos de música o reabrir el radar. |
+| `context/archivo/CLAUDE.md` | Antes de proponer una fuente de datos de música, reabrir el radar o instalar algo que prometa ahorrar tokens. |
 
 **Las cifras y los pendientes van en `ESTADO.md`, no acá.** Este archivo y los
 `context/*/CLAUDE.md` son criterio que no caduca; `ESTADO.md` es la foto de
@@ -155,11 +155,9 @@ Se trabaja **directo sobre `main`**, sin ramas ni PRs.
 ⚠️ **Preguntarle a Juan antes de correr cualquiera de las dos**, y antes de
 correr los CLI que tocan la base. Él decide el momento.
 
-Las otras cuatro son de terceros y no las mantenemos: `/taste-skill` y
-`/web-design-guidelines` para UI, `/ponytail` para podar, `/graphify` para
-consultar el repo como grafo. Origen, licencia y cómo se actualizan, en
-`.claude/skills/ORIGEN.md` — `/graphify` además necesita un paquete de Python
-que vive fuera del repo.
+Las otras tres son de terceros y no las mantenemos: `/taste-skill` y
+`/web-design-guidelines` para UI, y `/ponytail` para podar. Origen, licencia y
+cómo se actualizan, en `.claude/skills/ORIGEN.md`.
 
 ## Dónde escribir cada cosa
 
