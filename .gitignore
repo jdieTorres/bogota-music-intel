@@ -19,3 +19,6 @@ Thumbs.db
 
 # Supabase local
 .supabase/
+
+# Grafo de conocimiento (graphify) — se regenera con `graphify update .`
+graphify-out/

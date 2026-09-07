@@ -132,7 +132,9 @@ No negociables. Cada una se pagó con un error, y varias con dos.
 
 ---
 
-## Las dos skills del proyecto
+## Las skills
+
+Dos son del proyecto:
 
 - **`/actualizar-estado`** pone al día `ESTADO.md`, este archivo y los
   `context/*/CLAUDE.md` con el estado real. Correrla al cerrar una fase o una
@@ -147,6 +149,12 @@ Se trabaja **directo sobre `main`**, sin ramas ni PRs.
 
 ⚠️ **Preguntarle a Juan antes de correr cualquiera de las dos**, y antes de
 correr los CLI que tocan la base. Él decide el momento.
+
+Las otras cuatro son de terceros y no las mantenemos: `/taste-skill` y
+`/web-design-guidelines` para UI, `/ponytail` para podar, `/graphify` para
+consultar el repo como grafo. Origen, licencia y cómo se actualizan, en
+`.claude/skills/ORIGEN.md` — `/graphify` además necesita un paquete de Python
+que vive fuera del repo.
 
 ## Dónde escribir cada cosa
 
