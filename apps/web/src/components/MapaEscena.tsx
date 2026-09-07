@@ -131,13 +131,28 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
 
     const limites = new LngLatBounds();
     for (const sala of salas) {
-      const marcador = document.createElement("div");
+      // Un <button> de verdad y no un <div role="button">: hasta el
+      // 2026-09-07 era un div sin tabindex, así que no recibía foco y el
+      // mapa entero no se podía usar sin mouse.
+      //
+      // El manejador de teclado de abajo NO sobra, aunque un <button> se
+      // active solo con Enter y Espacio: MapLibre se traga el keydown en el
+      // contenedor del mapa —verificado en el navegador, el evento no llega
+      // ni a `window`— y con él la activación nativa. Escuchar en el propio
+      // marcador corre antes que eso. Si algún día se quita el listener por
+      // "redundante", el mapa vuelve a quedar sin teclado y en silencio.
+      const marcador = document.createElement("button");
+      marcador.type = "button";
       marcador.className = "marcador-sala";
-      marcador.setAttribute("role", "button");
       marcador.setAttribute("aria-label", `${sala.name}, ${sala.eventos.length} eventos`);
       // El panel debajo del mapa es la única forma de ver el detalle: el
       // click reemplaza al popup flotante que había antes.
       marcador.addEventListener("click", () => setSalaSeleccionada(sala));
+      marcador.addEventListener("keydown", (evento) => {
+        if (evento.key !== "Enter" && evento.key !== " ") return;
+        evento.preventDefault();
+        setSalaSeleccionada(sala);
+      });
 
       new Marker({ element: marcador })
         .setLngLat([sala.longitude, sala.latitude])

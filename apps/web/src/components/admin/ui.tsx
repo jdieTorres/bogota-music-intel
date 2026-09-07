@@ -11,8 +11,12 @@ export const BOTON_TENUE =
   "rounded-md border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:text-foreground";
 export const BOTON_ROJO =
   "rounded-md border border-red-500/40 px-3 py-1.5 text-xs text-red-400 transition-colors hover:text-red-300";
+// Sin `outline-none`: apagaba el anillo del navegador y lo reemplazaba solo
+// con un cambio de color de borde. El anillo lo pone la regla global de
+// `globals.css`; el borde se queda como refuerzo, que en un campo de texto
+// se agradece también al hacer click.
 export const CAMPO =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent";
+  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-accent";
 
 export function Marco({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto max-w-4xl px-5 py-10 sm:py-14">{children}</div>;

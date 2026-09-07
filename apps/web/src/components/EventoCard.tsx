@@ -10,7 +10,10 @@ export function EventoCard({ evento }: { evento: Evento }) {
   const venue = nombreDelVenue(evento);
 
   return (
-    <li>
+    // `scroll-mt-16` deja aire para el encabezado del día, que es sticky: sin
+    // eso, al llegar tabulando a la primera tarjeta de un día, el navegador la
+    // desplaza justo debajo del encabezado y el anillo de foco queda tapado.
+    <li className="scroll-mt-16">
       <Link
         href={`/evento/${evento.id}`}
         className="group flex gap-4 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-accent/60 hover:bg-surface-hover sm:gap-5 sm:p-4"

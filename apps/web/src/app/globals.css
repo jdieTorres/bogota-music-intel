@@ -72,6 +72,24 @@ body {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+/* --- Foco visible --------------------------------------------------------
+   Antes no había ninguno en todo el sitio: un `grep focus src/` devolvía dos
+   líneas, y las dos apagaban el anillo del navegador sin reemplazarlo.
+   Navegar con teclado era navegar a ciegas.
+
+   Va como una regla global y no como una clase por componente a propósito:
+   así cubre también el botón que alguien agregue el mes que viene. El modo
+   de fallar de la clase por componente es olvidarse, y se olvida callado.
+
+   `:focus-visible` y no `:focus` para que el anillo no salte al hacer click
+   con el mouse. `:where()` deja la especificidad en cero, así que cualquier
+   componente puede pisar esto sin pelear. El `outline` sigue solo el
+   `border-radius` del elemento, no hay que repetirlo acá. */
+:where(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* --- Mapa de la escena ---------------------------------------------------
    El marcador usa los tokens `--popup-*`, fijos independientemente del
    modo (ver el comentario en `:root` arriba): el mapa es siempre claro.
@@ -81,6 +99,9 @@ body {
    las tarjetas del sitio—, así que el CSS del popup salió de acá. */
 
 .marcador-sala {
+  /* `padding: 0` porque desde el 2026-09-07 el marcador es un <button> y no
+     un <div>: el relleno propio del botón deformaría el círculo de 14px. */
+  padding: 0;
   width: 14px;
   height: 14px;
   border-radius: 50%;

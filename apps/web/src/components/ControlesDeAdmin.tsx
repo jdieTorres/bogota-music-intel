@@ -95,7 +95,7 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             placeholder="Por qué se borra (queda registrado)"
-            className="mt-3 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+            className="mt-3 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-accent"
           />
           {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
           <div className="mt-3 flex gap-2">
