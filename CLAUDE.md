@@ -48,8 +48,10 @@ hoy.
 
 - **Frontend:** Next.js 16 (TypeScript) en Vercel, plan Hobby (⚠️ no
   comercial). Lee Supabase directo.
-- **Backend:** Python + FastAPI (`services/api`, paquete
-  `bogota_music_intel`). Capa de ingesta, no de lectura.
+- **Backend:** Python (`services/api`, paquete `bogota_music_intel`). Capa de
+  ingesta, no de lectura, y **no es un servidor**: son los CLI que dispara el
+  cron. Hubo un FastAPI con un `/health` que nadie llamaba y se borró; si algún
+  día hace falta servir algo, el frontend ya lee Supabase directo.
 - **Base de datos:** Supabase (Postgres + Auth + Storage).
 - **Ingesta:** GitHub Actions (cron), respetando `robots.txt`.
 - **Mapas:** MapLibre GL 6 + tiles de OpenFreeMap (sin API key ni límite).
