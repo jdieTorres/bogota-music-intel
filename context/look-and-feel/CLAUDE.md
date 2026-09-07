@@ -196,28 +196,19 @@ interior se empastan y no se distingue de un círculo cualquiera.
 - **El grano de papel sí sobrevivió** (`body::after` en `globals.css`), a una
   opacidad mucho más baja que la de la primera ronda.
 
-## El estado
-
-⚠️ Lo que sigue describe la **primera** ronda y quedó superado por el
-rediseño del 2026-09-07, que Juan pidió expresamente. Se conserva porque
-explica por qué la primera ronda se dejó a medias.
-
-## El estado de la primera ronda: congelado a propósito, no terminado
+## Por qué la primera ronda quedó a medias
 
 La primera ronda quedó **commiteada, verificada en navegador y aceptada por
-Juan** el 2026-08-28. Pero Juan decidió ese mismo día seguir adelante con esta
-identidad tal como está y **hacer una pasada de ajustes al final, justo antes
-de desplegar** — dentro de la Fase 6, no antes.
+Juan** el 2026-08-28, pero congelada a propósito: él decidió ese mismo día
+seguir con esa identidad tal cual y dejar la pasada de ajustes para el final,
+dentro de la Fase 6. Esa pasada terminó siendo el rediseño del 2026-09-07, y
+llegó antes de lo previsto porque Juan la pidió expresamente.
 
-Dos consecuencias para quien retome, y las dos importan:
-
-- **No rediseñar por iniciativa propia en el medio.**
-- **No dar el look & feel por cerrado al llegar al deploy.** Lo que ya está
-  identificado para esa pasada es lo de "Qué quedó fuera de esta ronda", más
-  el nombre y la identidad de marca definitivos.
-
-Juan lo quiere trabajar en conjunto y con calma: son varias sesiones, no un
-retoque puntual.
+Lo que sigue vigente de aquella decisión es el modo de trabajo: **el look &
+feel no se rediseña por iniciativa propia**, y no se da por cerrado al llegar
+al deploy. Juan lo quiere trabajar en conjunto y con calma — son varias
+sesiones, no un retoque puntual. Lo que queda para esa pasada está arriba, en
+"Qué queda abierto".
 
 ## El mapa es la excepción deliberada
 

@@ -123,9 +123,16 @@ peticiones pegadas al arrancar y MusicBrainz devolvía 503 tumbando la corrida.
 Con el control adentro de `musicbrainz.py`, las 52 consultas pasaron limpias.
 Vale igual para Nominatim (1 req/s, User-Agent identificable).
 
-⚠️ **MusicBrainz responde distinto desde CI que desde la máquina de Juan** —
-ver `ESTADO.md`. Un 503 no se guarda como "artista desconocido": deja el
-evento sin clasificar para reintentarlo.
+**Un 503 no se guarda como "artista desconocido": deja el evento sin
+clasificar para reintentarlo.** Ese diseño es lo que resolvió solo el único
+susto que dio MusicBrainz desde CI. El 2026-08-30 el paso `Classify events`
+terminó en verde y dejó un evento sin clasificar, y durante ocho días se
+sospechó que MusicBrainz trataba distinto a las IP de GitHub Actions —como
+había pasado con Deezer—. **No era eso:** entre el 2026-09-02 y el 2026-09-07
+el paso hizo trabajo real en cuatro corridas (25s, 22s, 48s, 7s) y volvió a
+1s, y hoy no queda ninguna fila cruda ni ningún canónico sin clasificar. Si
+fallara desde CI, las filas se habrían acumulado en vez de vaciarse. Fue un
+fallo transitorio, absorbido por el reintento.
 
 ## Ver también
 

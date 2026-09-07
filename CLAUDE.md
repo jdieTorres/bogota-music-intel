@@ -94,11 +94,13 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   al llamarlas cuatro entradas resultaron falsas. Una duda que se pueda
   contestar con un `GET` no merece más investigación documental.
 - **Y hay que llamarla desde donde va a correr en producción, no solo en
-  local.** Pasó con Deezer (geolocaliza por IP y desde CI devuelve otro chart,
-  sin error) y otra vez con MusicBrainz. Que le haya pasado a dos de tres
-  fuentes externas sugiere que **el default a asumir es que una API responde
-  distinto desde CI**. Si algo depende de una API y solo se probó local,
-  tratalo como no probado.
+  local.** Pasó con Deezer: geolocaliza por IP y desde CI devuelve otro chart,
+  sin error. **Si algo depende de una API y solo se probó local, tratalo como
+  no probado** — y al revés, una sola corrida rara desde CI tampoco prueba lo
+  contrario: a MusicBrainz se le atribuyó el mismo defecto por un fallo del
+  2026-08-30 y ocho días de cron mostraron que clasifica bien
+  (`context/ingesta/CLAUDE.md`). La conclusión, en los dos sentidos, sale de
+  varias corridas.
 - **Verificar el frontend en un navegador de verdad, no solo en el HTML
   servido.** El mapa estuvo en negro con CI verde, tests pasando, `tsc` limpio
   y build correcto.
@@ -106,7 +108,9 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   frames de `requestAnimationFrame` a una pestaña oculta, así que un canvas
   —el mapa— no renderiza y **parece roto sin estarlo**. El 2026-09-07 eso
   costó un pendiente en rojo por un bug que no existía. Antes de diagnosticar
-  cualquier cosa que dibuje, mirar `document.visibilityState`.
+  cualquier cosa que dibuje, mirar `document.visibilityState` — o mejor,
+  usar `npm run capturas`, que corre sobre Chromium headless y siempre
+  renderiza (`context/look-and-feel/CLAUDE.md`).
 - **En pantalla no van nombres de archivo nuestros.** Al lector no le dicen
   nada y le piden entender cómo está hecho el sistema. La nota para quien
   mantiene el código va en el código. Vale para estados vacíos y mensajes de

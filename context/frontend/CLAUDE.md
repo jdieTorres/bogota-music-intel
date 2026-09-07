@@ -35,9 +35,15 @@ uso). La atribución a OpenStreetMap **se agrega a mano**: el estilo no la trae.
 
 ⚠️ **Turbopack deja a MapLibre GL 6 sin su worker y el mapa queda en negro sin
 un solo error en consola** (dev y build por igual). Resuelto con
-`apps/web/scripts/copiar-worker-maplibre.mjs` + `setWorkerUrl()`. Si el mapa
-vuelve a quedar en negro, lo primero a mirar es **si el navegador pide
-teselas**, no si hay errores.
+`apps/web/scripts/copiar-worker-maplibre.mjs` + `setWorkerUrl()`.
+
+Si vuelve a verse en negro, **el primer paso es `npm run capturas`, no
+diagnosticar**: el 2026-09-07 el mapa estaba sano y parecía roto porque se lo
+miraba en una pestaña oculta. Y ojo con la señal que lo delató en su día —"no
+pide ni una tesela"—, porque **desde el navegador no se puede leer**: las
+teselas las pide el worker y esas peticiones no aparecen en el panel de red de
+la extensión, ni siquiera cuando todo funciona. Detalle en
+`context/frontend/trampas.md`.
 
 **El mapa no cuenta lo mismo que la cartelera y no es un error**: `getEscena`
 filtra por `starts_at >= hoy` y suma conciertos, fiestas y festivales en un

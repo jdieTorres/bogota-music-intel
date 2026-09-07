@@ -23,3 +23,27 @@ Arreglado con un `<script dangerouslySetInnerHTML>` crudo en el `<head>`, que Re
 
 ---
 
+### El mapa que parecía roto y no lo estaba (2026-09-07)
+
+Se anotó en rojo que `/mapa` "no pinta teselas". Era un **artefacto de la
+verificación**: la pestaña estaba oculta (`document.visibilityState ===
+"hidden"`) mientras se la miraba con la automatización del navegador, Chrome no
+le da frames de `requestAnimationFrame` a una pestaña oculta, y las teselas se
+piden **durante** el render — así que nunca se pedían. Lo único en pantalla era
+el color de fondo del estilo en el primer frame. Forzando el render a mano:
+seis teselas en `loaded`, `isStyleLoaded()` en `true`, cero errores, el mapa
+completo con calles, cerros, etiquetas y los nueve marcadores.
+
+**Las dos señales que despistaron, y que no son síntoma de nada:**
+
+- **Las peticiones de tesela salen del worker y no aparecen en el panel de red
+  de la extensión**, ni siquiera cuando todo funciona. O sea que "no pide ni
+  una tesela" —la pista que en 2026-08-27 sí delató el bug del worker— **no se
+  puede leer desde ahí**. Es la misma frase señalando dos cosas opuestas según
+  dónde se mire.
+- **La petición del propio worker se queda en `pending` para siempre**, por lo
+  mismo.
+
+La salida es no diagnosticar a ojo: `npm run capturas` levanta Chromium
+headless, que siempre renderiza.
+
