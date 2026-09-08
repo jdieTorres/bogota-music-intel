@@ -165,6 +165,37 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
       // `MARCA_SALA_SVG`.
       marcador.innerHTML = MARCA_SALA_SVG;
       marcador.setAttribute("aria-label", `${sala.name}, ${sala.eventos.length} eventos`);
+
+      // El globo que aparece al apuntar el pin: nombre y dirección, nada
+      // más. El detalle sigue en el panel de abajo; esto solo contesta
+      // "¿cuál es esta?" sin obligar a hacer clic.
+      //
+      // Se arma con `createElement` y `textContent` —no con una plantilla de
+      // HTML como el popup de 2026-08-29, que necesitaba su propio
+      // `escaparHtml`—: el nombre y la dirección los escribe una persona en
+      // /admin, y acá no hay nada que escapar porque nunca se interpretan
+      // como marcado.
+      //
+      // `aria-hidden` porque no aporta nada al lector de pantalla: el nombre
+      // ya está en el `aria-label` de arriba, y quien navega con teclado
+      // llega igual al panel, que trae la dirección y los eventos.
+      const globo = document.createElement("span");
+      globo.className = "marcador-sala__globo";
+      globo.setAttribute("aria-hidden", "true");
+
+      const nombre = document.createElement("span");
+      nombre.className = "marcador-sala__nombre";
+      nombre.textContent = sala.name;
+
+      // Siempre se dibuja, aunque venga vacía: el CSS le reserva la altura
+      // para que el globo no cambie de tamaño entre una sala y otra. Sin
+      // texto de relleno — una sala sin dirección muestra el hueco.
+      const direccion = document.createElement("span");
+      direccion.className = "marcador-sala__direccion";
+      direccion.textContent = sala.address ?? "";
+
+      globo.append(nombre, direccion);
+      marcador.append(globo);
       // El panel debajo del mapa es la única forma de ver el detalle: el
       // click reemplaza al popup flotante que había antes.
       marcador.addEventListener("click", () => setSalaSeleccionada(sala));
@@ -187,7 +218,21 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
       mapa.setCenter([salas[0].longitude, salas[0].latitude]);
       mapa.setZoom(14);
     } else {
-      mapa.fitBounds(limites, { padding: 60, maxZoom: 14, animate: false });
+      // Arriba se deja más aire que en los otros tres lados: el globo del
+      // hover sale hacia arriba y mide unos 68px con la puntita y lo que el
+      // pin crece al escalar. Con 60 parejo, el pin más al norte quedaba a
+      // 53px del borde y el contenedor —que recorta para redondear las
+      // esquinas— le comía la primera línea al globo.
+      //
+      // ⚠️ Esto cubre el encuadre inicial, que es el que ve todo el mundo.
+      // Si el lector arrastra el mapa y deja un pin pegado al borde de
+      // arriba, su globo se sigue recortando; resolverlo pide voltear el
+      // globo hacia abajo, y eso ya no es CSS.
+      mapa.fitBounds(limites, {
+        padding: { top: 76, bottom: 60, left: 60, right: 60 },
+        maxZoom: 14,
+        animate: false,
+      });
     }
 
     return () => mapa.remove();

@@ -131,7 +131,9 @@ body {
    El detalle de la sala ya no es un popup de MapLibre —se reemplazó el
    2026-08-29 por el panel debajo del mapa (`PanelSala` en
    `MapaEscena.tsx`), que sí seguía el tema de la página como el resto de
-   las tarjetas del sitio—, así que el CSS del popup salió de acá. */
+   las tarjetas del sitio—, así que el CSS del popup salió de acá. El globo
+   que volvió el 2026-09-08 no es aquel: dice dos datos, aparece al apuntar
+   y es CSS sobre un hijo del marcador (más abajo). */
 
 .marcador-sala {
   /* Los tres colores del pin.
@@ -166,6 +168,9 @@ body {
      tape la calle en la que está. */
   width: 30px;
   height: 30px;
+  /* Ancla del globo de texto de abajo. No pelea con MapLibre, que posiciona
+     el marcador con un `transform` en línea y no con `position`. */
+  position: relative;
   border: 0;
   background: none;
   line-height: 0;
@@ -200,6 +205,92 @@ body {
   --pin-fondo: #c2185b;
   --pin-detalle: #ffd9e6;
   z-index: 1;
+}
+
+/* El globo de texto del pin apuntado (2026-09-08, pedido de Juan).
+
+   Es un agregado, no un reemplazo: el panel de detalle debajo del mapa se
+   queda, y este globo solo dice dos cosas —el nombre de la sala y su
+   dirección— para que apuntar el mapa responda "¿cuál es esta?" sin tener
+   que hacer clic.
+
+   **No es un `Popup` de MapLibre**, aunque el que existió hasta el
+   2026-08-29 sí lo era. Un Popup es un objeto que hay que crear, abrir y
+   cerrar a mano en `mouseenter`/`mouseleave`/`focus`/`blur`; acá el estado
+   ya lo describe el mismo selector que pinta el pin de rosa, así que el
+   globo aparece con el hover **y con el foco de teclado** sin una sola línea
+   de JS. El teclado no tiene puntero y el mapa se recorre con Tab: si esto
+   dependiera solo de `:hover`, el globo no existiría para quien navega así.
+
+   Hereda los colores del pin apuntado a propósito — el globo y el pin son un
+   solo objeto. Medidos sobre el fondo #c2185b: el nombre en #ffeaf2 da
+   **5.09** y la dirección en #ffd9e6 da **4.54**, los dos por encima del 4.5
+   que le corresponde a un texto.
+
+   ⚠️ Como el resto del mapa, estos colores van fijos y no se redefinen en
+   `[data-theme="oscuro"]`: las teselas no cambian con el toggle y un globo
+   que sí cambiara se vería de otro color sobre un mapa que se quedó igual. */
+.marcador-sala__globo {
+  position: absolute;
+  /* Sale del pin hacia arriba. El 10px cubre lo que el SVG crece al
+     escalar 1.3 (unos 4,5px por lado) más el aire de la puntita. */
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #c2185b;
+  color: #ffeaf2;
+  padding: 6px 10px;
+  border-radius: 4px;
+  line-height: 1.35;
+  font-size: 12px;
+  /* Una sola línea por dato: si el nombre pudiera partirse en dos, la altura
+     del globo saltaría de una sala a otra igual que si se omitiera la
+     dirección. Una sala de nombre largo da un globo ancho, y eso en un mapa
+     se tolera; uno que cambia de alto al pasar de un pin al de al lado, no. */
+  white-space: nowrap;
+  /* El globo no se apunta: el puntero tiene que seguir sobre el pin, o
+     apareceria y desapareceria en bucle al acercarse a él. */
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.12s ease,
+    visibility 0.12s;
+}
+
+/* La puntita: un cuadrado girado 45° que asoma por debajo del globo. Se
+   dibuja acá y no con bordes porque el globo tiene un solo anclaje —siempre
+   arriba del pin— y no hay que pintar cuatro casos distintos. */
+.marcador-sala__globo::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.marcador-sala__nombre {
+  display: block;
+  font-weight: 600;
+}
+
+/* La dirección se dibuja siempre, incluso vacía: una sala sin dirección deja
+   el hueco y el globo mide lo mismo. **No lleva texto de relleno** — un "sin
+   dirección" afirmaría algo que nadie verificó, y el hueco ya lo dice. */
+.marcador-sala__direccion {
+  display: block;
+  min-height: 1.35em;
+  color: #ffd9e6;
+  font-size: 11px;
+}
+
+.marcador-sala:hover .marcador-sala__globo,
+.marcador-sala:focus-visible .marcador-sala__globo {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ⚠️ **El crecimiento va sobre el SVG, no sobre el botón**, y no es cuestión

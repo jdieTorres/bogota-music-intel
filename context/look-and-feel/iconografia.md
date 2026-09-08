@@ -140,3 +140,43 @@ de color es lo que hace que el pin se encuentre sin buscarlo.
 distancia y el de arriba oculta al de abajo — ya pasaba a 26px. No lo resuelve
 achicar el pin: lo resuelve agrupar, y eso es trabajo aparte que nadie ha
 pedido todavía.
+
+### El globo del hover: nombre y dirección, nada más
+
+Desde el 2026-09-08 el pin apuntado abre un globo de texto con **dos datos: el
+nombre de la sala y su dirección**. Es un agregado, no un reemplazo — el panel
+debajo del mapa se queda con la foto y los eventos. El globo contesta "¿cuál es
+esta?" mientras el puntero barre el mapa, que es lo que antes obligaba a hacer
+clic pin por pin.
+
+Hereda los colores del pin apuntado, así que los dos son un solo objeto: fondo
+`#c2185b`, el nombre en `#ffeaf2` y la dirección en `#ffd9e6`. Medidos sobre el
+rosa, **5.09** y **4.54** — los dos por encima del 4.5 que le corresponde a un
+texto. Es el único sitio del globo donde había que medir: la excepción de "a
+ojo" del relleno del pin no se extiende acá.
+
+**La dirección se dibuja siempre, aunque la sala no tenga.** El elemento queda
+vacío con su altura reservada, así que el globo mide lo mismo en las dos salas
+y no salta de tamaño al pasar de un pin al de al lado. **No lleva texto de
+relleno**: un "sin dirección" afirmaría algo que nadie verificó, y el hueco ya
+lo dice. Verificado midiendo: 43,03px de alto con dirección y sin ella.
+
+Tres decisiones de implementación:
+
+- **No es un `Popup` de MapLibre**, aunque el que existió hasta el 2026-08-29
+  sí lo era. Un Popup hay que crearlo, abrirlo y cerrarlo a mano en cuatro
+  eventos; acá el estado ya lo describe el mismo selector que pinta el pin de
+  rosa, así que un hijo del marcador y `opacity` bastan. **Y con eso el globo
+  sale también con `:focus-visible`** — el mapa se recorre con Tab y el
+  teclado no tiene puntero; con un Popup atado a `mouseenter` no existiría
+  para quien navega así.
+- **Una sola línea por dato** (`white-space: nowrap`). Si el nombre pudiera
+  partirse en dos, la altura saltaría igual que si se omitiera la dirección.
+  Una sala de nombre largo da un globo ancho, y eso en un mapa se tolera.
+- ⚠️ **El globo sale hacia arriba y el contenedor del mapa recorta** para
+  redondear las esquinas. Por eso `fitBounds` lleva 76 de padding arriba
+  contra 60 en los otros tres lados: con 60 parejo, al pin más al norte le
+  faltaban 7px y el globo perdía su primera línea. Cubre el encuadre inicial,
+  que es lo que ve todo el mundo; **si el lector arrastra un pin hasta el
+  borde de arriba, su globo se sigue recortando**. Resolverlo pide voltear el
+  globo hacia abajo cuando no cabe, y eso ya no es CSS.

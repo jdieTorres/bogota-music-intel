@@ -164,13 +164,35 @@ nuevo**, junto con lo que se aprendió rehaciendo los tres de categoría.
   un mapa lleno de líneas un aro delgado se pierde: el pin tiene que ganarle
   a las calles. Relleno y a 30px es una mancha de color antes de ser un
   dibujo, que es lo que se ve al barrer el mapa con la vista. **Y el pin
-  apuntado crece y se pone rosa** — el único lugar del sitio donde el magenta
-  no es la marca de escena local; el porqué, abajo.
+  apuntado crece, se pone rosa y abre un globo con el nombre de la sala y su
+  dirección** — el único lugar del sitio donde el magenta no es la marca de
+  escena local; el porqué, abajo.
 
 ⚠️ **El marcador del mapa es la excepción de color**: sus colores van fijos
 dentro del SVG y no en tokens, porque el mapa no cambia con el toggle — y por
 eso mismo el motivo usa el cian **claro** y no `--accent-2`, que sobre el
 verde da 1.03 de contraste. El porqué completo, en
+`context/look-and-feel/iconografia.md`.
+
+### El globo del pin apuntado
+
+Volvió el 2026-09-08 con dos datos y nada más —**nombre de la sala y
+dirección**— y **sin reemplazar al panel de abajo**: el panel sigue teniendo la
+foto y los eventos, y el globo solo contesta "¿cuál es esta?" mientras el
+puntero barre el mapa. No es el popup de MapLibre que se quitó el 2026-08-29.
+
+Dos criterios que valen más allá del mapa:
+
+- **Un hueco reservado no es un dato faltante disimulado.** La sala sin
+  dirección deja la línea vacía —el globo mide igual en las dos— pero **no
+  lleva texto de relleno**: un "sin dirección" afirmaría algo que nadie
+  verificó.
+- **Un estado que se muestra con `:hover` se muestra también con
+  `:focus-visible`.** El mapa se recorre con Tab y el teclado no tiene
+  puntero. Es lo que decidió que el globo fuera CSS sobre un hijo del marcador
+  y no un `Popup` atado a `mouseenter`.
+
+Los colores, las medidas y el recorte del borde superior, en
 `context/look-and-feel/iconografia.md`.
 
 ## Qué queda abierto
