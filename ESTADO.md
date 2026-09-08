@@ -1,6 +1,7 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-07**.
+Última actualización: **2026-09-07** (recontado contra la base esa noche, con
+el MCP de Supabase ya funcionando).
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -11,20 +12,21 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-- 🔥 **`Bogotá Music Market | BoMM 2026` es mañana (2026-09-08) y está en
-  borrador.** De los ocho festivales en cola es el único que se vence ya; los
+- 🔥 **`Bogotá Music Market | BoMM 2026` es mañana (2026-09-08) y sigue en
+  borrador.** De los seis festivales en cola es el único que se vence ya; los
   otros van del 2026-09-12 al 2026-11-28.
-- **`/festivales` sigue vacía, y ahora por otra razón.** El 2026-09-07 se
-  publicaron dos —`Festival Internacional de Música Sacra` y `Tortazo Jazz`—
-  pero los dos eran del 2026-09-05, o sea que ya habían pasado. La página
-  filtra por `starts_at >= hoy`, así que publicarlos no la llenó. Lo que la
-  llena son los 8 festivales que siguen en borrador.
-- **50 borradores en cola** esperando triage. No bloquea escribir código, pero
+- **`/festivales` ya no está vacía, pero muestra uno solo:** `Festival
+  Cordillera 2026` (2026-09-12), que se publicó el 2026-09-07 al resolver el
+  duplicado. Los otros dos publicados —`Festival Internacional de Música
+  Sacra` y `Tortazo Jazz`— son del 2026-09-04 y del 2026-09-05, o sea que ya
+  pasaron, y la página filtra por `starts_at >= hoy`. Lo que la llena son los
+  6 festivales que siguen en borrador.
+- **48 borradores en cola** esperando triage. No bloquea escribir código, pero
   sí bloquea que la cartelera muestre lo que ya se trajo.
-- **3 duplicados sugeridos esperando fusión** en `/admin`: `Festival Cordillera
-  2026` con `Festival Cordillera`, `Carlos Vives | Tour Al Sol` con su gemelo
-  ya publicado, y dos `Luis Alberto Posada` de título idéntico. El detector los
-  marcó bien; falta que una persona decida.
+- **2 duplicados sugeridos esperando fusión** en `/admin`: `Carlos Vives & La
+  Provincia | Tour Al Sol` con su gemelo ya publicado, y dos `Luis Alberto
+  Posada` de título idéntico, los dos en borrador. El tercero —los dos
+  `Festival Cordillera`— lo resolvió Juan el 2026-09-07.
 - **Fotos de las salas: 0 de 18 publicadas.** `fotos_curadas.py` está vacío y
   todas salen con el ícono de respaldo. **Ninguna fuente que scrapeamos
   publica foto del venue**, así que no hay nada que automatizar: sirve el
@@ -41,7 +43,7 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   Centro de Convenciones y Museo de Arte Moderno de Bogotá MAMBO. Entraron
   solas al nombrarlas un evento scrapeado y esperan revisión. Ojo: aprobarlas
   vuelve a mover el denominador de las coordenadas.
-- **El género: 9 de 51 publicados lo muestran.** Otros 7 tienen `category`
+- **El género: 9 de 52 publicados lo muestran.** Otros 7 tienen `category`
   pero es la taxonomía de la fuente —4 "Música", 2 "Conciertos", 1 "Otro"— y
   `generoVisible` la esconde a propósito. Ninguna fuente publica género real:
   o lo escribe Juan en `/admin` o el chip no existe.
@@ -50,30 +52,27 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   ellos, **`Expo Solar` y `ARTBo | Feria Internacional de Arte`, no son
   música** y están en la cola por el fallo de `Ferias MICE` que se describe
   abajo.
-
 - **El token de Supabase de la sesión vence el 2026-12-06.** Es el
   `SUPABASE_ACCESS_TOKEN` de `.claude/settings.local.json`, creado el
-  2026-09-07 con 90 días, el máximo que ofrece Supabase. Cuando venza, el MCP
-  va a responder `Unauthorized` sin decir que caducó. Se regenera en Account →
-  Access Tokens con los mismos cuatro permisos de lectura
-  (`context/infraestructura/CLAUDE.md`).
+  2026-09-07 con 90 días, el máximo que ofrece Supabase. **Quedó verificado
+  funcionando el 2026-09-07**, después de reiniciar Claude Code: `list_tables`
+  y `execute_sql` responden contra la base real, y las cifras de la sección 3
+  salieron de ahí. Cuando venza, el MCP va a responder `Unauthorized` sin
+  decir que caducó. Se regenera en Account → Access Tokens con los mismos
+  cuatro permisos de lectura (`context/infraestructura/CLAUDE.md`).
 
 ### Preguntas abiertas — hay que hacérselas a Juan, no resolverlas por cuenta propia
 
-- **¿Se les devuelve el año al título de los festivales?** Ya no es una duda
-  de estilo: **el año partido en dos creó un duplicado real.** `Festival
-  Cordillera` (revisado el 2026-09-01, sin año porque el normalizador se lo
-  quitó cuando todavía era `music`) y `Festival Cordillera 2026` (sin revisar)
-  son hoy dos canónicos distintos con el mismo `starts_at`. Ahora que son
-  `festival` la regla es la contraria —el año es la edición y se conserva—.
-  **No se re-normalizaron porque 5 de los 6 de entonces tenían `reviewed_at`**:
-  no hay forma de distinguir "Juan dejó ese título" de "Juan nunca lo miró", y
-  pisar una edición del admin es lo que el modelo de moderación prohíbe. Si
-  Juan confirma que el título no fue decisión suya, es una corrida y ya.
-- **¿Se suelta la tabla `trending_artists`?** Sigue en la base con 215 filas.
-  La migración está escrita (`20260831010000_baja_radar.sql`) y **sin
-  aplicar**, porque borra datos irrecuperables que no le hacen daño a nadie:
-  215 filas no pesan nada contra los 500 MB del plan gratuito.
+- **¿Se les devuelve el año al título de los festivales que ya están
+  revisados?** El caso urgente se cerró solo: el 2026-09-07 Juan resolvió los
+  dos `Festival Cordillera` dejando **el que conserva el año**, que es lo que
+  manda la regla desde que son `festival` (el año es la edición). Queda la
+  parte general: a los festivales viejos el normalizador les quitó el año
+  cuando todavía eran `music`, y **no se re-normalizaron porque tienen
+  `reviewed_at`** — no hay forma de distinguir "Juan dejó ese título" de "Juan
+  nunca lo miró", y pisar una edición del admin es lo que el modelo de
+  moderación prohíbe. Si Juan confirma que esos títulos no fueron decisión
+  suya, es una corrida y ya.
 - **¿Se borra el secret `BMI_LASTFM_API_KEY`?** Ya no lo usa nadie.
 - **¿Se suelta `canonical_events.price_text`?** Desde el 2026-09-02 no la lee
   nadie: el precio sale de `price_kind`/`price_min`/`price_max`. Se conservó
@@ -132,17 +131,18 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   `npm run capturas` cubren escritorio y móvil en los dos modos, pero son
   Chromium headless a tamaño simulado: no dicen nada de un teléfono de verdad
   ni de Safari.
-- **36 canónicos publicados sin revisar** (de 51). Son los del backfill del
+- **36 canónicos publicados sin revisar** (de 52). Son los del backfill del
   2026-08-31, publicados para que la cartelera no se vaciara al cambiar de
   modelo. Tienen `reviewed_at` en null y eso es correcto: nadie los revisó. El
   número baja solo a medida que Juan toca cada evento por otro motivo.
 - **12 publicados ya pasaron de fecha** y siguen en `publicado`. No se ven —la
   cartelera filtra por `starts_at >= hoy`— así que no es un bug, pero explica
-  por qué "51 publicados" y "38 en pantalla" no cuadran.
+  por qué "52 publicados" y "39 en pantalla" no cuadran.
 - **Sin verificar, porque no se ve desde fuera del dashboard:** si el proyecto
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
-  `sb_*` del 2026-08-28 no tocó.
+  `sb_*` del 2026-08-28 no tocó, y el MCP tampoco lo contesta: su token es de
+  lectura y no lista las API keys.
 - **Opcional:** añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para
   que el CI prerenderice contra la base real en vez de contra placeholders.
 
@@ -152,31 +152,36 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-07** contra la base.
+**2026-09-07** contra la base, con el MCP.
 
 | | |
 |---|---|
 | Filas crudas | **116** — visitbogota 58, royal 14, movistar 13, lourdes 9, latino 8, rockal 8, idartes 6 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **106** — 51 publicados, 50 borradores, 5 descartados |
-| Publicados | 45 conciertos + 4 fiestas + 2 festivales; de los conciertos, **8 locales y 37 internacionales**, 0 sin origen |
-| Borradores | 50 — 42 música, 8 festivales; **11 de música sin origen resuelto** |
+| Canónicos | **105** — 52 publicados, 48 borradores, 5 descartados |
+| Publicados | 45 conciertos + 4 fiestas + 3 festivales; de los conciertos, **8 locales y 37 internacionales**, 0 sin origen |
+| Borradores | 48 — 42 música, 6 festivales; **11 de música sin origen resuelto** |
 | Salas | **35** — 18 publicadas, **4 por aprobar**, 13 descartadas |
 | Coordenadas | **9 de 18 salas publicadas ubicadas** |
 | Fotos de sala | **0 de 18** |
-| Precio | **21 de 51 publicados** lo tienen |
-| Género visible | **9 de 51 publicados** |
+| Precio | **21 de 52 publicados** lo tienen |
+| Género visible | **9 de 52 publicados** |
 | Bloqueados | **31** `(fuente, id)` — visitbogota 23, idartes 5, movistar 3; 26 con motivo «no music» |
-| Duplicados sugeridos | **3**, esperando fusión en `/admin` |
-| En pantalla | **36 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), **0 festivales**, 37 eventos en el mapa |
-| Tests | 275 backend + 55 frontend, verdes en local y en CI (`b40ca71`) |
+| Duplicados sugeridos | **2**, esperando fusión en `/admin` |
+| En pantalla | **36 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), **1 festival**, 37 eventos en el mapa |
+| Tests | 275 backend + 55 frontend, verdes en local y en CI (`e97f2c0`); `Scraper cron` verde el 2026-09-07 |
 
 Cómo leerlas sin equivocarse:
 
+- ⚠️ **El estado de un canónico es `status`, no `published_at`.** Contar por
+  `published_at is not null` da 53 y no 52: hay un descartado que conserva la
+  fecha en la que estuvo publicado, y es correcto que la conserve.
 - ⚠️ **Que las filas crudas suban o bajen no dice nada del scraping por sí
   solo.** El botón de borrar elimina la fila cruda además del canónico, así
   que un triage a fondo *reduce* el crudo. Antes de sospechar de una fuente,
-  mirar `blocked_source_events`.
+  mirar `blocked_source_events`. Resolver un duplicado es distinto: se va un
+  canónico y el crudo se queda — por eso el 2026-09-07 los canónicos bajaron
+  de 106 a 105 con las 116 filas crudas quietas.
 - **El salto entre canónicos y pantalla es la cola más los que ya pasaron de
   fecha**, no deduplicación. Es el modelo funcionando, no un atraso del
   pipeline.
