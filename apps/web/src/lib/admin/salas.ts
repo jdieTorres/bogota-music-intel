@@ -103,6 +103,7 @@ export type SalaNueva = {
   city?: string;
   address?: string | null;
   website_url?: string | null;
+  photo_url?: string | null;
   latitude?: number | null;
   longitude?: number | null;
 };
@@ -124,6 +125,7 @@ export async function crearSala(sala: SalaNueva) {
       city: sala.city?.trim() || "Bogotá",
       address: sala.address?.trim() || null,
       website_url: sala.website_url?.trim() || null,
+      photo_url: sala.photo_url?.trim() || null,
       latitude: sala.latitude ?? null,
       longitude: sala.longitude ?? null,
       source_type: "manual",

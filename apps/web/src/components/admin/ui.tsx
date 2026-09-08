@@ -43,6 +43,76 @@ export function Rotulo({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Campo de URL de imagen con vista previa.
+ *
+ * **La vista previa es el punto, no un adorno.** Una URL pegada a mano falla
+ * de maneras que el texto no delata: el sitio de la sala sirve la foto solo a
+ * quien viene de su propia página, la de Instagram caduca a los días, o el
+ * enlace copiado apunta a la página que contiene la imagen y no a la imagen.
+ * Los tres casos se guardan sin error y se descubren después, cuando alguien
+ * abre el mapa. Acá se ven antes de guardar.
+ *
+ * Va con `<img>` y no con `next/image` a propósito: el optimizador de Next
+ * exige que el host esté en `images.remotePatterns`, y el sentido de este
+ * campo es justamente que la URL pueda venir de cualquier lado.
+ */
+export function CampoDeImagen({
+  valor,
+  alCambiar,
+  ayuda,
+}: {
+  valor: string | null;
+  alCambiar: (v: string | null) => void;
+  ayuda?: React.ReactNode;
+}) {
+  const url = valor?.trim() ?? "";
+  // No se valida "que parezca una URL de imagen" por la extensión: media
+  // internet sirve fotos desde rutas sin extensión. Lo que contesta de
+  // verdad si la URL sirve es cargarla, y eso es lo que hace la vista previa.
+  const esHttps = url === "" || url.startsWith("https://");
+
+  return (
+    <div>
+      <Rotulo>Foto de la sala</Rotulo>
+      <input
+        value={url}
+        onChange={(e) => alCambiar(e.target.value.trim() || null)}
+        placeholder="https://…"
+        className={CAMPO}
+      />
+      {ayuda && <p className="mt-1 text-xs text-muted">{ayuda}</p>}
+      {!esHttps && (
+        <p className="mt-1 text-xs text-red-400">
+          Tiene que empezar en https:// — una imagen por http la bloquea el navegador.
+        </p>
+      )}
+      {url !== "" && esHttps && (
+        <div className="mt-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={url}
+            alt=""
+            className="aspect-[16/9] w-full max-w-sm rounded-md border border-border object-cover"
+            onError={(e) => {
+              e.currentTarget.hidden = true;
+              e.currentTarget.nextElementSibling?.removeAttribute("hidden");
+            }}
+            onLoad={(e) => {
+              e.currentTarget.hidden = false;
+              e.currentTarget.nextElementSibling?.setAttribute("hidden", "");
+            }}
+          />
+          <p hidden className="text-xs text-red-400">
+            Esa URL no carga. Probala abriéndola sola en una pestaña: si ahí se ve,
+            el sitio no permite mostrarla desde otro lado y hace falta otra.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** "03 sep 26". Se arma por partes porque `es-CO` interpone "de" entre
  *  ellas ("03 de sept de 26") y en una columna angosta eso parte el
  *  renglón en dos líneas. */

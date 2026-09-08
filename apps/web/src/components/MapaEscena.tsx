@@ -75,10 +75,25 @@ function PanelSala({ sala }: { sala: SalaEnMapa }) {
     <div className="mt-4 overflow-hidden rounded-lg border border-border bg-surface">
       <div className="relative aspect-[16/9] w-full bg-background sm:aspect-[21/9]">
         {sala.photo_url ? (
+          // ⚠️ `unoptimized` es obligatorio acá, no una optimización de más.
+          //
+          // Los afiches llegan de un puñado de fuentes conocidas y por eso la
+          // lista blanca de `images.remotePatterns` les funciona. **La foto de
+          // la sala la pega Juan a mano en /admin**, desde el sitio de cada
+          // sala o su Instagram, así que el host es distinto casi siempre.
+          // `next/image` no degrada ante un host que no esté en la lista:
+          // lanza y tumba la página — comprobado, 500 sin esto y 200 con esto.
+          // Sin `unoptimized`, cada foto nueva costaría editar
+          // `next.config.ts` y volver a desplegar.
+          //
+          // Y no reabre el agujero que la lista blanca cierra: el riesgo era
+          // que nuestro servidor descargue y sirva cualquier URL, y acá no
+          // descarga nada — la imagen la pide el navegador de quien mira.
           <Image
             src={sala.photo_url}
             alt=""
             fill
+            unoptimized
             sizes="(max-width: 640px) 100vw, 1024px"
             className="object-cover"
           />

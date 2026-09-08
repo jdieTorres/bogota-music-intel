@@ -93,6 +93,15 @@ default `borrador`.
   la crearía de nuevo y los eventos quedarían repartidos entre las dos copias.
   `lib/admin/slug.ts` lo replica y `slug.test.ts` lo compara contra 17 salidas
   reales ("Ñoño's Pub" da `nono-s-pub`, no `nonos-pub`).
+- **La foto de la sala se pega como URL, con vista previa** (desde el
+  2026-09-08). Ninguna fuente que scrapeamos publica foto del venue, así que
+  este es el único camino por el que entra. La vista previa no es adorno: una
+  URL pegada falla callada de tres maneras —el sitio la sirve solo a quien
+  viene de su propia página, la de Instagram caduca, o el enlace apunta a la
+  página y no a la imagen— y las tres se guardan sin error. Que se vea antes
+  de guardar es la diferencia entre enterarse ahí o cuando alguien abre el
+  mapa. El criterio de qué foto sirve está en el propio formulario, que es
+  donde hace falta.
 
 ### Carga manual
 

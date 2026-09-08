@@ -15,7 +15,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { BOTON, BOTON_TENUE, CAMPO, Etiqueta, Rotulo } from "@/components/admin/ui";
+import {
+  BOTON,
+  BOTON_TENUE,
+  CAMPO,
+  CampoDeImagen,
+  Etiqueta,
+  Rotulo,
+} from "@/components/admin/ui";
 import { VOLVER } from "@/components/admin/ModeracionDeEventos";
 import {
   type CorreccionDeSala,
@@ -38,6 +45,25 @@ const VACIO: Record<PestañaDeSala, string> = {
   borrador: "El cron no encontró ninguna sala nueva.",
   publicado: "Todavía no hay ninguna sala aprobada.",
 };
+
+/**
+ * El criterio de qué foto sirve, que hasta el 2026-09-08 solo existía en
+ * `fotos_curadas.py` — o sea, donde no lo iba a leer quien está llenando el
+ * formulario.
+ *
+ * Ninguna fuente que scrapeamos publica foto de la sala: los afiches que
+ * llegan son del show, no del lugar. Por eso esto se carga a mano y por eso
+ * el criterio importa — un logo o un afiche haciendo de foto de sala es
+ * mostrar una cosa diciendo que es otra.
+ */
+const AYUDA_FOTO = (
+  <>
+    La fachada o el interior de la sala, de su sitio oficial, su Instagram o Google
+    Maps. Un logo no sirve, y el afiche de un evento tampoco: sería mostrar el show
+    en el lugar de la sala. Si no hay una buena, dejalo vacío — la sala sale con el
+    ícono de respaldo, que no afirma nada.
+  </>
+);
 
 export function ModeracionDeSalas({ setError }: { setError: (m: string | null) => void }) {
   const [salas, setSalas] = useState<SalaEnModeracion[]>([]);
@@ -196,6 +222,7 @@ function FichaDeSala({
     name: sala.name,
     address: sala.address,
     website_url: sala.website_url,
+    photo_url: sala.photo_url,
     latitude: sala.latitude,
     longitude: sala.longitude,
   });
@@ -275,6 +302,13 @@ function FichaDeSala({
             className={CAMPO}
           />
         </label>
+        <div className="sm:col-span-2">
+          <CampoDeImagen
+            valor={campos.photo_url ?? null}
+            alCambiar={(v) => setCampos({ ...campos, photo_url: v })}
+            ayuda={AYUDA_FOTO}
+          />
+        </div>
       </div>
 
       <p className="mt-3 text-xs text-muted">
@@ -324,6 +358,7 @@ function FormularioDeSala({
 }) {
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
+  const [foto, setFoto] = useState<string | null>(null);
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -335,6 +370,7 @@ function FormularioDeSala({
       await crearSala({
         name: nombre,
         address: direccion || null,
+        photo_url: foto,
         latitude: lat ? Number(lat) : null,
         longitude: lon ? Number(lon) : null,
       });
@@ -392,6 +428,9 @@ function FormularioDeSala({
             className={CAMPO}
           />
         </label>
+        <div className="sm:col-span-2">
+          <CampoDeImagen valor={foto} alCambiar={setFoto} ayuda={AYUDA_FOTO} />
+        </div>
       </div>
 
       <button

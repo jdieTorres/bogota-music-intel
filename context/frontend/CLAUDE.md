@@ -87,6 +87,28 @@ Al sumar una fuente nueva **hay que agregar su host**. `moderacion_cli` compara
 los hosts que llegan contra esa lista —leyéndola del propio `next.config.ts`,
 para no mantener dos copias— y lo avisa en el log del cron.
 
+### La excepción: las fotos de sala van `unoptimized`
+
+Los afiches llegan de un puñado de fuentes conocidas y por eso la lista blanca
+funciona con ellos. **Las fotos de sala no**: las pega Juan a mano en `/admin`,
+una por una, desde el sitio de cada sala o su Instagram, así que el host es
+distinto casi siempre y no se puede anticipar. Con la lista blanca, cada foto
+nueva costaría editar `next.config.ts` y volver a desplegar — y hasta entonces
+la página del mapa **se cae**, no se degrada.
+
+Por eso la foto de sala se dibuja con `unoptimized`, que **saltea el
+optimizador y con él la lista blanca**. Verificado llamando, no leyendo la
+documentación: con una URL de un host que no está en la lista, la página
+responde **200 con `unoptimized` y 500 sin él**, y el `src` que sale al HTML es
+la URL de origen tal cual, sin pasar por `/_next/image`.
+
+⚠️ **Y eso no abre el agujero que la lista blanca cierra**: el riesgo era que
+nuestro servidor descargue y sirva cualquier URL. Acá no descarga nada — la
+imagen la pide el navegador de quien mira, directo al sitio de la sala. El
+costo es el otro: la foto se sirve sin optimizar y **depende de que ese sitio
+la siga publicando**. Por eso el campo de `/admin` tiene vista previa: una URL
+que no carga se ve antes de guardarla, no cuando alguien abre el mapa.
+
 ## El tema claro/oscuro
 
 `src/components/ThemeToggle.tsx` cambia `data-theme` en `<html>` y lo guarda en
