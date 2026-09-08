@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "static.wixstatic.com" },
       { protocol: "https", hostname: "s3.eu-central-1.amazonaws.com" },
       { protocol: "https", hostname: "visitbogota.co" },
+      // Los afiches que carga el admin en /admin. A diferencia de los de
+      // arriba, este host es nuestro: la imagen la subió una persona al
+      // bucket `afiches`, no la publica la sala.
+      { protocol: "https", hostname: "zwsagtrsylkzttwrgtmx.supabase.co" },
     ],
   },
 };
