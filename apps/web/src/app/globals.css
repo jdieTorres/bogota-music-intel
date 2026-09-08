@@ -134,27 +134,104 @@ body {
    las tarjetas del sitio—, así que el CSS del popup salió de acá. */
 
 .marcador-sala {
+  /* Los tres colores del pin.
+
+     ⚠️ Son variables **propias del marcador** y no tokens del tema: no se
+     redefinen en `[data-theme="oscuro"]` a propósito, porque el mapa no
+     cambia con el toggle y un pin que sí cambiara se vería fuera de lugar
+     sobre unas teselas que siguen claras.
+
+     **Estos tres valores los eligió Juan** el 2026-09-08, y van contra la
+     costumbre del resto de la paleta, que se mide antes de elegirse. Medidos
+     después, sobre el verde #1fb21a: el arco #4fd4ef da **1.61** y el punto
+     #f7faf4 da **2.68**, los dos por debajo del 3:1 que le corresponde a un
+     gráfico; el disco contra el papel del mapa también da 2.68.
+
+     Queda anotado, no corregido: es una decisión suya y la sabe. Lo que
+     sostiene la legibilidad acá es el aro blanco y la sombra, que separan el
+     pin del mapa aunque el contraste del relleno sea bajo. ⚠️ Si algún día
+     se quita el aro o la sombra, esto se cae — y ahí sí hay que volver a los
+     números, no al ojo. */
+  --pin-aro: #f7faf4;
+  --pin-fondo: #1fb21a;
+  --pin-motivo: #4fd4ef;
+  --pin-detalle: #f7faf4;
   /* `padding: 0` porque el marcador es un <button> y no un <div>: el relleno
      propio del botón deformaría el ícono. */
   padding: 0;
-  /* 26px: a 14px —lo que medía el punto verde— el aro y el trazo interior de
-     la marca se empastan y no se distingue de un círculo cualquiera. A 26
-     se lee el dibujo sin taparle el mapa a nadie. */
-  width: 26px;
-  height: 26px;
+  /* 30px: a 14px —lo que medía el punto verde— el aro y el trazo interior de
+     la marca se empastan y no se distingue de un círculo cualquiera. Estuvo
+     en 26 hasta el 2026-09-08, cuando el disco pasó a ir relleno de verde:
+     con más masa de color, 4px más lo vuelven una parada de la vista sin que
+     tape la calle en la que está. */
+  width: 30px;
+  height: 30px;
   border: 0;
   background: none;
   line-height: 0;
   cursor: pointer;
-  /* La sombra reemplaza al aro que traía el punto verde: separa el ícono de
-     las calles y los parques, que traen sus propios verdes. */
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.35));
+  /* La sombra separa el ícono de las calles y los parques, que traen sus
+     propios verdes. Subió con el disco relleno: una mancha de color sólido
+     necesita despegarse más del fondo que un aro. */
+  filter: drop-shadow(0 1.5px 3px rgb(0 0 0 / 0.45));
   transition: transform 0.12s ease;
 }
 
+/* El pin apuntado crece y se pone rosa (2026-09-08, pedido de Juan).
+
+   El rosa acá **no es la marca de escena local**, que es el único trabajo que
+   tiene el magenta en el resto del sitio: en el mapa no hay nada que diga
+   "local", y un estado de hover dura lo que dura el puntero encima — no
+   etiqueta al pin, lo señala. Si algún día el mapa distingue salas de escena
+   local, esa marca tiene que ser otra cosa, no este rosa.
+
+   Sobre el rosa los números dan bien: el arco azul 3.36 y el punto en rosa
+   pálido 4.56, los dos por encima del 3:1. **El arco se queda azul también
+   acá**: es el detalle que hermana al pin con la marca de la barra de
+   arriba, y perderlo al apuntar haría que el pin cambiara de identidad, no
+   de estado. El aro exterior sí se tiñe, porque un aro blanco alrededor de
+   un disco rosa lee como el pin verde a medio pintar.
+
+   El `z-index` no es decoración: en Chapinero hay pines que se tapan entre
+   sí, y sin esto el que crece puede quedar debajo del vecino. */
 .marcador-sala:hover,
 .marcador-sala:focus-visible {
-  transform: scale(1.15);
+  --pin-aro: #ffeaf2;
+  --pin-fondo: #c2185b;
+  --pin-detalle: #ffd9e6;
+  z-index: 1;
+}
+
+/* ⚠️ **El crecimiento va sobre el SVG, no sobre el botón**, y no es cuestión
+   de gusto: MapLibre posiciona cada marcador escribiéndole un `transform`
+   **en línea** (`translate(-50%,-50%) translate(Xpx,Ypx)…`), y un estilo en
+   línea le gana a la hoja de estilos. Un `transform: scale()` sobre
+   `.marcador-sala` no hace absolutamente nada — y no lo hizo entre el
+   2026-09-07 y el 2026-09-08, con un `scale(1.15)` escrito acá que nadie
+   notó que no corría. Se descubrió midiendo el ancho renderizado en los dos
+   estados: 30px y 30px.
+
+   Si algún día hay que animar la posición del marcador, tampoco va acá: hay
+   que pedírselo a MapLibre, que es quien manda en ese `transform`. */
+.marcador-sala svg {
+  transform: scale(1);
+  transform-origin: center;
+  transition: transform 0.12s ease;
+}
+
+.marcador-sala:hover svg,
+.marcador-sala:focus-visible svg {
+  transform: scale(1.3);
+}
+
+/* El color se transiciona junto con el tamaño para que el cambio no parezca
+   un parpadeo. Va sobre las formas y no sobre el botón porque quien pinta es
+   el SVG de adentro. */
+.marcador-sala circle,
+.marcador-sala path {
+  transition:
+    fill 0.12s ease,
+    stroke 0.12s ease;
 }
 
 .marcador-sala svg {

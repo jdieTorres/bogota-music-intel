@@ -65,8 +65,16 @@ en los dos modos; `--accent-2` bajó de `#0e7f9c` a `#0c7189` porque el
 primero daba 4.17 sobre el papel y el género se escribe en tamaño de cuerpo.
 Antes de tocar un color, volver a medirlo.
 
-**El magenta tiene un solo trabajo y ninguno más: la marca de escena
-local.** Estaba definido desde el 2026-08-28 y no lo usaba nadie.
+**El magenta tiene un solo trabajo: la marca de escena local.** Estaba
+definido desde el 2026-08-28 y no lo usaba nadie.
+
+Tiene **una sola excepción**, y conviene entender por qué no rompe la regla:
+el **pin del mapa apuntado con el puntero** se pone rosa (2026-09-08, pedido
+de Juan). Un estado de hover dura lo que dura el puntero encima: no etiqueta
+al pin, lo señala. La regla existe para que el magenta no signifique dos
+cosas a la vez, y en el mapa no hay nada que hoy diga "local". ⚠️ **Si algún
+día el mapa distingue las salas de escena local, esa marca tiene que ser otra
+cosa** — ahí sí serían dos significados peleando.
 
 ### Tipografía
 
@@ -132,23 +140,38 @@ nuevo**, junto con lo que se aprendió rehaciendo los tres de categoría.
 | Ícono | Qué identifica | Dónde sale |
 |---|---|---|
 | `BrandMark` | el sitio, **y la sala** | masthead y marcador del mapa |
-| `IconConcierto` | `event_type` `music` — un micrófono | pestaña Conciertos |
-| `IconFiesta` | `event_type` `fiesta` — confeti | pestaña Fiestas |
-| `IconFestival` | `event_type` `festival` — una tarima | pestaña Festivales |
+| `IconConcierto` | `event_type` `music` — un micrófono de mano, con cable | pestaña, fila, ficha y panel de sala |
+| `IconFiesta` | `event_type` `fiesta` — un matasuegras | igual |
+| `IconFestival` | `event_type` `festival` — una carpa | igual |
 | `IconNota` | evento sin afiche | fila de cartelera y ficha |
 | `IconSun` / `IconMoon` | el `ThemeToggle` | masthead |
 
-### Dos decisiones de fondo
+### Tres decisiones de fondo
 
-- **El ícono de categoría va en la pestaña, no en cada fila.** Dentro de una
-  pestaña todos los eventos son del mismo tipo, así que repetirlo por fila no
-  informa nada. Donde sí decide es al elegir qué mirar.
+- **El ícono de categoría acompaña al nombre del evento**, y no solo a la
+  pestaña. Hasta el 2026-09-08 iba únicamente en la pestaña, con el argumento
+  de que dentro de una pestaña todos los eventos son del mismo tipo. El
+  argumento sigue siendo cierto y aun así Juan pidió lo contrario, con razón:
+  el evento se lee **fuera de su lista** —en su ficha, en el panel de una
+  sala, al volver de otra pestaña— y ahí no hay pestaña activa que lo diga.
+  Sale a 18px en la fila, a 16 en el panel de la sala y a 28/32 en la ficha,
+  que es lo que lo deja notorio sin volverse el primer elemento de la línea.
+  Quien lo dibuja es `IconoDeTipo`, y ahí vive la regla de que **un `null` no
+  lleva ícono**.
 - **La sala no tiene ícono propio: es `BrandMark`.** Repetir el dibujo con
   otro nombre solo abriría la puerta a que los dos se desincronicen.
+- **En el mapa esa marca va rellena de verde, no hueca** (2026-09-08). Sobre
+  un mapa lleno de líneas un aro delgado se pierde: el pin tiene que ganarle
+  a las calles. Relleno y a 30px es una mancha de color antes de ser un
+  dibujo, que es lo que se ve al barrer el mapa con la vista. **Y el pin
+  apuntado crece y se pone rosa** — el único lugar del sitio donde el magenta
+  no es la marca de escena local; el porqué, abajo.
 
 ⚠️ **El marcador del mapa es la excepción de color**: sus colores van fijos
-dentro del SVG y no en tokens, porque el mapa no cambia con el toggle. El
-porqué, en `context/look-and-feel/iconografia.md`.
+dentro del SVG y no en tokens, porque el mapa no cambia con el toggle — y por
+eso mismo el motivo usa el cian **claro** y no `--accent-2`, que sobre el
+verde da 1.03 de contraste. El porqué completo, en
+`context/look-and-feel/iconografia.md`.
 
 ## Qué queda abierto
 
