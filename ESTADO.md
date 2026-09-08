@@ -27,11 +27,13 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   Provincia | Tour Al Sol` con su gemelo ya publicado, y dos `Luis Alberto
   Posada` de título idéntico, los dos en borrador. El tercero —los dos
   `Festival Cordillera`— lo resolvió Juan el 2026-09-07.
-- **Fotos de las salas: 0 de 18 publicadas.** `fotos_curadas.py` está vacío y
-  todas salen con el ícono de respaldo. **Ninguna fuente que scrapeamos
-  publica foto del venue**, así que no hay nada que automatizar: sirve el
-  sitio oficial de la sala, su Instagram o Google Maps — una foto de la sala
-  (fachada o interior), no un logo ni el afiche de un evento.
+- **Fotos de las salas: 0 de 18 publicadas**, y todas salen con el ícono de
+  respaldo. **Ninguna fuente que scrapeamos publica foto del venue**, así que
+  no hay nada que automatizar: sirve el sitio oficial de la sala, su Instagram
+  o Google Maps — una foto de la sala (fachada o interior), no un logo ni el
+  afiche de un evento. Desde el 2026-09-08 **se pegan en `/admin` → Salas**,
+  con vista previa; la lista curada que había antes se archivó sin haber
+  llegado a tener una entrada.
 - **Coordenadas: 9 de 18 salas publicadas sin punto** — Coliseo Medplus,
   Parque El Country, Parque Metropolitano Simón Bolívar, Proyecto Kinder,
   Teatro Astor Plaza, Teatro Cafam, Teatro Colón de Bogotá, Teatro Mayor Julio

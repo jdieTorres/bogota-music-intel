@@ -40,11 +40,19 @@ API que reemplace estas listas**: se probaron Deezer, iTunes y Wikidata y
 ninguna expone país del artista de forma útil. La lista curada es la
 respuesta, no un parche.
 
-Son siete archivos en `services/api/bogota_music_intel/`: `artistas_locales`,
+Son seis archivos en `services/api/bogota_music_intel/`: `artistas_locales`,
 `ciclos_curados`, `festivales_curados`, `coordenadas_curadas`,
-`nombres_de_salas`, `fotos_curadas` y `titulos_curados`. **Crecen con cada
-corrida del cron**: un evento nuevo con un artista que las bases globales no
-conocen vuelve a caer en "sin origen", y quién entra lo decide Juan.
+`nombres_de_salas` y `titulos_curados`. **Crecen con cada corrida del cron**:
+un evento nuevo con un artista que las bases globales no conocen vuelve a caer
+en "sin origen", y quién entra lo decide Juan.
+
+⚠️ **Una lista curada es la respuesta cuando el dato lo produce la ingesta.
+Cuando lo produce una persona, el lugar es el formulario.** Eran siete: las
+fotos de sala se archivaron el 2026-09-08 porque nadie las scrapea —las pega
+Juan una por una— y una lista en git obligaba a un commit, una corrida de CLI
+y un despliegue por foto. Es la misma lección que ya había dejado
+`eventos_excluidos.py` al mudarse a `blocked_source_events`
+(`context/archivo/fotos-curadas.md`).
 
 **Todas exigen un campo `evidencia`, y hay tests que lo verifican. La regla: la
 nacionalidad, la coordenada o la grafía tiene que venir de una fuente

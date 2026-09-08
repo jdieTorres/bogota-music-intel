@@ -27,7 +27,7 @@ pero falso.**
 
 - Una entrada nueva en cualquiera de las siete listas curadas
   (`artistas_locales`, `ciclos_curados`, `festivales_curados`,
-  `coordenadas_curadas`, `nombres_de_salas`, `fotos_curadas`,
+  `coordenadas_curadas`, `nombres_de_salas`,
   `titulos_curados`) **tiene que traer `evidencia`, y la evidencia tiene que
   ser una fuente consultable.** Una nacionalidad "que se sabe", una coordenada
   aproximada a ojo o una grafía corregida de memoria son hallazgo, aunque estén

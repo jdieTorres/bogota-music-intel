@@ -17,7 +17,6 @@ Viven en `services/api/bogota_music_intel/`.
 | `festivales_curados.py` | festivales, **por título completo**, no por subcadena |
 | `coordenadas_curadas.py` | coordenadas de salas que Nominatim no resuelve |
 | `nombres_de_salas.py` | nombres corregidos cuando la fuente los publica mal |
-| `fotos_curadas.py` | fotos de sala para el panel del mapa |
 | `titulos_curados.py` | grafías de artista y títulos crudos mal escritos |
 
 Detalles que hay que respetar al agregar entradas:
@@ -37,6 +36,7 @@ Detalles que hay que respetar al agregar entradas:
   nombre de artista, sirve para cualquier evento futuro suyo) sobre `TITULOS`
   (por título crudo exacto), que deja de engancharse si la sala cambia una
   coma.
-- **`fotos_curadas.py`**: aplicar con `python -m
-  bogota_music_intel.fotos_cli [--dry-run]`. Si el host de la imagen no está
-  en `images.remotePatterns` de `apps/web/next.config.ts`, Next.js la rechaza.
+- ⚠️ **Las fotos de sala ya no son una lista curada.** `fotos_curadas.py` y
+  `fotos_cli.py` se archivaron el 2026-09-08: ahora la URL se pega en
+  `/admin` → Salas y se guarda directo en `venues.photo_url`. El porqué, en
+  `context/archivo/fotos-curadas.md`.

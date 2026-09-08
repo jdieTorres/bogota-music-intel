@@ -27,6 +27,14 @@ instalar algo que prometa ahorrar tokens, mirar acá.
   `.claude/settings.json` que hubo que revertir, y nada avisaba cuando el grafo
   quedaba viejo. **Antes de instalar algo que prometa ahorrar tokens, medir con
   `/context`.**
+- **`fotos-curadas.md`** — `fotos_curadas.py` y `fotos_cli.py`, escritos el
+  2026-08-29 y archivados el 2026-09-08 **sin una sola entrada**. Ninguna
+  fuente publica foto del venue, así que el dato entra a mano; de ahí se
+  concluyó mal que iba en una lista curada como las otras seis, cuando esas
+  las alimenta la ingesta y esta la alimenta una persona. Cargar una foto
+  costaba commit, CLI y despliegue. **Una lista curada es la respuesta cuando
+  el dato lo produce la ingesta; cuando lo produce una persona, el lugar es el
+  formulario** — la misma lección que ya había dejado `eventos_excluidos.py`.
 - **`mcp-de-github.md`** — el servidor MCP de GitHub, puesto y sacado el
   2026-09-07. Su OAuth no soporta *dynamic client registration*, así que el
   login de `/mcp` falla con `Incompatible auth server` y la única vía era un
