@@ -63,6 +63,18 @@ for (const vista of VISTAS) {
       deviceScaleFactor: 2,
       locale: "es-CO",
       timezoneId: "America/Bogota",
+      // ⚠️ El User-Agent por defecto de Playwright dice "HeadlessChrome", y
+      // hay sitios que con eso responden 403 con una página HTML donde
+      // debería ir una imagen. Pasa hoy con la foto de Movistar Arena: se ve
+      // perfecta en un navegador de verdad y salía rota en estas capturas.
+      //
+      // Las fotos de sala son URLs de sitios ajenos que pega Juan a mano, así
+      // que este caso no es raro: es el esperable. Sin esta línea, la
+      // herramienta que existe para que el sitio no "parezca roto sin estarlo"
+      // era justamente la que lo hacía parecer roto.
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+        "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
     });
 
     // El modo se fija antes de que corra nada de la página, igual que hace el

@@ -30,6 +30,18 @@ que despistaron, está en `context/frontend/trampas.md`.
 - **De la página completa solo genera la de escritorio.** La cartelera en
   móvil da una tira de más de 16.000px que al abrirla se reduce a algo
   ilegible. Se descubrió generándola.
+- **Se hace pasar por un Chrome normal.** El User-Agent por defecto de
+  Playwright dice `HeadlessChrome`, y hay servidores que con eso devuelven
+  **403 con una página HTML donde iba la imagen**. Pasó el 2026-09-08 con la
+  foto de Movistar Arena: perfecta en el navegador de Juan, rota en la
+  captura, y el diagnóstico que se dio primero —"esa foto no sirve"— era
+  falso. Las fotos de sala son URLs de sitios ajenos pegadas a mano, así que
+  este caso es el esperable y no la excepción.
+
+  ⚠️ La lección es más ancha que la línea de código: **la herramienta que
+  existe para que el sitio no "parezca roto sin estarlo" puede ser la que lo
+  haga parecer roto.** Antes de creerle a una captura que muestra algo caído
+  afuera de nuestro dominio, comprobarlo en un navegador de verdad.
 
 ## Lo que no cubren
 
