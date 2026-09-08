@@ -72,11 +72,11 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   no mostrar "12:00 a. m." cuando la fuente solo publicó fecha. Ante la duda,
   se muestra el hueco.
 - **"No sé" y "confirmado que no" son estados distintos y no se colapsan.**
-  `is_local` es `null`/`true`/`false` y el ranking solo castiga al `false`; un
-  503 de MusicBrainz no se guarda como "artista desconocido"; un match con
-  puntaje alto pero nombre distinto se rechaza en vez de aceptarse a medias.
-  Cada vez que se juntan los dos estados, el sistema afirma algo que nadie
-  verificó.
+  `is_local` es `null`/`true`/`false` y el ranking solo castiga al `false`; una
+  sala sin coordenada se lista como "sin ubicar" en vez de recibir un pin
+  aproximado; `price_kind` en null es "no sabemos si cuesta" y `con_costo` es
+  "cuesta, no sabemos cuánto". Cada vez que se juntan los dos estados, el
+  sistema afirma algo que nadie verificó.
 - **Guardar crudo, filtrar y clasificar en lectura.** La ingesta no descarta;
   el criterio editorial se aplica al leer. Así, cuando cambie el criterio, no
   hay que volver a scrapear el pasado.
@@ -93,6 +93,13 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   investigación documental de APIs de música se armó leyendo docs oficiales, y
   al llamarlas cuatro entradas resultaron falsas. Una duda que se pueda
   contestar con un `GET` no merece más investigación documental.
+- **Antes de preguntarse si una fuente acierta, preguntarse si contesta la
+  pregunta.** MusicBrainz clasificaba bien la nacionalidad del artista y aun
+  así hubo que darlo de baja: la pantalla decía «de la escena local» y eso es
+  un juicio editorial, no un hecho registrado en ninguna base. Una señal
+  precisa sobre la pregunta equivocada es peor que no tener señal, porque
+  parece un dato. Cuando el valor lo produce un criterio y no una medición, el
+  lugar es el formulario (`context/archivo/musicbrainz-y-artistas-locales.md`).
 - **Y hay que llamarla desde donde va a correr en producción, no solo en
   local.** Pasó con Deezer: geolocaliza por IP y desde CI devuelve otro chart,
   sin error. **Si algo depende de una API y solo se probó local, tratalo como
@@ -111,6 +118,14 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   cualquier cosa que dibuje, mirar `document.visibilityState` — o mejor,
   usar `npm run capturas`, que corre sobre Chromium headless y siempre
   renderiza (`context/look-and-feel/capturas.md`).
+- **El español es de Bogotá, nunca rioplatense.** Ni en pantalla, ni en los
+  comentarios, ni en las respuestas de la sesión. Nada de "pegá", "subí",
+  "revisá", "mirá", "decime", ni "vos/tenés/podés". **Se tutea** —"sube el
+  afiche", "revisa antes de guardar"—; lo que separa el tuteo del voseo es la
+  sílaba tónica: "sube" y no "subí". No es un gusto: en una plataforma cuyo
+  valor es conocer la escena de esta ciudad, escribir como alguien de otro
+  país delata que el texto no lo escribió quien dice escribirlo. La señal más
+  fácil de detectar es el acento en la última sílaba de un imperativo.
 - **En pantalla no van nombres de archivo nuestros.** Al lector no le dicen
   nada y le piden entender cómo está hecho el sistema. La nota para quien
   mantiene el código va en el código. Vale para estados vacíos y mensajes de
@@ -133,9 +148,17 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   bloquean igual. Para esas fuentes la vía es **pegar, no traer**: si el admin
   pega una URL y nuestro servidor la va a buscar, sigue siendo nuestro agente
   entrando donde no lo dejan.
-- **Las migraciones las aplica Juan a mano** en el SQL Editor de Supabase.
-  Ninguna sesión puede aplicar una por su cuenta: no hay CLI ni cadena de
-  conexión. Entregarla y pedirla, no darla por corrida.
+- **Lo aditivo lo aplica la sesión; lo destructivo pasa por Juan.** Desde el
+  2026-09-08 el MCP de Supabase tiene escritura, así que `add column`, `create
+  table`, índices y buckets se aplican con `apply_migration` y quedan
+  registrados. **Cualquier `drop`, `update` masivo o reescritura de datos sigue
+  necesitando que Juan lo autorice**, y el motivo no es ceremonia: el branching
+  de Supabase es de plan Pro, así que esa base es la **única copia** y no hay
+  entorno de pruebas donde equivocarse. El mismo token que aplica `add column`
+  puede correr `drop column price_text`.
+- **Y el archivo de la migración va al repo igual**, aunque se haya aplicado
+  desde la sesión. `supabase/migrations/` es el registro de lo que le pasó al
+  esquema, incluido lo que se aplicó y se revirtió el mismo día.
 - **Antes de dar el CI por bueno, mirar los dos workflows.** `Tests` y
   `Scraper cron` son distintos y uno no dice nada del otro.
 
