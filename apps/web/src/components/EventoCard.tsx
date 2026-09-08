@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ChipBoleta } from "@/components/ChipBoleta";
-import { IconNota } from "@/components/icons";
+import { IconNota, IconoDeTipo } from "@/components/icons";
 import { type Evento, nombreDelVenue } from "@/lib/events";
 import { horaDeEvento } from "@/lib/fechas";
 
@@ -66,8 +66,22 @@ export function EventoCard({ evento }: { evento: Evento }) {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h3 className="text-pretty font-display text-lg font-semibold leading-tight tracking-tight transition-colors group-hover:text-accent sm:text-xl">
-            {evento.title}
+          {/* El ícono de tipo, desde el 2026-09-08 y a pedido de Juan. Antes
+              solo estaba en la pestaña, con el argumento de que dentro de una
+              pestaña todos los eventos son del mismo tipo; sigue siendo
+              cierto, y aun así el ícono acá hace un trabajo que la pestaña no
+              hace: la fila se vuelve reconocible fuera de su lista —en la
+              ficha, en el panel de una sala, al volver de otra pestaña— sin
+              tener que leer nada.
+
+              A 18px y sin nombre para lectores de pantalla: la pestaña activa
+              ya lo dijo, y repetirlo en cada una de las filas es ruido. */}
+          <h3 className="flex items-start gap-2 font-display text-lg font-semibold leading-tight tracking-tight transition-colors group-hover:text-accent sm:text-xl">
+            <IconoDeTipo
+              tipo={evento.event_type}
+              className="mt-0.5 h-[18px] w-[18px] shrink-0 opacity-80"
+            />
+            <span className="text-pretty">{evento.title}</span>
           </h3>
 
           <p className="truncate text-sm text-muted">

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ChipBoleta } from "@/components/ChipBoleta";
 import { ControlesDeAdmin } from "@/components/ControlesDeAdmin";
-import { IconNota } from "@/components/icons";
+import { IconNota, IconoDeTipo } from "@/components/icons";
 
 import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
@@ -97,8 +97,18 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
                 de la escena local
               </p>
             )}
-            <h1 className="mt-2 text-balance font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
-              {titulo}
+            {/* Acá el ícono sí lleva nombre para lectores de pantalla: la
+                ficha no dice en ningún lado qué tipo de evento es —no hay
+                pestaña activa que lo diga— así que el dibujo es la única
+                señal, y una señal que solo existe en el dibujo deja fuera a
+                quien no lo ve. */}
+            <h1 className="mt-2 flex items-start gap-3 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
+              <IconoDeTipo
+                tipo={evento.event_type}
+                conNombre
+                className="mt-1 h-7 w-7 shrink-0 sm:mt-1.5 sm:h-8 sm:w-8"
+              />
+              <span className="text-balance">{titulo}</span>
             </h1>
             <p className="mt-3 text-lg text-muted">
               {venue}

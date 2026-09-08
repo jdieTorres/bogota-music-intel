@@ -15,7 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { IconNota, MARCA_SALA_SVG } from "@/components/icons";
+import { IconNota, IconoDeTipo, MARCA_SALA_SVG } from "@/components/icons";
 import type { SalaEnMapa } from "@/lib/venues";
 
 // maplibre-gl 6 resuelve su worker con `import.meta.url` y descarta el valor si
@@ -105,6 +105,15 @@ function PanelSala({ sala }: { sala: SalaEnMapa }) {
                 <span className="shrink-0 font-mono text-xs text-muted">
                   {fechaCorta(evento.starts_at)}
                 </span>
+                {/* Con nombre para lectores de pantalla: el panel de una sala
+                    mezcla conciertos, fiestas y festivales, así que acá el
+                    tipo no se deduce de nada más. `self-center` porque el
+                    ícono no tiene línea base con la que alinearse. */}
+                <IconoDeTipo
+                  tipo={evento.event_type}
+                  conNombre
+                  className="h-4 w-4 shrink-0 self-center opacity-80"
+                />
                 <span className="truncate text-sm">{evento.title}</span>
               </Link>
             </li>
