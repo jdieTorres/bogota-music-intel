@@ -1,0 +1,21 @@
+-- Se da de baja `venues.escena`, aplicada y revertida el mismo día
+-- (2026-09-08, decisión de Juan). Duró unas horas.
+--
+-- La idea era que la sala dijera si sus conciertos entran a la cartelera, y
+-- el defecto que la tumbó es real: **una sala no es homogénea**. Royal Center
+-- programa una gira internacional el viernes y una banda local el martes; el
+-- Teatro Jorge Eliécer Gaitán es institucional y además es donde toca
+-- Ancestral Beats. Etiquetar la sala mal-etiqueta todos sus eventos, y
+-- ninguno de los dos estados era honesto para la mitad de su programación.
+--
+-- Lo que la reemplaza no es otra columna: es la cola de moderación, que ya
+-- existía y ya decide evento por evento. El criterio resultó ser editorial y
+-- humano, no un dato que se pueda guardar en la sala.
+--
+-- El ruido que esta columna iba a tapar se resuelve un paso antes, en la
+-- ingesta: salieron del registry las dos fuentes que traían casi solo
+-- escenarios grandes (visitbogota y movistar_arena). ⚠️ Sacar la fuente no
+-- borra nada; filtrar dentro de un scraper que sigue corriendo sí, porque
+-- `_prune_missing_events` interpreta lo filtrado como "ya no existe".
+
+alter table venues drop column if exists escena;
