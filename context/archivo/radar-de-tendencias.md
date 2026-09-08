@@ -1,6 +1,8 @@
 # Radar de tendencias — módulo retirado (archivo)
 
 > Construido el 2026-08-28, sacado del MVP y borrado el 2026-08-31. No hay código ni ruta; está todo en el historial de git. Se conserva el registro por si el módulo vuelve.
+>
+> **Los datos ya no están.** La tabla `trending_artists` se soltó con `20260831010000_baja_radar.sql` —verificado el 2026-09-07: no existe en el esquema—, y con ella las 215 fotos semanales de `lastfm_geo`. Si el radar vuelve, vuelve sin historia: la serie arranca de cero.
 
 ## 7. Radar de tendencias (Fase 5) — implementado el 2026-08-28, un eje activo
 

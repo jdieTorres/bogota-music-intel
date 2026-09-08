@@ -28,13 +28,22 @@ aplican en el **SQL Editor de Supabase**.
 Quien escriba una migración tiene que **entregarla y pedirla**, no darla por
 corrida. Anotar en `ESTADO.md` que quedó sin aplicar.
 
+⚠️ **Y para saber si una migración ya se aplicó hay que mirar el esquema, no
+la lista de migraciones.** `list_migrations` del MCP lee
+`supabase_migrations.schema_migrations`, que la llena el CLI de Supabase — y
+acá no se usa: pegar el SQL a mano no deja rastro ahí. La tabla está vacía y
+seguirá vacía, así que su respuesta **no significa "ninguna aplicada"**. Lo
+que contesta de verdad es `list_tables` o un `select` contra el objeto que la
+migración crea o borra: así se descubrió el 2026-09-07 que la migración de
+baja del radar sí estaba aplicada mientras `ESTADO.md` la daba por pendiente.
+
 ## CI — dos workflows, y uno no dice nada del otro
 
 - **`Scraper cron`** — corre la ingesta contra Supabase de verdad. Su verde
   prueba que los secrets sirven: `scrape_cli` devuelve 1 si falla cualquier
   fuente.
-- **`Tests`** — 249 tests de backend y 42 de frontend, `ruff`, `tsc`,
-  `eslint`, `npm run lint` y build.
+- **`Tests`** — los tests de backend y de frontend, `ruff`, `tsc`, `eslint`,
+  `npm run lint` y build. Cuántos son, en `ESTADO.md`.
 
 ⚠️ **Antes de dar el CI por bueno, mirar los dos.** `Tests` estuvo en rojo tres
 días sin que nadie lo notara, precisamente porque `Scraper cron` estaba verde
