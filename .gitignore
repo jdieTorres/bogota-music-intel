@@ -22,3 +22,7 @@ Thumbs.db
 
 # Capturas de look & feel (npm run capturas) — se regeneran
 apps/web/capturas/
+
+# Claude Code — settings.local.json lleva el token de Supabase.
+# Lo ignoraba solo el ignore global del usuario; acá no depende de la máquina.
+.claude/settings.local.json

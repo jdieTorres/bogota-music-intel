@@ -51,6 +51,13 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   música** y están en la cola por el fallo de `Ferias MICE` que se describe
   abajo.
 
+- **El token de Supabase de la sesión vence el 2026-12-06.** Es el
+  `SUPABASE_ACCESS_TOKEN` de `.claude/settings.local.json`, creado el
+  2026-09-07 con 90 días, el máximo que ofrece Supabase. Cuando venza, el MCP
+  va a responder `Unauthorized` sin decir que caducó. Se regenera en Account →
+  Access Tokens con los mismos cuatro permisos de lectura
+  (`context/infraestructura/CLAUDE.md`).
+
 ### Preguntas abiertas — hay que hacérselas a Juan, no resolverlas por cuenta propia
 
 - **¿Se les devuelve el año al título de los festivales?** Ya no es una duda

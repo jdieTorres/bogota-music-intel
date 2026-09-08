@@ -52,6 +52,7 @@ configuración, pero **no cuentes con la hora**.
 |---|---|
 | `BMI_SUPABASE_URL` | `services/api/.env` + secret del repo |
 | `BMI_SUPABASE_SERVICE_ROLE_KEY` | `services/api/.env` + secret del repo |
+| `SUPABASE_ACCESS_TOKEN` | `.claude/settings.local.json`, solo local |
 
 Son claves de **formato nuevo** (`sb_secret_…` / `sb_publishable_…`), no los
 JWT viejos: se revocan una por una desde Project Settings → API Keys sin tocar
@@ -61,6 +62,27 @@ rota sin ventana de caída.
 `services/api/.env` está en `.gitignore` desde el principio y nunca estuvo
 rastreado. **La publishable del frontend no se rota**: va en el bundle del
 navegador por diseño y RLS solo le permite SELECT.
+
+`SUPABASE_ACCESS_TOKEN` es distinto: no lo usa ni la ingesta ni el frontend,
+sino el servidor MCP que deja a la sesión consultar la base. Es un token
+**scoped** (`sbp_fc…`) limitado al proyecto, con cuatro permisos y todos de
+lectura: **Database**, **Migrations**, **Advisors** y **Project Settings**.
+Database es el que importa —`list_tables` y `execute_sql` cuelgan de él— y es
+el que se olvida, porque la sección del diálogo se llama igual que el permiso.
+
+Los tokens scoped **siempre vencen**: el máximo del desplegable es 90 días. Al
+vencer, el MCP responde `Unauthorized` sin decir que caducó, así que la fecha
+va en `ESTADO.md`. Se regenera en Account → Access Tokens, se pega en
+`.claude/settings.local.json` y **hay que reiniciar Claude Code**: el servidor
+lee la variable al arrancar.
+
+Que el token sirve se comprueba llamando a la Management API, no reiniciando a
+ver qué pasa — un 403 dice exactamente qué permiso falta:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}
+" -H "Authorization: Bearer $TOKEN"   https://api.supabase.com/v1/projects/<ref>/types/typescript
+```
 
 ## Deploy
 
