@@ -68,7 +68,7 @@ Lo que **no** cambia: Tuboleta, Bandsintown y Songkick siguen fuera del pipeline
 | Ace of Spades | ⚠️ **Corregido al implementar (2026-08-27):** el sitio redirige a `/new/`, un WordPress recién montado sin listado de eventos — solo el post "Hello world!" de ejemplo, un botón de reservas por WhatsApp y `wp-json` sin custom post types. No hay nada que scrapear. Difusión real: Instagram (@aceofspadesclub1) | Carga manual periódica hasta que publiquen cartelera |
 | Lourdes Music Hall | Sitio propio (lourdesmusichall.com), robots.txt estándar | Scraping directo |
 | Royal Center | Sitio propio (royalcenter.com.co), robots.txt permisivo — publica "Próximos Eventos" con fechas | Scraping directo |
-| Latino Power | Tienda de boletas propia (tickets.latinopower.com.co), robots.txt estándar. **Hallazgo (2026-08-27):** corre el plugin *The Events Calendar*, que expone API REST pública y estructurada en `/wp-json/tribe/events/v1/events` (fechas con timezone, venue con dirección, costo). No requiere parsear HTML | API JSON — la mejor fuente de las seis |
+| Latino Power | Tienda de boletas propia (tickets.latinopower.com.co), robots.txt estándar. **Hallazgo (2026-08-27):** corre el plugin *The Events Calendar*, que expone API REST pública y estructurada en `/wp-json/tribe/events/v1/events` (fechas con timezone, venue con dirección, costo). No requiere parsear HTML | API JSON — la fuente mejor estructurada de todas |
 | Capital Live Concerts | No es venue suelto — es la sala de Rockal Live / ROCKAL SAS (promotor real, con sitio propio y presencia en X/FB/LinkedIn). Tiene página de vendedor activa en eTicketaBlanca con eventos reales | Página de vendedor Rockal Live en eTicketaBlanca (`tickets.eticketablanca.com/seller/rockal-live-dltt`) |
 | Boro Room | Sin sitio propio. Difusión casi 100% Instagram (@boro_room, activa). No tiene organizador fijo en eTicketaBlanca — cada show lo vende una productora distinta (ej. Sin Error Producciones tuvo solo 1 evento histórico ahí) | Sin fuente automatizable estable — carga manual periódica |
 | The Bonfire | Mismo patrón que Boro Room: sin sitio propio, difusión en TikTok/Instagram, sin organizador fijo identificado en eTicketaBlanca | Sin fuente automatizable estable — carga manual periódica |
@@ -93,6 +93,35 @@ Verificadas contra los sitios reales; hay tests de regresión en `services/api/t
 
 
 ---
+
+### El horizonte de una fuente: lo que se perdió al sacar visitbogota (2026-09-08)
+
+Al recuperar `movistar_arena` se esperaba que su scraper volviera a enganchar
+los eventos del Movistar que colgaban solo de `visitbogota` — la deduplicación
+los propondría como duplicados y bastaba confirmarlos. **La primera corrida
+mostró que no.**
+
+El motivo no es un fallo del parser: `movistararena.co` publica su cartelera
+con una ventana de **alrededor de un mes**, y `visitbogota` llegaba a **tres**.
+Las 13 filas que trae el scraper de la sala terminan el 3 de octubre; los seis
+huérfanos son todos posteriores:
+
+| Evento | Fecha |
+|---|---|
+| LosPetitFellas | 9 oct |
+| Kris R | 23 oct |
+| Aterciopelados | 30 oct |
+| Reykon | 6 nov |
+| Todos Somos Ángeles Rock Fest | 8 nov |
+| Juanes | 19 nov |
+
+Se reenganchan solos a medida que la ventana los alcance. Hasta entonces siguen
+congelados: si el Movistar mueve una de esas fechas, nadie se entera.
+
+**Lo que hay que llevarse:** parte del valor de la agenda del distrito no era
+la cobertura de salas —eso ya se había medido, y era casi todo masivo— sino el
+**horizonte temporal**, que nadie midió antes de sacarla. Al evaluar una fuente
+conviene anotar las dos cosas: qué salas trae y hasta cuándo llega.
 
 ### Idartes deja de entrar acotada
 

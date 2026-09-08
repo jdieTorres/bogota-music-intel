@@ -10,10 +10,17 @@ hacia periodismo y creación de contenido en la industria musical.
 
 ## Lo primero que hay que entender
 
-**La plataforma prioriza y promueve los toques de artistas locales.** No es una
-cartelera genérica de eventos de la ciudad: si algo entra al producto, tiene
-que servir a ese propósito. Es criterio de diseño, no solo de filtrado — aplica
-al scraping, al ranking y a cómo se presenta cada evento.
+**La plataforma promueve los toques de la escena underground de Bogotá.** No
+es una cartelera genérica de la ciudad: si algo entra al producto, tiene que
+servir a ese propósito. Es criterio de diseño, no solo de filtrado — aplica al
+scraping, al ranking y a cómo se presenta cada evento.
+
+⚠️ **"Escena" no es lo mismo que "colombiano", y confundirlos ya costó una
+feature entera** (2026-09-08). Carlos Vives y Juanes son nacionales y no son
+escena; El Kalvo lo es y ninguna base global sabe de dónde viene. **Ningún
+automatismo decide esto**: quién es de la escena lo marca Juan, evento por
+evento, en la cola de moderación — y la cola ya existía, así que el giro no
+necesitó código nuevo para decidir, solo para dejar de decidir mal.
 
 **Ningún evento se publica solo.** El cron propone; lo que trae entra como
 borrador a una cola y Juan verifica, completa y publica. Lo que se muestra sale

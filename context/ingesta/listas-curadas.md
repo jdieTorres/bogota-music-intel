@@ -1,4 +1,8 @@
-# Las siete listas curadas
+# Las listas curadas
+
+> Eran siete. Hoy son cinco: `fotos_curadas` se archivó el 2026-09-08 —el dato
+> lo produce una persona, así que va al formulario— y `artistas_locales` se fue
+> con MusicBrainz el mismo día. Las dos, en `context/archivo/`.
 
 MusicBrainz resuelve bien al internacional consagrado y mal al local
 emergente, que es lo contrario de lo que esta plataforma necesita. **No hay

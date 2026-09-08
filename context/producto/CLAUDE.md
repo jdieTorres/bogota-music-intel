@@ -24,11 +24,17 @@ Radar— está en `context/producto/diseno-del-producto.md`.
 | Fase | Qué es | Estado |
 |---|---|---|
 | 1 | Infraestructura (monorepo, Supabase, GitHub Actions) | hecha |
-| 2 | Scrapers | hecha, sigue creciendo |
+| 2 | Scrapers | hecha, y desde el 2026-09-08 **encoge a propósito** |
 | 3 | Calendario | hecha |
 | 4 | Mapa | hecha |
 | 5 | Moderación + directorio | moderación hecha, directorio sin arrancar |
 | 6 | Pulido y deploy | sin arrancar |
+
+**La Fase 2 dejó de medirse por cuántas fuentes tiene.** Al enfocar el producto
+en la escena underground, `visitbogota` salió del cron: traía 58 filas y 49
+eran de escenarios masivos. La cobertura que importa ahora no es "cuántos
+eventos de Bogotá", sino "cuántos de la escena", y esos casi no se publican en
+carteleras — entran por el lector de afiches (`context/ingesta/CLAUDE.md`).
 
 Lo que falta de verdad, con numerador y denominador, está en `ESTADO.md`.
 

@@ -7,7 +7,7 @@ libre y teatro.
 Dos señales, en este orden de confianza:
 
 1. **La categoría que publica la fuente.** Cuando existe es la señal más
-   fuerte, porque la puso la sala. Solo dos de seis fuentes la traen
+   fuerte, porque la puso la sala. Solo dos de las fuentes activas la traen
    (Idartes Teatro JEG y Rockal Live); en Idartes distingue Teatro y
    Multidisciplinar, que es exactamente lo que hay que sacar.
 

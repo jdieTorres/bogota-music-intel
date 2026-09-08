@@ -1,7 +1,7 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-07** (recontado contra la base esa noche, con
-el MCP de Supabase ya funcionando).
+Última actualización: **2026-09-08**, recontado contra la base con el MCP
+después de la primera corrida del cron sin MusicBrainz.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -12,139 +12,94 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-- 🔥 **`Bogotá Music Market | BoMM 2026` es mañana (2026-09-08) y sigue en
-  borrador.** De los seis festivales en cola es el único que se vence ya; los
-  otros van del 2026-09-12 al 2026-11-28.
-- **`/festivales` ya no está vacía, pero muestra uno solo:** `Festival
-  Cordillera 2026` (2026-09-12), que se publicó el 2026-09-07 al resolver el
-  duplicado. Los otros dos publicados —`Festival Internacional de Música
-  Sacra` y `Tortazo Jazz`— son del 2026-09-04 y del 2026-09-05, o sea que ya
-  pasaron, y la página filtra por `starts_at >= hoy`. Lo que la llena son los
-  6 festivales que siguen en borrador.
-- **48 borradores en cola** esperando triage. No bloquea escribir código, pero
-  sí bloquea que la cartelera muestre lo que ya se trajo.
-- **2 duplicados sugeridos esperando fusión** en `/admin`: `Carlos Vives & La
-  Provincia | Tour Al Sol` con su gemelo ya publicado, y dos `Luis Alberto
-  Posada` de título idéntico, los dos en borrador. El tercero —los dos
-  `Festival Cordillera`— lo resolvió Juan el 2026-09-07.
-- **Fotos de las salas: 0 de 18 publicadas**, y todas salen con el ícono de
-  respaldo. **Ninguna fuente que scrapeamos publica foto del venue**, así que
-  no hay nada que automatizar: sirve el sitio oficial de la sala, su Instagram
-  o Google Maps — una foto de la sala (fachada o interior), no un logo ni el
-  afiche de un evento. Desde el 2026-09-08 **se pegan en `/admin` → Salas**,
-  con vista previa; la lista curada que había antes se archivó sin haber
-  llegado a tener una entrada.
-- **Coordenadas: 9 de 18 salas publicadas sin punto** — Coliseo Medplus,
-  Parque El Country, Parque Metropolitano Simón Bolívar, Proyecto Kinder,
-  Teatro Astor Plaza, Teatro Cafam, Teatro Colón de Bogotá, Teatro Mayor Julio
-  Mario Santo Domingo y Teatro al Aire Libre La Media Torta. Eran 4: el
-  denominador creció al aprobar salas nuevas el 2026-09-02 y nadie movió el
-  numerador. Ya se nota — `/mapa` las lista debajo como "sin ubicar". Se
+- 🔥 **La cuenta de Anthropic no tiene saldo, y eso deja el lector de afiches
+  sin probar.** La key está en `apps/web/.env.local` y la API la acepta; lo que
+  devuelve es *"Your credit balance is too low"*. Se recarga en
+  `console.anthropic.com` → Plans & Billing. Es la única dependencia paga del
+  proyecto y leer un afiche cuesta cerca de US$0,01.
+- **La cartelera sigue encabezada por el Movistar Arena.** De 38 eventos en
+  pantalla, **9 son de esa sala** — más que ninguna otra — y otros 5 de Royal
+  Center. Son publicados de antes del giro: la cola se vació pero la cartelera
+  no. Se sacan con "No va" en `/admin`, que es reversible; **"Borrar" no**,
+  porque su bloqueo es por `(fuente, id)` y una fuente nueva lo esquiva.
+- **8 de 19 salas publicadas sin foto**: La Mecánica, La Media Torta, Parque el
+  Country, Proyecto Kinder, Teatro Astor Plaza, Teatro Cafam, Teatro Colón y
+  Teatro Mayor Julio Mario Santo Domingo. Se pegan como URL en `/admin` →
+  Salas, con vista previa.
+- **2 de 19 salas publicadas sin coordenada**: La Mecánica y Teatro Cafam. Se
   arregla pegando el punto desde Google Maps en `/admin` → Salas.
 - **4 salas por aprobar**: Parque de la 93, Teatro Panorama, Ágora Bogotá
-  Centro de Convenciones y Museo de Arte Moderno de Bogotá MAMBO. Entraron
-  solas al nombrarlas un evento scrapeado y esperan revisión. Ojo: aprobarlas
-  vuelve a mover el denominador de las coordenadas.
-- **El género: 9 de 52 publicados lo muestran.** Otros 7 tienen `category`
-  pero es la taxonomía de la fuente —4 "Música", 2 "Conciertos", 1 "Otro"— y
-  `generoVisible` la esconde a propósito. Ninguna fuente publica género real:
-  o lo escribe Juan en `/admin` o el chip no existe.
-- **11 borradores de música sin origen resuelto** (`is_local` en null). Se
-  resuelven a mano en `/admin` o curando en `artistas_locales.py`. Dos de
-  ellos, **`Expo Solar` y `ARTBo | Feria Internacional de Arte`, no son
-  música** y están en la cola por el fallo de `Ferias MICE` que se describe
-  abajo.
-- **El token de Supabase de la sesión vence el 2026-12-06.** Es el
-  `SUPABASE_ACCESS_TOKEN` de `.claude/settings.local.json`, creado el
-  2026-09-07 con 90 días, el máximo que ofrece Supabase. **Quedó verificado
-  funcionando el 2026-09-07**, después de reiniciar Claude Code: `list_tables`
-  y `execute_sql` responden contra la base real, y las cifras de la sección 3
-  salieron de ahí. Cuando venza, el MCP va a responder `Unauthorized` sin
-  decir que caducó. Se regenera en Account → Access Tokens con los mismos
-  cuatro permisos de lectura (`context/infraestructura/CLAUDE.md`).
+  Centro de Convenciones y Museo de Arte Moderno de Bogotá MAMBO. Ojo:
+  aprobarlas mueve el denominador de las dos líneas de arriba.
+- **El género: 6 de 50 publicados muestran chip.** Otros 5 tienen `category`
+  pero es taxonomía de la fuente —3 "Música", 1 "Conciertos", 1 "Otro"— y
+  `generoVisible` la esconde a propósito. Ninguna fuente publica género real
+  salvo Rockal Live: o lo escribe Juan en `/admin` o el chip no existe.
+- **La fecha de vencimiento del token de Supabase hay que anotarla.** El
+  2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
+  reemplazó al de solo lectura que vencía el 2026-12-06. Los tokens scoped
+  siempre vencen y el máximo del desplegable son 90 días; **si tomó el máximo
+  vence alrededor del 2026-12-07**, pero eso no se verificó. Al vencer, el MCP
+  responde `Unauthorized` sin decir que caducó.
 
 ### Preguntas abiertas — hay que hacérselas a Juan, no resolverlas por cuenta propia
 
 - **¿Se les devuelve el año al título de los festivales que ya están
-  revisados?** El caso urgente se cerró solo: el 2026-09-07 Juan resolvió los
-  dos `Festival Cordillera` dejando **el que conserva el año**, que es lo que
-  manda la regla desde que son `festival` (el año es la edición). Queda la
-  parte general: a los festivales viejos el normalizador les quitó el año
-  cuando todavía eran `music`, y **no se re-normalizaron porque tienen
-  `reviewed_at`** — no hay forma de distinguir "Juan dejó ese título" de "Juan
-  nunca lo miró", y pisar una edición del admin es lo que el modelo de
-  moderación prohíbe. Si Juan confirma que esos títulos no fueron decisión
-  suya, es una corrida y ya.
+  revisados?** A los festivales viejos el normalizador les quitó el año cuando
+  todavía eran `music`, y **no se re-normalizaron porque tienen `reviewed_at`**
+  — no hay forma de distinguir "Juan dejó ese título" de "Juan nunca lo miró",
+  y pisar una edición del admin es lo que el modelo de moderación prohíbe. Si
+  Juan confirma que esos títulos no fueron decisión suya, es una corrida y ya.
 - **¿Se borra el secret `BMI_LASTFM_API_KEY`?** Ya no lo usa nadie.
 - **¿Se suelta `canonical_events.price_text`?** Desde el 2026-09-02 no la lee
   nadie: el precio sale de `price_kind`/`price_min`/`price_max`. Se conservó
-  porque soltarla borra datos irrecuperables, que es decisión tuya y no de una
-  migración. En `events` **sí se queda**: ahí es la evidencia cruda de lo que
-  publicó la fuente.
+  porque soltarla borra datos irrecuperables. En `events` **sí se queda**: ahí
+  es la evidencia cruda de lo que publicó la fuente.
 
 ---
 
 ## 2. Lo que quedó a medias
 
-- 🟠 **Afinar el filtro de `visitbogota`: sigue llegando a la cola mucho que
-  no es música.** Lo pidió Juan el 2026-09-02 después de otra sesión de
-  triage, y una semana después la proporción no bajó: de los **31 bloqueos que
-  existen, 23 son de visitbogota**, y **26 del total tienen motivo «no music»**
-  — o sea que dos tercios del trabajo de borrado que ha hecho una persona lo
-  genera una sola fuente.
-
-  Dos pistas concretas, las dos verificadas contra fichas reales:
-
-  1. **`Ferias MICE` no engancha, aunque `ferias` y `mice` están las dos en la
-     lista.** `categoria_no_musical()` compara la cadena entera contra
-     `CATEGORIAS_NO_MUSICALES`, así que una etiqueta compuesta se escapa. Hoy
-     **`Expo Solar` y `ARTBo` siguen en la cola como música** por esto. Es el
-     arreglo chico y seguro.
-  2. **La ficha publica tres niveles de etiquetas y el scraper solo lee el
-     primero.** El regex `_CATEGORIA` corta justo en «Categorías», que es el
-     segundo bloque, y hay un tercero («Subcategorías»). Comparadas:
-
-     | Ficha | Categoría del evento | Categorías | Subcategorías |
-     |---|---|---|---|
-     | Expo Solar | Ferias MICE | *(vacío)* | *(vacío)* |
-     | Tortazo Jazz | Conciertos | Cultura | Teatros Museos Música y Arte |
-
-     ⚠️ **Son dos fichas, no una muestra.** Antes de construir sobre esto hay
-     que mirar bastantes más y ver si de verdad discrimina — es exactamente el
-     error que ya se pagó dos veces en este proyecto, dar por buena una señal
-     con pocos casos.
-
-  El contexto que hace falta para no equivocarse: **`Categoría del evento` casi
-  no discrimina en el corpus real** — 52 de las 55 fichas de entonces decían
-  «Conciertos». Eso no contradice lo que dice `context/ingesta/CLAUDE.md` (la
-  etiqueta *acierta* cuando dice algo distinto), pero sí matiza para qué sirve:
-  es buena para descartar lo que ella misma marca como otra cosa, y no alcanza
-  para lo que mete bajo «Conciertos».
-
-  Y el aviso de siempre antes de tocar `PATRONES_NO_MUSICALES`: el archivo ya
-  advierte que **la Feria de las Flores y la Feria de Cali SÍ son eventos con
-  música**. Un patrón sobre «feria» o «festival» es justamente el que se lleva
-  por delante lo que la plataforma existe para promover.
-- **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local, y eso
-  incluye el rediseño entero del 2026-09-07. Hacen falta
-  `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en el
-  proyecto de Vercel.
-- **El rediseño no se ha visto en un dispositivo real.** Las 30 capturas de
+- 🟠 **El lector de afiches está escrito y a medio probar.** Lo verificado de
+  punta a punta es la subida al bucket —hay un evento con su afiche servido
+  desde Storage— y que un POST sin sesión de admin recibe 401 o 403. **La
+  extracción nunca corrió**, por el saldo. Lo que hay que mirar cuando corra no
+  es si acierta el título: es **que devuelva vacío donde el afiche no dice
+  nada**. Los tres casos que lo prueban son un afiche sin año, uno sin hora y
+  uno de una sala que no está cargada.
+- **`/admin` no se ha visto renderizado desde los cambios del 2026-09-08.**
+  Pide sesión, así que `npm run capturas` —que cubre las cinco páginas
+  públicas— no llega ahí. Compila, los tipos cierran y los tests pasan, pero
+  este proyecto ya tuvo el mapa en negro con el CI entero en verde. Sin
+  verificar: el bloque de carga de afiche, los dos campos de fecha, y que
+  guardar un evento al que se llegó con `?evento=` devuelva a su ficha pública.
+- **6 eventos del Movistar cuelgan solo de `visitbogota`, que ya no corre.**
+  LosPetitFellas (9 oct), Kris R (23 oct), Aterciopelados (30 oct), Reykon (6
+  nov), Todos Somos Ángeles Rock Fest (8 nov) y Juanes (19 nov). Recuperar
+  `movistar_arena` **no los reenganchó**: el sitio de la sala publica una
+  ventana de un mes y esos seis caen fuera. Se reenganchan solos cuando su
+  fecha entre en la ventana; hasta entonces, si el Movistar mueve una de esas
+  fechas nadie se entera. El detalle en `context/ingesta/fuentes-y-legalidad.md`.
+- **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen
+  falta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y
+  ahora también `ANTHROPIC_API_KEY` en el proyecto de Vercel. ⚠️ El route
+  handler del afiche declara `maxDuration = 60`, que es el tope del plan Hobby:
+  **eso solo se prueba desplegado**, porque el límite es del entorno y no del
+  código.
+- **El sitio no se ha visto en un dispositivo real.** Las 30 capturas de
   `npm run capturas` cubren escritorio y móvil en los dos modos, pero son
   Chromium headless a tamaño simulado: no dicen nada de un teléfono de verdad
   ni de Safari.
-- **36 canónicos publicados sin revisar** (de 52). Son los del backfill del
-  2026-08-31, publicados para que la cartelera no se vaciara al cambiar de
-  modelo. Tienen `reviewed_at` en null y eso es correcto: nadie los revisó. El
-  número baja solo a medida que Juan toca cada evento por otro motivo.
+- **24 publicados sin revisar** (de 50). Tienen `reviewed_at` en null y eso es
+  correcto: nadie los revisó. El número baja solo a medida que Juan toca cada
+  evento por otro motivo.
 - **12 publicados ya pasaron de fecha** y siguen en `publicado`. No se ven —la
   cartelera filtra por `starts_at >= hoy`— así que no es un bug, pero explica
-  por qué "52 publicados" y "39 en pantalla" no cuadran.
+  por qué "50 publicados" y "38 en pantalla" no cuadran.
 - **Sin verificar, porque no se ve desde fuera del dashboard:** si el proyecto
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
-  `sb_*` del 2026-08-28 no tocó, y el MCP tampoco lo contesta: su token es de
-  lectura y no lista las API keys.
+  `sb_*` del 2026-08-28 no tocó.
 - **Opcional:** añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para
   que el CI prerenderice contra la base real en vez de contra placeholders.
 
@@ -154,62 +109,60 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-07** contra la base, con el MCP.
+**2026-09-08** contra la base, con el MCP.
 
 | | |
 |---|---|
-| Filas crudas | **116** — visitbogota 58, royal 14, movistar 13, lourdes 9, latino 8, rockal 8, idartes 6 |
+| Filas crudas | **113** — visitbogota 56 *(congeladas)*, royal 14, movistar 13, lourdes 9, latino 8, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **105** — 52 publicados, 48 borradores, 5 descartados |
-| Publicados | 45 conciertos + 4 fiestas + 3 festivales; de los conciertos, **8 locales y 37 internacionales**, 0 sin origen |
-| Borradores | 48 — 42 música, 6 festivales; **11 de música sin origen resuelto** |
-| Salas | **35** — 18 publicadas, **4 por aprobar**, 13 descartadas |
-| Coordenadas | **9 de 18 salas publicadas ubicadas** |
-| Fotos de sala | **0 de 18** |
-| Precio | **21 de 52 publicados** lo tienen |
-| Género visible | **9 de 52 publicados** |
-| Bloqueados | **31** `(fuente, id)` — visitbogota 23, idartes 5, movistar 3; 26 con motivo «no music» |
-| Duplicados sugeridos | **2**, esperando fusión en `/admin` |
-| En pantalla | **36 conciertos en 10 salas**, 2 fiestas (+1 sin fecha), **1 festival**, 37 eventos en el mapa |
-| Tests | 275 backend + 55 frontend, verdes en local y en CI (`e97f2c0`); `Scraper cron` verde el 2026-09-07 |
+| Canónicos | **101** — 50 publicados, **0 borradores**, 51 descartados |
+| En pantalla | **29 toques, 2 fiestas, 7 festivales**, en 13 salas |
+| Salas | **23** — 19 publicadas, 4 por aprobar |
+| Coordenadas | **17 de 19** salas publicadas ubicadas |
+| Fotos de sala | **11 de 19** |
+| Afiche | **49 de 50** publicados lo tienen |
+| Precio | **17 de 50** publicados |
+| Género visible | **6 de 50** |
+| Escena local marcada | **4 de 50** — se marca a mano y nada la calcula |
+| Bloqueados | **36** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3 |
+| Duplicados sugeridos | **0** |
+| Tests | **221 backend + 74 frontend**, verdes en local y en CI (`8048df2`) |
 
 Cómo leerlas sin equivocarse:
 
-- ⚠️ **El estado de un canónico es `status`, no `published_at`.** Contar por
-  `published_at is not null` da 53 y no 52: hay un descartado que conserva la
-  fecha en la que estuvo publicado, y es correcto que la conserve.
-- ⚠️ **Que las filas crudas suban o bajen no dice nada del scraping por sí
-  solo.** El botón de borrar elimina la fila cruda además del canónico, así
-  que un triage a fondo *reduce* el crudo. Antes de sospechar de una fuente,
-  mirar `blocked_source_events`. Resolver un duplicado es distinto: se va un
-  canónico y el crudo se queda — por eso el 2026-09-07 los canónicos bajaron
-  de 106 a 105 con las 116 filas crudas quietas.
-- **El salto entre canónicos y pantalla es la cola más los que ya pasaron de
-  fecha**, no deduplicación. Es el modelo funcionando, no un atraso del
-  pipeline.
-- **No queda ningún publicado sin clasificar ni sin origen resuelto.** Pero
-  **se llegó ahí curando artistas a mano**: cada evento nuevo puede volver a
-  caer en "sin origen" —hoy hay 11 borradores así—, y los locales emergentes
-  son los que más probablemente caigan.
+- ⚠️ **El estado de un canónico es `status`, no `published_at`.** Hay
+  descartados que conservan la fecha en la que estuvieron publicados, y es
+  correcto que la conserven.
+- ⚠️ **Las 56 filas de visitbogota están congeladas, no vivas.** La fuente
+  salió del registry el 2026-09-08; sus filas quedan como registro y no se
+  actualizan. Lo mismo vale para `scraped_at`, que es "cuándo se vio por
+  primera vez" y no "última corrida": el upsert no lo reescribe.
+- **Los tests bajaron de 275 a 221 y no se perdió cobertura**: se fueron los 54
+  que probaban MusicBrainz y el origen del artista, junto con el código.
+- **La escena local marcada bajó de 35 a 4 a propósito.** El 2026-09-08 se
+  pusieron en `null` los 70 canónicos cuyo `is_local` venía de MusicBrainz —
+  medía nacionalidad y la pantalla decía "escena local"— y quedaron los 6 que
+  venían de la lista curada, de los cuales 4 están publicados.
 - **Las fiestas y los festivales tienen `is_local = null` y eso es correcto.**
-  Al contar "sin origen resuelto" hay que mirar solo los conciertos.
-- **3 de los 31 bloqueos tienen como motivo «pq si».** La función exige un
-  motivo pero no puede exigir que sirva. No es para arreglar con código: es
-  para saber, cuando dentro de tres meses alguien se pregunte por qué no
-  vuelve un evento, que en tres casos la respuesta no está escrita.
+  No hay un artista de cartel a quien preguntarle.
 
 ---
 
 ## 4. El siguiente paso
 
-Hay dos caminos y no compiten:
+Por orden de lo que destraba más:
 
-1. **El directorio de la escena local** — es el único módulo del MVP que no ha
-   arrancado, y el que cierra el alcance.
-2. **Más fuentes** — es lo que sigue tapando el sesgo de cobertura. Quedan
-   `ticketlive.com.co`, `mitaquilla.com.co` y `feverup.com` abiertas y sin
-   explotar, más el pegado manual de texto o flyer.
-
-**Después queda la Fase 6 (pulido y deploy).** El pulido de look & feel se hizo
-el 2026-09-07 —el sitio se rediseñó entero— así que lo que queda de esa fase es
-**desplegar a Vercel, que nunca se ha hecho**, y verlo en un dispositivo real.
+1. **Recargar el saldo y probar el lector de afiches.** Es lo único que
+   convierte la feature más grande de la semana en algo usable, y es la vía
+   principal por la que entra la escena desde que salió `visitbogota`.
+2. **Desplegar a Vercel.** Nunca se ha hecho, y hay dos cosas que solo se
+   prueban ahí: el tope de 60 s del route handler y el sitio en un teléfono de
+   verdad.
+3. **Sacar de la cartelera lo masivo que quedó publicado**, o la portada la
+   sigue encabezando el Movistar.
+4. **Fuentes que sí lleguen a la escena.** Quedan `ticketlive.com.co` y
+   `mitaquilla.com.co` —las dos auditadas como abiertas y las dos venden para
+   clubes— más `feverup.com`. Y una pista sin auditar: **Passline**, a donde
+   apuntan los botones de compra de Lourdes.
+5. **El directorio de la escena local**, el único módulo del MVP que no ha
+   arrancado.

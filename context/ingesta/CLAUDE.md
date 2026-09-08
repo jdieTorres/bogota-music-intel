@@ -13,6 +13,14 @@ el motivo verificado de cada uno.
 - **Guardar crudo, filtrar y clasificar en lectura.** La ingesta no descarta:
   el criterio editorial se aplica al leer. Así, cuando cambie el criterio, no
   hay que volver a scrapear el pasado.
+- **Una fuente no se compara solo por qué salas cubre, sino por cuán lejos
+  publica.** Medido el 2026-09-08: `movistararena.co` lista alrededor de un
+  mes hacia adelante y `visitbogota` llegaba a tres. Al sacar visitbogota, seis
+  eventos del Movistar quedaron sin fuente viva porque están más allá de esa
+  ventana, y volver a encender el scraper de la sala **no los recuperó** — se
+  reenganchan solos cuando su fecha entre en la ventana. El horizonte es una
+  propiedad de la fuente tan medible como su cobertura, y no se nota hasta que
+  se pierde.
 - **La categoría que publica una fuente no siempre coincide con su propia
   ficha**, y cuál de las dos señales sirve **se mide fuente por fuente, no se
   hereda**. En Idartes manda la ruta de la ficha (la etiqueta del listado se

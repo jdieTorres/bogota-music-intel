@@ -1,9 +1,32 @@
 # Criterio editorial — qué se publica y cómo se ordena
 
-**Principio, definido por Juan el 2026-08-27:** la plataforma prioriza y
-promueve **los toques de artistas locales**. No es una cartelera genérica de
-eventos de la ciudad. Es criterio de diseño, no solo de filtrado: aplica al
-scraping, al ranking y a cómo se presenta cada evento.
+**Principio, definido por Juan el 2026-08-27 y afinado el 2026-09-08:** la
+plataforma promueve **los toques de la escena underground de Bogotá**. No es
+una cartelera genérica de eventos de la ciudad. Es criterio de diseño, no solo
+de filtrado: aplica al scraping, al ranking y a cómo se presenta cada evento.
+
+## Quién decide qué es escena: una persona, en la cola
+
+El 2026-09-08 se probaron y descartaron dos formas de automatizarlo, y las dos
+fallaron por el mismo motivo:
+
+- **Por sala** (`venues.escena`, aplicada y revertida el mismo día). Una sala
+  **no es homogénea**: Royal Center programa una gira internacional el viernes
+  y una banda local el martes, y el Teatro Jorge Eliécer Gaitán es
+  institucional y además es donde toca Ancestral Beats. Etiquetar la sala
+  mal-etiqueta todos sus eventos.
+- **Por nacionalidad del artista** (MusicBrainz). Contestaba bien una pregunta
+  que no era la nuestra: ver
+  `context/archivo/musicbrainz-y-artistas-locales.md`.
+
+Lo que quedó: **la cola de moderación, que ya existía.** Publicar o descartar
+un evento *es* la decisión, y no hace falta un campo que la duplique. El
+recorte que sí se automatizó vive un paso antes, en la ingesta — qué fuentes
+corre el cron (`context/ingesta/CLAUDE.md`).
+
+El precio de esto es que la cartelera depende de que Juan pase por la cola. Se
+aceptó a sabiendas: un criterio editorial que nadie aplica no es un criterio,
+pero uno que aplica una heurística equivocada es peor, porque parece un dato.
 
 ## Las cuatro categorías (`events.event_type`)
 

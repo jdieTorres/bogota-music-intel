@@ -4,8 +4,8 @@ Ningún evento llega a la cartelera sin que una persona lo mire. El cron
 sigue corriendo igual; lo que trae entra como **borrador** a una cola de
 revisión, y el admin verifica, completa y publica.
 
-El motivo no es de calidad sino de **sesgo de cobertura**: las seis fuentes
-que scrapeamos tiran a salas grandes, donde tocan los internacionales. El
+El motivo no es de calidad sino de **sesgo de cobertura**: las fuentes que
+scrapeamos tiran a salas grandes, donde tocan los internacionales. El
 toque local en un bar chico, anunciado solo por Instagram, es invisible para
 el pipeline — y promover ese toque es el propósito de la plataforma. Diseño
 completo en `context/moderacion/diseno.md`.
