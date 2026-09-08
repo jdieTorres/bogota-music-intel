@@ -129,18 +129,56 @@ export function fechaCompacta(iso: string | null): string {
 }
 
 
-// Bogotá es UTC-5 todo el año. Se convierte a mano y no con la zona horaria
-// del navegador: el admin podría estar en otro lado, y una hora movida cinco
-// horas es exactamente el error que este proyecto ya cometió dos veces.
-const OFFSET_BOGOTA_MS = 5 * 60 * 60 * 1000;
-
-export function aCampoDeFecha(iso: string | null): string {
-  if (!iso) return "";
-  return new Date(new Date(iso).getTime() - OFFSET_BOGOTA_MS).toISOString().slice(0, 16);
-}
-
-export function desdeCampoDeFecha(valor: string): string | null {
-  return valor ? `${valor}:00-05:00` : null;
+/**
+ * La fecha y la hora, en dos campos separados.
+ *
+ * **Eran un solo `datetime-local` hasta el 2026-09-08, y era un bug.** Ese
+ * control exige las dos mitades: mientras falte la hora devuelve cadena
+ * vacía, así que escribir solo el día no guardaba nada y el evento quedaba
+ * sin fecha sin aviso. En esta escena eso es el caso común, no el raro: el
+ * afiche anuncia el día y muy seguido no anuncia la hora.
+ *
+ * Separados, cada dato entra por su cuenta y el hueco de la hora es un hueco
+ * de verdad — que la cartelera ya sabe mostrar sin inventar "12:00 a. m.".
+ *
+ * La conversión a hora de Bogotá vive en `lib/admin/fecha.ts`, aparte y con
+ * pruebas.
+ */
+export function CampoDeFechaYHora({
+  fecha,
+  hora,
+  alCambiar,
+}: {
+  fecha: string;
+  hora: string;
+  alCambiar: (campos: { fecha: string; hora: string }) => void;
+}) {
+  return (
+    <>
+      <label>
+        <Rotulo>Fecha</Rotulo>
+        <input
+          type="date"
+          value={fecha}
+          onChange={(e) => alCambiar({ fecha: e.target.value, hora })}
+          className={CAMPO}
+        />
+      </label>
+      <label>
+        <Rotulo>Hora</Rotulo>
+        <input
+          type="time"
+          value={hora}
+          onChange={(e) => alCambiar({ fecha, hora: e.target.value })}
+          className={CAMPO}
+        />
+        <p className="mt-1 text-xs text-muted">
+          Si el afiche no la anuncia, déjala vacía: el evento se guarda con la fecha
+          y la cartelera no muestra ninguna hora.
+        </p>
+      </label>
+    </>
+  );
 }
 
 

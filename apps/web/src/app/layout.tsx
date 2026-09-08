@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     template: "%s · Cartelera de Bogotá",
   },
   description:
-    "Los conciertos de la escena bogotana en un solo lugar, recogidos directamente de las carteleras de cada sala.",
+    "Los toques de la escena bogotana en un solo lugar, recogidos directamente de las carteleras de cada sala.",
 };
 
 // Fija `data-theme` antes de que el navegador pinte, para que el modo
@@ -132,7 +132,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto max-w-5xl px-5 py-10 text-xs leading-relaxed text-muted">
             <p className="max-w-md">
               Cartelera recogida automáticamente de los sitios oficiales de cada
-              sala. Confirmá fecha, hora y precio en el enlace de boletería antes
+              sala. Confirma fecha, hora y precio en el enlace de boletería antes
               de comprar.
             </p>
             <p className="mt-3">

@@ -5,9 +5,10 @@ import { notFound } from "next/navigation";
 
 import { ChipBoleta } from "@/components/ChipBoleta";
 import { ControlesDeAdmin } from "@/components/ControlesDeAdmin";
-import { IconNota, IconoDeTipo } from "@/components/icons";
+import { IconEnlaceExterno, IconNota, IconoDeTipo } from "@/components/icons";
 
 import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
+import { primerEnlace } from "@/lib/enlaces";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
 
 export const revalidate = 1800;
@@ -33,6 +34,11 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
 
   const hora = horaDeEvento(evento.starts_at, evento.date_precision);
   const venue = nombreDelVenue(evento);
+  // A dónde mandar a quien quiere saber más. La boletería ya tiene su propio
+  // botón, así que acá va lo otro: el anuncio del que salió el evento — la
+  // publicación de la sala, o la cartelera de la que se recogió.
+  const masInfo =
+    primerEnlace(evento.evidence) ?? evento.events?.[0]?.source_url ?? null;
   const titulo = evento.title;
 
   return (
@@ -148,6 +154,23 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
               {evento.description}
             </p>
           )}
+
+          {/* El anuncio original, para quien quiere el cartel completo, los
+              teloneros o la hora de apertura — todo lo que la ficha no tiene
+              porque nadie lo estructuró. Reemplaza al pie que antes imprimía
+              la evidencia entera: un enlace se puede abrir, una nota interna
+              no le sirve a nadie y no debería estar publicada. */}
+          {masInfo && (
+            <a
+              href={masInfo}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-8 inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-sm transition-colors hover:border-accent hover:text-accent"
+            >
+              Más info
+              <IconEnlaceExterno className="h-4 w-4" />
+            </a>
+          )}
         </div>
       </div>
 
@@ -203,6 +226,12 @@ function SinDato({ children }: { children: React.ReactNode }) {
  * toques que no se publican en ningún lado— así que afirmar que sí la tiene
  * sería exactamente el tipo de dato inventado que el proyecto no permite.
  *
+ * **Dice de dónde salió, pero no enlaza.** El enlace vivía acá hasta el
+ * 2026-09-08 y apuntaba al mismo sitio que el botón "Más info" de arriba, así
+ * que la misma página se ofrecía dos veces con dos nombres distintos. El
+ * botón es el que se ve y el que invita a abrir; esto es la nota al pie que
+ * dice de quién es el dato.
+ *
  * Por lo mismo, "revisado a mano" solo se dice cuando `reviewed_at` existe.
  * Los 51 eventos de la mudanza inicial se publicaron sin que nadie los
  * mirara, y decir lo contrario sería la misma mentira en la otra dirección.
@@ -225,30 +254,21 @@ function Procedencia({ evento }: { evento: Evento }) {
   return (
     <p className="mt-10 border-t border-border pt-5 text-xs leading-relaxed text-muted">
       {fuentes.length === 0 ? (
-        <>Evento verificado y cargado a mano{evento.evidence ? `: ${evento.evidence}` : ""}.</>
+        <>Evento verificado y cargado a mano.</>
       ) : (
         <>
           Datos recogidos de{" "}
           {fuentes.map((fuente, i) => (
             <span key={fuente.source_url}>
               {i > 0 && " y de "}
-              <a
-                href={fuente.source_url}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-4 transition-colors hover:text-foreground"
-              >
-                {fuentes.length > 1
-                  ? dominio(fuente.source_url)
-                  : "la cartelera oficial de la sala"}
-              </a>
+              {fuentes.length > 1
+                ? dominio(fuente.source_url)
+                : "la cartelera oficial de la sala"}
             </span>
           ))}
           {revisado ? ", y revisados a mano." : "."}
         </>
-      )}{" "}
-      Confirmá los detalles antes de comprar: la programación puede cambiar
-      después de la última actualización.
+      )}
     </p>
   );
 }

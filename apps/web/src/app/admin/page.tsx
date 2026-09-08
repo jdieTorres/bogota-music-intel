@@ -12,7 +12,8 @@
  * base no le devuelve ni le acepta nada.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 import { FormularioDeEvento } from "@/components/admin/FormularioDeEvento";
 import { ModeracionDeEventos } from "@/components/admin/ModeracionDeEventos";
@@ -31,6 +32,23 @@ export default function AdminPage() {
   const [creandoEvento, setCreandoEvento] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  /**
+   * Saca el `?evento=` al salir de la moderación de eventos.
+   *
+   * La ficha pública deja ese parámetro para abrir un evento concreto. Al
+   * irse a Salas o a cargar uno nuevo, la ficha ya no está abierta y la URL
+   * no puede seguir nombrándola: recargarla la reabriría en otra sección.
+   *
+   * Se lee de `window.location` y no con `useSearchParams` a propósito: ese
+   * hook obligaría a un límite de Suspense también acá, en la carcasa, y lo
+   * único que hace falta es saber si hay algo que limpiar.
+   */
+  const limpiarUrl = useCallback(() => {
+    if (typeof window !== "undefined" && window.location.search) router.replace(pathname);
+  }, [router, pathname]);
 
   const revisar = useCallback(async (haySesion: boolean) => {
     if (!haySesion) {
@@ -84,6 +102,7 @@ export default function AdminPage() {
               onClick={() => {
                 setSeccion(cual);
                 setCreandoEvento(false);
+                limpiarUrl();
               }}
               className={`font-display text-3xl font-semibold tracking-tight transition-colors ${
                 seccion === cual ? "text-foreground" : "text-muted hover:text-foreground"
@@ -95,7 +114,13 @@ export default function AdminPage() {
         </div>
         <div className="flex items-center gap-2">
           {seccion === "eventos" && !creandoEvento && (
-            <button onClick={() => setCreandoEvento(true)} className={BOTON_TENUE}>
+            <button
+              onClick={() => {
+                setCreandoEvento(true);
+                limpiarUrl();
+              }}
+              className={BOTON_TENUE}
+            >
               + Nuevo evento
             </button>
           )}
@@ -120,7 +145,12 @@ export default function AdminPage() {
           }}
         />
       ) : (
-        <ModeracionDeEventos key={version} setError={setError} />
+        // `ModeracionDeEventos` lee `?evento=` para abrir directo el que se
+        // pidió desde la ficha pública, y `useSearchParams` obliga a un
+        // límite de Suspense en una ruta prerenderizada.
+        <Suspense fallback={null}>
+          <ModeracionDeEventos key={version} setError={setError} />
+        </Suspense>
       )}
     </Marco>
   );

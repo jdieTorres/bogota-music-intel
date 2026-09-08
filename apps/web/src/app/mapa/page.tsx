@@ -25,7 +25,7 @@ export default async function Page() {
           El mapa no está disponible
         </h1>
         <p className="mt-3 text-muted">
-          No pudimos conectarnos a la base de datos. Recargá en unos segundos.
+          No pudimos conectarnos a la base de datos. Recarga en unos segundos.
         </p>
       </div>
     );

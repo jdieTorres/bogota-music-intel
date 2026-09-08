@@ -313,7 +313,7 @@ function FichaDeSala({
 
       <p className="mt-3 text-xs text-muted">
         Sin coordenadas la sala se lista como &ldquo;sin ubicar&rdquo; debajo del mapa. Es
-        preferible a un pin en el lugar equivocado — pegá el punto desde Google Maps.
+        preferible a un pin en el lugar equivocado — pega el punto desde Google Maps.
       </p>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
@@ -385,7 +385,7 @@ function FormularioDeSala({
     <div className="mt-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
       <h2 className="font-display text-lg font-semibold">Nueva sala</h2>
       <p className="mt-1 text-xs text-muted">
-        Para un lugar que ningún scraper publica. Nace aprobada: la estás creando vos, que
+        Para un lugar que ningún scraper publica. Nace aprobada: la creas tú, que
         sos quien aprobaría el borrador.
       </p>
 

@@ -114,7 +114,7 @@ export function SinConexion() {
       </h1>
       <p className="mt-3 max-w-md text-pretty text-muted">
         No pudimos conectarnos a la base de datos. Si el proyecto estuvo varios
-        días sin visitas, puede tardar unos segundos en despertar: recargá la
+        días sin visitas, puede tardar unos segundos en despertar: recarga la
         página.
       </p>
     </div>

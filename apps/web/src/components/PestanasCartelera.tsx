@@ -26,10 +26,10 @@ import {
  * extremo opuesto de las pestañas dice de qué tamaño es lo que se está
  * mirando, justo donde uno elige qué mirar.
  */
-export type Pestana = "conciertos" | "fiestas" | "festivales";
+export type Pestana = "toques" | "fiestas" | "festivales";
 
 // El orden no es alfabético ni casual: va de lo más frecuente a lo más
-// esporádico. Los conciertos son la cartelera de todas las semanas; las
+// esporádico. Los toques son la cartelera de todas las semanas; las
 // fiestas, de todos los fines de semana; los festivales, varios por año.
 const PESTANAS: {
   id: Pestana;
@@ -37,7 +37,7 @@ const PESTANAS: {
   href: string;
   Icono: (props: { className?: string }) => React.ReactElement;
 }[] = [
-  { id: "conciertos", etiqueta: "Conciertos", href: "/", Icono: IconConcierto },
+  { id: "toques", etiqueta: "Toques", href: "/", Icono: IconConcierto },
   { id: "fiestas", etiqueta: "Fiestas", href: "/fiestas", Icono: IconFiesta },
   {
     id: "festivales",
@@ -52,7 +52,7 @@ export function PestanasCartelera({
   conteo,
 }: {
   activa: Pestana;
-  /** "36 conciertos en 10 salas". Se omite cuando no hay nada que contar. */
+  /** "36 toques en 10 salas". Se omite cuando no hay nada que contar. */
   conteo?: string;
 }) {
   return (

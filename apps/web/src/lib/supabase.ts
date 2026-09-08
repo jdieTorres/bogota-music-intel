@@ -6,7 +6,7 @@ const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 if (!url || !key) {
   throw new Error(
     "Faltan NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. " +
-      "Copiá apps/web/.env.example a .env.local y completá los valores del proyecto Supabase.",
+      "Copia apps/web/.env.example a .env.local y completa los valores del proyecto Supabase.",
   );
 }
 

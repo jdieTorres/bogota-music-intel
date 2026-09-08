@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   BOTON,
@@ -18,12 +19,12 @@ import {
   BOTON_TENUE,
   CAMPO,
   CampoDeGenero,
+  CampoDeFechaYHora,
   Etiqueta,
   Rotulo,
-  aCampoDeFecha,
-  desdeCampoDeFecha,
   fechaCompacta,
 } from "@/components/admin/ui";
+import { aCamposDeFecha, desdeCamposDeFecha } from "@/lib/admin/fecha";
 import { CampoDePrecio } from "@/components/admin/CampoDePrecio";
 import { formatearPrecio, type PrecioEvento } from "@/lib/precio";
 import {
@@ -46,19 +47,53 @@ export function ModeracionDeEventos({
 }: {
   setError: (m: string | null) => void;
 }) {
+  // Se llega acá desde la ficha pública de un evento ("Editar este evento").
+  // Ese evento está publicado por definición —la ficha pública no muestra
+  // otra cosa—, así que se empieza por "En la cartelera"; si su fecha ya
+  // pasó, el efecto de más abajo cambia a "Ya pasaron".
+  const pedido = useSearchParams().get("evento");
+  const router = useRouter();
+
+  /**
+   * Saca el `?evento=` de la barra de direcciones.
+   *
+   * Se llama al soltar la ficha por cualquier vía —cambiar de pestaña,
+   * volver al listado— porque una URL que sigue nombrando un evento que ya
+   * no está abierto miente: recargarla vuelve a abrirlo, y compartirla manda
+   * a otro lado del que se estaba mirando.
+   *
+   * `replace` y no `push`: limpiar la barra no es un paso del recorrido, y
+   * con `push` el botón de atrás volvería a abrir la ficha que se acaba de
+   * cerrar.
+   */
+  const limpiarUrl = useCallback(() => {
+    if (pedido) router.replace("/admin");
+  }, [pedido, router]);
   const [cola, setCola] = useState<EventoEnCola[]>([]);
-  const [pestaña, setPestaña] = useState<Pestaña>("cola");
-  const [elegido, setElegido] = useState<string | null>(null);
+  const [pestaña, setPestaña] = useState<Pestaña>(pedido ? "publicados" : "cola");
+  const [elegido, setElegido] = useState<string | null>(pedido);
 
   const cargar = useCallback(
     async (cual: Pestaña) => {
       try {
-        setCola(await getEventos(cual));
+        const filas = await getEventos(cual);
+        // El evento pedido por la URL no está entre los vigentes: su fecha ya
+        // pasó. Se busca una sola vez —solo desde "publicados"— para no
+        // quedar rebotando entre pestañas si el id no existe en ninguna.
+        if (pedido && cual === "publicados" && !filas.some((e) => e.id === pedido)) {
+          const pasados = await getEventos("pasados");
+          if (pasados.some((e) => e.id === pedido)) {
+            setCola(pasados);
+            setPestaña("pasados");
+            return;
+          }
+        }
+        setCola(filas);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
     },
-    [setError],
+    [setError, pedido],
   );
 
   useEffect(() => {
@@ -74,6 +109,8 @@ export function ModeracionDeEventos({
   // copia de antes de guardar.
   const seleccionado = cola.find((e) => e.id === elegido) ?? null;
 
+
+
   return (
     <>
       <nav className="mt-6 flex gap-1 border-b border-border">
@@ -83,6 +120,7 @@ export function ModeracionDeEventos({
             onClick={() => {
               setPestaña(clave);
               setElegido(null);
+              limpiarUrl();
             }}
             className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
               pestaña === clave
@@ -101,15 +139,34 @@ export function ModeracionDeEventos({
 
       {seleccionado ? (
         <div className="mt-6">
-          <button onClick={() => setElegido(null)} className={VOLVER}>
+          <button
+            onClick={() => {
+              setElegido(null);
+              limpiarUrl();
+            }}
+            className={VOLVER}
+          >
             ← Volver al listado
           </button>
           <div className="mt-4">
             <Ficha
               key={seleccionado.id}
               evento={seleccionado}
-              alResolver={() => {
+              alResolver={(quedaPublicado) => {
+                // Se llegó desde la ficha pública para arreglar algo puntual,
+                // y el evento sigue publicado: se vuelve a verlo, que es lo
+                // que se venía a comprobar.
+                //
+                // ⚠️ Solo si queda publicado. `/evento/<id>` lee únicamente
+                // lo publicado, así que mandar allí un borrador o algo que
+                // se acaba de quitar de la cartelera daría un 404 —parecería
+                // que el guardado falló justo cuando funcionó—.
+                if (pedido === seleccionado.id && quedaPublicado) {
+                  router.push(`/evento/${seleccionado.id}`);
+                  return;
+                }
                 setElegido(null);
+                limpiarUrl();
                 void cargar(pestaña);
               }}
               setError={setError}
@@ -183,7 +240,9 @@ function Ficha({
   setError,
 }: {
   evento: EventoEnCola;
-  alResolver: () => void;
+  /** `quedaPublicado` decide si se vuelve a la ficha pública del evento o
+   *  al listado: `/evento/<id>` solo existe para lo publicado. */
+  alResolver: (quedaPublicado: boolean) => void;
   setError: (m: string | null) => void;
 }) {
   const [campos, setCampos] = useState<Correccion>({
@@ -203,12 +262,12 @@ function Ficha({
   const cambio = evento.change_detail;
   const editar = (parcial: Correccion) => setCampos((c) => ({ ...c, ...parcial }));
 
-  async function accion(fn: () => Promise<void>) {
+  async function accion(fn: () => Promise<void>, quedaPublicado = false) {
     setOcupado(true);
     setError(null);
     try {
       await fn();
-      alResolver();
+      alResolver(quedaPublicado);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setOcupado(false);
@@ -254,14 +313,18 @@ function Ficha({
           <div className="mt-3 flex gap-2">
             <button
               disabled={ocupado}
-              onClick={() => accion(() => resolverCambio(evento, true))}
+              onClick={() =>
+                accion(() => resolverCambio(evento, true), evento.status === "publicado")
+              }
               className={`${BOTON} bg-accent text-background`}
             >
               Tomar lo nuevo
             </button>
             <button
               disabled={ocupado}
-              onClick={() => accion(() => resolverCambio(evento, false))}
+              onClick={() =>
+                accion(() => resolverCambio(evento, false), evento.status === "publicado")
+              }
               className={BOTON_TENUE}
             >
               Quedarme con lo mío
@@ -279,15 +342,12 @@ function Ficha({
             className={CAMPO}
           />
         </label>
-        <label>
-          <Rotulo>Fecha y hora (Bogotá)</Rotulo>
-          <input
-            type="datetime-local"
-            value={aCampoDeFecha(campos.starts_at ?? null)}
-            onChange={(e) => editar({ starts_at: desdeCampoDeFecha(e.target.value) })}
-            className={CAMPO}
-          />
-        </label>
+        <CampoDeFechaYHora
+          {...aCamposDeFecha(campos.starts_at ?? null)}
+          alCambiar={({ fecha, hora }) =>
+            editar({ starts_at: desdeCamposDeFecha(fecha, hora) })
+          }
+        />
         <CampoDePrecio
           valor={{
             price_kind: campos.price_kind ?? null,
@@ -308,7 +368,7 @@ function Ficha({
             className={CAMPO}
           >
             <option value="">todavía no sé</option>
-            <option value="music">concierto</option>
+            <option value="music">toque</option>
             <option value="fiesta">fiesta o ciclo</option>
             <option value="festival">festival</option>
             <option value="not_music">no es música</option>
@@ -364,7 +424,7 @@ function Ficha({
         {evento.status === "publicado" ? (
           <button
             disabled={ocupado}
-            onClick={() => accion(() => guardar(evento.id, campos))}
+            onClick={() => accion(() => guardar(evento.id, campos), true)}
             className={`${BOTON} bg-accent text-background`}
           >
             Guardar cambios
@@ -373,7 +433,7 @@ function Ficha({
           <>
             <button
               disabled={ocupado || !campos.title}
-              onClick={() => accion(() => publicar(evento.id, campos))}
+              onClick={() => accion(() => publicar(evento.id, campos), true)}
               className={`${BOTON} bg-accent text-background disabled:opacity-40`}
               title={!campos.title ? "Sin título no se puede publicar" : undefined}
             >
@@ -468,7 +528,7 @@ function ConfirmarBorrado({
           disabled={ocupado || motivo.trim().length < 5}
           onClick={() => alConfirmar(motivo.trim())}
           className={`${BOTON} bg-red-600 text-white disabled:opacity-40`}
-          title={motivo.trim().length < 5 ? "Escribí el motivo primero" : undefined}
+          title={motivo.trim().length < 5 ? "Escribe el motivo primero" : undefined}
         >
           Borrar definitivamente
         </button>

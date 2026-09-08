@@ -42,6 +42,45 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Abrir en otra pestaña.
+ *
+ * Acompaña a "Más info" y antes era una flecha de texto ("↗"). El set del
+ * proyecto es de trazo y **nunca glifos**: un carácter no hereda el grosor
+ * del resto de los íconos y se ve de un tamaño distinto en cada tipografía
+ * del sistema.
+ *
+ * `aria-hidden` porque el texto del botón ya dice a dónde lleva; que se abra
+ * en otra pestaña lo dice el dibujo a quien lo ve, y repetirlo en el nombre
+ * accesible sería ruido.
+ */
+export function IconEnlaceExterno({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M14 5h5v5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19 5l-8 8"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M18 14.5V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconNota({ className }: { className?: string }) {
   return (
     <svg
@@ -299,7 +338,7 @@ export function IconFestival({ className }: { className?: string }) {
  * repetirlo en cada una de las 36 filas es ruido.
  */
 const ICONO_POR_TIPO = {
-  music: { Icono: IconConcierto, nombre: "Concierto" },
+  music: { Icono: IconConcierto, nombre: "Toque" },
   fiesta: { Icono: IconFiesta, nombre: "Fiesta" },
   festival: { Icono: IconFestival, nombre: "Festival" },
 } as const;

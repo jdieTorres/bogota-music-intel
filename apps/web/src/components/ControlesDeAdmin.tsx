@@ -69,10 +69,10 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
       {!confirmando ? (
         <div className="mt-3 flex flex-wrap gap-2">
           <a
-            href="/admin"
+            href={`/admin?evento=${eventoId}`}
             className="rounded-md border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:text-foreground"
           >
-            Editar en moderación
+            Editar este evento
           </a>
           <button
             onClick={() => setConfirmando(true)}
@@ -88,7 +88,7 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
             Se borra el evento y las filas crudas de sus fuentes, y queda bloqueado para
             que el cron no lo vuelva a traer.{" "}
             <strong className="text-foreground">No se puede deshacer.</strong> Para solo
-            sacarlo de la cartelera sin borrarlo, usá &ldquo;Quitar de la cartelera&rdquo;
+            sacarlo de la cartelera sin borrarlo, usa &ldquo;Quitar de la cartelera&rdquo;
             en moderación.
           </p>
           <input

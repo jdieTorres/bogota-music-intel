@@ -40,14 +40,14 @@ export default async function Page() {
     <div className="mx-auto max-w-5xl px-5 pb-16">
       <EncabezadoDePagina
         titulo="Qué suena en Bogotá"
-        bajada="Conciertos de las salas de la ciudad, recogidos directamente de la cartelera de cada una."
+        bajada="Los toques de las salas de la ciudad, recogidos directamente de la cartelera de cada una."
       />
 
       <PestanasCartelera
-        activa="conciertos"
+        activa="toques"
         conteo={
           proximos.length > 0
-            ? `${proximos.length} ${proximos.length === 1 ? "concierto" : "conciertos"} en ${salas.size} ${salas.size === 1 ? "sala" : "salas"}`
+            ? `${proximos.length} ${proximos.length === 1 ? "toque" : "toques"} en ${salas.size} ${salas.size === 1 ? "sala" : "salas"}`
             : undefined
         }
       />
@@ -57,7 +57,7 @@ export default async function Page() {
         sinFecha={sinFecha}
         vacio={
           <EstadoVacio
-            titulo="No hay conciertos en cartelera"
+            titulo="No hay toques en cartelera"
             detalle="El recolector corre todos los días a las 9:00 a. m. Si acabás de montar el proyecto, corré el scraper para poblar la base."
           />
         }

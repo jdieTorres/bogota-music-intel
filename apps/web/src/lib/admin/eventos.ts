@@ -277,6 +277,10 @@ export type EventoNuevo = {
   category?: string | null;
   event_type: TipoEvento;
   is_local: boolean | null;
+  /** El afiche. En un evento cargado a mano es el que subió el admin al
+   *  bucket `afiches`; en uno scrapeado lo escribe el pipeline con la URL
+   *  que publica la fuente. */
+  image_url?: string | null;
   /** Obligatoria: la base rechaza un `origin = 'manual'` sin evidencia. */
   evidence: string;
 };
@@ -295,8 +299,8 @@ export type EventoNuevo = {
  * el mismo botón de publicar, en vez de tener dos caminos distintos hacia la
  * cartelera. Un camino que se salta la cola es un camino que nadie revisa.
  *
- * El título **no pasa por el normalizador**: lo estás escribiendo vos, ya en
- * la forma en que querés que salga. Normalizarlo encima sería pisarte.
+ * El título **no pasa por el normalizador**: lo escribes tú, ya en
+ * la forma en que quieres que salga. Normalizarlo encima sería pisarte.
  */
 export async function crearEvento(evento: EventoNuevo) {
   const { data, error } = await supabase

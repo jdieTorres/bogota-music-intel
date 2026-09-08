@@ -25,9 +25,9 @@ describe("priorizarLocales", () => {
   });
 
   it("NO penaliza al artista que no se pudo resolver", () => {
-    // La mayoría de los artistas locales pequeños no están en MusicBrainz.
-    // Si "no sé" contara como "no es local", la cartelera hundiría
-    // justamente los toques que existe para promover.
+    // Desde que `is_local` lo escribe una persona, «sin marcar» es el caso
+    // por defecto. Si contara como "no es local", la cartelera hundiría
+    // todo lo que nadie ha revisado todavía.
     const resultado = priorizarLocales([
       evento("MADE4RAP", null),
       evento("ROBBIE WILLIAMS", false),

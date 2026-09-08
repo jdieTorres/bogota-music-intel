@@ -57,10 +57,11 @@ type ConOrigen = { is_local: boolean | null };
  * Pone adelante los toques locales. Se aplica dentro de un mismo día: entre
  * días manda la fecha, no el criterio editorial.
  *
- * Solo baja al internacional **confirmado**. Un evento cuyo artista no se
- * pudo resolver (`is_local === null`) se queda donde estaba: la mayoría de
- * los artistas locales pequeños no están en MusicBrainz, así que penalizar
- * lo desconocido hundiría justamente los toques que hay que destacar.
+ * Solo baja al **confirmado como no local**. Un evento sin marcar
+ * (`is_local === null`) se queda donde estaba, y desde el 2026-09-08 eso es
+ * el caso por defecto: el campo lo escribe una persona en /admin y nada lo
+ * calcula. Penalizar lo no marcado hundiría todo lo que Juan todavía no ha
+ * mirado — justamente los toques nuevos que hay que destacar.
  *
  * El orden es estable, así que dentro de cada bloque se respeta la hora.
  */
