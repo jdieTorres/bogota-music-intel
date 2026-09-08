@@ -27,3 +27,10 @@ instalar algo que prometa ahorrar tokens, mirar acá.
   `.claude/settings.json` que hubo que revertir, y nada avisaba cuando el grafo
   quedaba viejo. **Antes de instalar algo que prometa ahorrar tokens, medir con
   `/context`.**
+- **`mcp-de-github.md`** — el servidor MCP de GitHub, puesto y sacado el
+  2026-09-07. Su OAuth no soporta *dynamic client registration*, así que el
+  login de `/mcp` falla con `Incompatible auth server` y la única vía era un
+  PAT clásico guardado a mano. No compensaba: su valor está en PRs e issues y
+  acá se trabaja directo sobre `main`; lo único que se le iba a pedir —mirar
+  los dos workflows del CI— lo hace `gh run list`. **Si hace falta ver el CI
+  desde la sesión, instalar `gh`, no reinstalar este MCP.**
