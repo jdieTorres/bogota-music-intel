@@ -1,5 +1,5 @@
 """Vocabulario de la clasificación editorial, en un módulo aparte para que
-la lista curada y el clasificador lo compartan sin importarse entre sí.
+las listas curadas y el clasificador lo compartan sin importarse entre sí.
 
 Los valores son los mismos que acepta el `check` de la columna
 `events.event_type` (migración 20260828000000, ampliada por
@@ -22,10 +22,15 @@ NO_MUSICA = "not_music"
 FUENTE_MANUAL = "manual"
 FUENTE_CICLO = "curated_cycle"
 FUENTE_FESTIVAL = "curated_festival"
-FUENTE_ARTISTA_CURADO = "curated_artist"
 FUENTE_CATEGORIA = "source_category"
 FUENTE_PATRON = "exclusion_pattern"
-FUENTE_MUSICBRAINZ = "musicbrainz"
-# No matcheó ninguna exclusión, así que se asume música, pero el artista no
-# se pudo resolver: el origen queda desconocido, no "internacional".
+# Ninguna regla lo excluyó, así que es música. Se llama "asumido" y no
+# "confirmado" a propósito: nadie verificó que lo sea, solo que nada dice
+# que no. Es el caso más común y por eso conviene que el nombre no mienta.
 FUENTE_ASUMIDO = "assumed_music"
+
+# ⚠️ Faltan dos que existieron hasta el 2026-09-08: `curated_artist` y
+# `musicbrainz`. Las dos servían para llenar `is_local`, que dejó de
+# calcularse — lo escribe una persona en /admin. Siguen apareciendo en filas
+# viejas de `classification_source`, así que si algo lee esa columna tiene
+# que tolerarlas; simplemente no se producen más.

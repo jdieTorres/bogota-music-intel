@@ -1,16 +1,22 @@
-"""Decide si un evento entra a la cartelera y con cuánta prioridad.
+"""Decide qué es un evento: música, fiesta, festival o ninguna de las tres.
 
-Traduce a código las dos decisiones editoriales que tomó Juan (2026-08-27):
+**Contesta una sola pregunta, `event_type`.** Hasta el 2026-09-08 contestaba
+dos: también resolvía el origen del artista (`is_local`) consultando
+MusicBrainz y una lista curada. Eso se dio de baja por decisión de Juan —
+`is_local` ahora lo escribe una persona en `/admin` y nada más.
 
-1. **Lo que no es música en vivo se excluye.** Comedia, lucha libre, teatro.
-2. **Los artistas internacionales no se excluyen**, van en segundo plano.
-   Un show de Robbie Williams en el Movistar es parte de la escena en vivo
-   de Bogotá aunque no sea un toque local.
+Por qué se cayó: MusicBrainz contesta **nacionalidad**, y en pantalla eso se
+imprimía como «de la escena local», que es otra afirmación. Carlos Vives y
+Juanes son colombianos y no son escena local; El Kalvo lo es y MusicBrainz no
+sabe de dónde es. La señal medía una cosa y la etiqueta decía otra, así que
+no era un problema de umbral sino de pregunta equivocada. El detalle, en
+`context/archivo/musicbrainz-y-artistas-locales.md`.
 
-Son dos preguntas distintas y se resuelven por separado: `event_type`
-contesta la primera, `is_local` la segunda.
+Efecto lateral bueno: la clasificación **ya no sale a la red**. No hay límite
+de peticiones que respetar, ni un 503 que pueda dejar eventos sin clasificar,
+ni una corrida del cron que dependa de un servicio ajeno.
 
-Hay dos categorías más además de esas dos, y las dos comparten la misma
+Hay dos categorías más además de la música, y las dos comparten la misma
 forma: **no hay un artista de cartel a quien identificar**, que no es lo
 mismo que no haberlo podido identificar. La **fiesta** es la noche o el
 ciclo que programa la sala; el **festival** son varios días y varios
@@ -26,17 +32,16 @@ primera que contesta gana:
     3. lista curada de festivales (por título completo, ver el módulo)
     4. categoría de la fuente  (la publicó la sala)
     5. patrón en el título     (heurística nuestra)
-    6. lista curada de artistas (donde MusicBrainz no llega o se equivoca)
-    7. MusicBrainz             (para el origen del artista)
+
+Si ninguna contesta, es música. Asumir que sí es lo correcto: el costo de
+mostrar de más es un evento que sobra en una lista, y el de excluir de más
+es un toque que desaparece sin que nadie se entere.
 
 Nada de esto borra filas: la ingesta sigue guardando todo crudo y esto solo
 marca. Si mañana cambia el criterio, se reclasifica sin volver a scrapear.
 """
 from dataclasses import dataclass
 
-import httpx
-
-from bogota_music_intel.artistas_locales import artista_curado
 from bogota_music_intel.ciclos_curados import ciclo_de
 from bogota_music_intel.clasificacion_manual import CLASIFICACION_MANUAL
 from bogota_music_intel.exclusion_patterns import (
@@ -44,17 +49,14 @@ from bogota_music_intel.exclusion_patterns import (
     patron_no_musical,
 )
 from bogota_music_intel.festivales_curados import festival_de
-from bogota_music_intel.musicbrainz import candidatos_de_titulo, resolver_artista
 from bogota_music_intel.tipos_evento import (
     FESTIVAL,
     FIESTA,
-    FUENTE_ARTISTA_CURADO,
     FUENTE_ASUMIDO,
     FUENTE_CATEGORIA,
     FUENTE_CICLO,
     FUENTE_FESTIVAL,
     FUENTE_MANUAL,
-    FUENTE_MUSICBRAINZ,
     FUENTE_PATRON,
     MUSICA,
     NO_MUSICA,
@@ -64,18 +66,17 @@ from bogota_music_intel.tipos_evento import (
 @dataclass(frozen=True)
 class Clasificacion:
     event_type: str
-    is_local: bool | None
     classification_source: str
     # Por qué quedó así, en castellano. Se imprime en el CLI: un evento que
     # desaparece de la cartelera sin explicación es imposible de auditar.
     detalle: str
-    # Si se llegó a consultar MusicBrainz. El ritmo lo controla el propio
-    # módulo; esto sirve para reportar y para verificar en los tests que las
-    # exclusiones no gastan una petición.
-    consulto_red: bool = False
+
+    # ⚠️ **No hay `is_local` acá, y es a propósito.** Que el campo no exista
+    # es lo que garantiza que nada automático lo escriba: el origen del
+    # artista lo decide una persona en `/admin` desde el 2026-09-08.
 
 
-def clasificar(evento: dict, client: httpx.Client | None = None) -> Clasificacion:
+def clasificar(evento: dict) -> Clasificacion:
     """Clasifica una fila de `events`. Necesita source, source_event_id,
     title y category (puede venir en None)."""
     clave = (evento["source"], evento["source_event_id"])
@@ -83,7 +84,6 @@ def clasificar(evento: dict, client: httpx.Client | None = None) -> Clasificacio
     if curada is not None:
         return Clasificacion(
             event_type=curada.event_type,
-            is_local=curada.is_local,
             classification_source=FUENTE_MANUAL,
             detalle=f"curado a mano: {curada.evidencia}",
         )
@@ -92,8 +92,6 @@ def clasificar(evento: dict, client: httpx.Client | None = None) -> Clasificacio
     if ciclo is not None:
         return Clasificacion(
             event_type=FIESTA,
-            # No es que no sepamos de dónde es el artista: no hay artista.
-            is_local=None,
             classification_source=FUENTE_CICLO,
             detalle=f"ciclo «{ciclo.nombre}»: {ciclo.evidencia}",
         )
@@ -102,9 +100,6 @@ def clasificar(evento: dict, client: httpx.Client | None = None) -> Clasificacio
     if festival is not None:
         return Clasificacion(
             event_type=FESTIVAL,
-            # Mismo motivo que la fiesta: no es que no sepamos de dónde es el
-            # artista, es que hay cincuenta y ninguno es el cartel.
-            is_local=None,
             classification_source=FUENTE_FESTIVAL,
             detalle=f"festival «{festival.nombre}»: {festival.evidencia}",
         )
@@ -113,7 +108,6 @@ def clasificar(evento: dict, client: httpx.Client | None = None) -> Clasificacio
     if motivo:
         return Clasificacion(
             event_type=NO_MUSICA,
-            is_local=None,
             classification_source=FUENTE_CATEGORIA,
             detalle=motivo,
         )
@@ -122,74 +116,14 @@ def clasificar(evento: dict, client: httpx.Client | None = None) -> Clasificacio
     if motivo:
         return Clasificacion(
             event_type=NO_MUSICA,
-            is_local=None,
             classification_source=FUENTE_PATRON,
             detalle=motivo,
         )
 
-    # Nada lo excluye: se asume música. El origen del artista es otra
-    # pregunta, y no poder contestarla no cambia que el evento se muestre.
-    candidatos = candidatos_de_titulo(evento["title"])
-    if not candidatos:
-        return Clasificacion(
-            event_type=MUSICA,
-            is_local=None,
-            classification_source=FUENTE_ASUMIDO,
-            detalle="del título no queda nada consultable; origen sin resolver",
-        )
-
-    # La lista curada va antes que MusicBrainz: además de cubrir lo que no
-    # tiene, sirve para corregirlo cuando se equivoca. Se revisa entera
-    # antes de salir a la red, así un artista curado nunca gasta petición.
-    for nombre in candidatos:
-        curado = artista_curado(nombre)
-        if curado is not None:
-            origen = "local" if curado.es_local else "internacional"
-            return Clasificacion(
-                event_type=MUSICA,
-                is_local=curado.es_local,
-                classification_source=FUENTE_ARTISTA_CURADO,
-                detalle=f"«{curado.nombre}» {origen} (curado): {curado.evidencia}",
-            )
-
-    # El primer candidato que MusicBrainz reconozca con país gana. Uno que
-    # existe pero sin país no cierra la búsqueda: puede que el siguiente
-    # trozo del título sea el artista de verdad.
-    sin_pais: str | None = None
-    for nombre in candidatos:
-        artista = resolver_artista(nombre, client=client)
-        if artista is None:
-            continue
-        if artista.es_local is None:
-            sin_pais = sin_pais or artista.nombre
-            continue
-
-        origen = "local" if artista.es_local else f"internacional ({artista.pais})"
-        return Clasificacion(
-            event_type=MUSICA,
-            is_local=artista.es_local,
-            classification_source=FUENTE_MUSICBRAINZ,
-            detalle=f"«{nombre}» -> {artista.nombre} [{artista.pais}] {origen}",
-            consulto_red=True,
-        )
-
-    if sin_pais is not None:
-        return Clasificacion(
-            event_type=MUSICA,
-            is_local=None,
-            classification_source=FUENTE_ASUMIDO,
-            detalle=f"«{sin_pais}» existe en MusicBrainz pero sin país",
-            consulto_red=True,
-        )
-
+    # Nada lo excluye: es música. Antes de acá se preguntaba de dónde era el
+    # artista; esa pregunta ya no la contesta el pipeline.
     return Clasificacion(
         event_type=MUSICA,
-        is_local=None,
         classification_source=FUENTE_ASUMIDO,
-        detalle=(
-            "MusicBrainz no reconoce ninguno de "
-            + ", ".join(f"«{c}»" for c in candidatos)
-            + "; origen sin resolver"
-        ),
-        consulto_red=True,
+        detalle="ninguna regla lo excluye",
     )

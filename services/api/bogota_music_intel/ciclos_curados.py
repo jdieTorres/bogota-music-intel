@@ -19,7 +19,7 @@ Reglas para agregar una entrada:
    concierto con cartel. El caso que lo enseñó: "Todo Copas" parecía una
    fiesta por el título ("Todo copas en Latino Power Bogota 20 Años") y
    resultó ser una banda de hip hop colombiana celebrando 20 años de
-   trayectoria. Está en `artistas_locales.py`, no acá.
+   trayectoria. Eso lo decide una persona en /admin, no acá.
 2. Dejar escrito en `evidencia` cómo se verificó.
 3. Ante la duda, no agregarlo: el evento se muestra como concierto, que es
    el estado por defecto y no esconde nada.
@@ -59,7 +59,7 @@ CICLOS: list[CicloCurado] = [
         evidencia=(
             "Evento de rap en el Royal Center, publicado por la sala y por "
             "el promotor (eTicketaBlanca) sin nombrar artistas en el "
-            "título. Es la marca del evento, no un artista: MusicBrainz no "
+            "título. Es la marca del evento, no un artista, así que no hay a "
             "lo reconoce y no hay ficha de artista en ninguna de las dos "
             "fuentes. Verificado 2026-08-27."
         ),

@@ -106,7 +106,7 @@ def main() -> int:
 
     if sin_resolver:
         print(f"\nSin ubicación ({len(sin_resolver)}): {', '.join(sin_resolver)}")
-        print("Revisá la dirección de esas salas o cargá la coordenada a mano.")
+        print("Revisa la dirección de esas salas o carga la coordenada a mano.")
     return 0
 
 

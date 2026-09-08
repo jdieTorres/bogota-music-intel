@@ -17,7 +17,7 @@ Hace seis cosas, y ninguna publica nada:
    algo ya publicado, el canónico vuelve a la cola con el cambio a la vista.
 3. **Avisa de los publicados que se quedaron sin fuente**, que hoy
    desaparecían en silencio cuando la sala los sacaba de su cartelera.
-4. **Baja la clasificación que llegó tarde**: un evento que MusicBrainz no
+4. **Baja la clasificación que llegó tarde**: un evento que el clasificador no
    resolvió el primer día y sí el segundo tiene que llegarle al canónico,
    que ya existía cuando eso pasó.
 5. **Rearma la foto de origen** del canónico al que el admin le acaba de
@@ -264,7 +264,7 @@ def _bajar_clasificacion_tardia(client, crudos, canonicos, guardar: bool) -> int
     """Rellena en el canónico la clasificación que el crudo resolvió después.
 
     Solo rellena huecos: si el admin corrigió el tipo a mano, su decisión
-    gana sobre lo que diga MusicBrainz mañana.
+    gana sobre lo que diga el clasificador mañana.
     """
     por_canonico = _por_canonico(crudos)
 
@@ -378,7 +378,7 @@ def main() -> int:
             print(
                 "La base todavía no tiene el esquema de moderación.\n"
                 "Aplicá supabase/migrations/20260831000000_moderacion.sql en el "
-                "SQL editor de Supabase (o con `supabase db push`) y volvé a correr esto."
+                "SQL editor de Supabase (o con `supabase db push`) y vuelve a correr esto."
             )
             return 1
         raise

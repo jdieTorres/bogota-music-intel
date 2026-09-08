@@ -27,6 +27,13 @@ instalar algo que prometa ahorrar tokens, mirar acá.
   `.claude/settings.json` que hubo que revertir, y nada avisaba cuando el grafo
   quedaba viejo. **Antes de instalar algo que prometa ahorrar tokens, medir con
   `/context`.**
+- **`musicbrainz-y-artistas-locales.md`** — el clasificador de origen del
+  artista, dado de baja el 2026-09-08. MusicBrainz contesta **nacionalidad** y
+  la pantalla decía «de la escena local»: de los 12 marcados como locales, 9
+  los había puesto la API —Carlos Vives, Juanes, Aterciopelados— y ninguno era
+  escena. No era un problema de umbral sino de pregunta equivocada; hoy
+  `is_local` lo escribe una persona en `/admin`. Se fueron con él la lista de
+  9 artistas curados y toda la dependencia de red del clasificador.
 - **`fotos-curadas.md`** — `fotos_curadas.py` y `fotos_cli.py`, escritos el
   2026-08-29 y archivados el 2026-09-08 **sin una sola entrada**. Ninguna
   fuente publica foto del venue, así que el dato entra a mano; de ahí se

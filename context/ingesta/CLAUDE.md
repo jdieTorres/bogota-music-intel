@@ -32,19 +32,19 @@ el motivo verificado de cada uno.
   razonables (la zona horaria que declara el sitio, la URL como identidad del
   evento) resultaron falsas y ya tienen tests de regresión.
 
-## Las siete listas curadas
+## Las listas curadas
 
-MusicBrainz resuelve bien al internacional consagrado y mal al local
-emergente, que es lo contrario de lo que esta plataforma necesita. **No hay
-API que reemplace estas listas**: se probaron Deezer, iTunes y Wikidata y
-ninguna expone país del artista de forma útil. La lista curada es la
-respuesta, no un parche.
+Son cinco archivos en `services/api/bogota_music_intel/`: `ciclos_curados`,
+`festivales_curados`, `coordenadas_curadas`, `nombres_de_salas` y
+`titulos_curados`. **Crecen con cada corrida del cron**, y quién entra lo
+decide Juan.
 
-Son seis archivos en `services/api/bogota_music_intel/`: `artistas_locales`,
-`ciclos_curados`, `festivales_curados`, `coordenadas_curadas`,
-`nombres_de_salas` y `titulos_curados`. **Crecen con cada corrida del cron**:
-un evento nuevo con un artista que las bases globales no conocen vuelve a caer
-en "sin origen", y quién entra lo decide Juan.
+⚠️ **Eran seis hasta el 2026-09-08**: `artistas_locales.py` se fue junto con
+MusicBrainz. Servía para decir de dónde era el artista, y esa pregunta el
+pipeline ya no la contesta — `is_local` lo escribe una persona en `/admin`. El
+porqué, en `context/archivo/musicbrainz-y-artistas-locales.md`; el resumen es
+que la API contestaba **nacionalidad** y la pantalla decía «escena local», que
+no es lo mismo.
 
 ⚠️ **Una lista curada es la respuesta cuando el dato lo produce la ingesta.
 Cuando lo produce una persona, el lugar es el formulario.** Eran siete: las
@@ -128,19 +128,14 @@ canónico, así que la segunda fuente se le adjunta como duplicado.
 en el llamador.** Dejarlo del lado del CLI parece más flexible y falla: la
 primera versión del clasificador espaciaba desde el bucle, dejaba escapar dos
 peticiones pegadas al arrancar y MusicBrainz devolvía 503 tumbando la corrida.
-Con el control adentro de `musicbrainz.py`, las 52 consultas pasaron limpias.
-Vale igual para Nominatim (1 req/s, User-Agent identificable).
+Hoy la regla vive en **Nominatim** (1 req/s, User-Agent identificable), que es
+la única API externa que le queda al pipeline.
 
-**Un 503 no se guarda como "artista desconocido": deja el evento sin
-clasificar para reintentarlo.** Ese diseño es lo que resolvió solo el único
-susto que dio MusicBrainz desde CI. El 2026-08-30 el paso `Classify events`
-terminó en verde y dejó un evento sin clasificar, y durante ocho días se
-sospechó que MusicBrainz trataba distinto a las IP de GitHub Actions —como
-había pasado con Deezer—. **No era eso:** entre el 2026-09-02 y el 2026-09-07
-el paso hizo trabajo real en cuatro corridas (25s, 22s, 48s, 7s) y volvió a
-1s, y hoy no queda ninguna fila cruda ni ningún canónico sin clasificar. Si
-fallara desde CI, las filas se habrían acumulado en vez de vaciarse. Fue un
-fallo transitorio, absorbido por el reintento.
+⚠️ **La clasificación ya no sale a la red** (2026-09-08). Con MusicBrainz se
+fue todo lo que colgaba de él: los reintentos, el corte tras tres fallas
+seguidas, y los eventos que quedaban sin clasificar cuando el servicio no
+respondía. `classify_cli` corre en milisegundos y no puede fallar por causas
+ajenas.
 
 ## Ver también
 

@@ -46,8 +46,8 @@ jobs:
 
       # Cola de moderación: abre un borrador por cada evento nuevo y marca
       # los publicados cuya fuente se movió. Va DESPUÉS de clasificar para
-      # que el borrador herede event_type e is_local ya resueltos y el admin
-      # no tenga que decidirlos a mano.
+      # que el borrador herede el event_type ya resuelto y el admin no tenga
+      # que decidirlo a mano.
       #
       # No publica nada: eso lo hace una persona. Ver
       # context/moderacion/diseno.md.

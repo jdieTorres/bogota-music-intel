@@ -269,7 +269,7 @@ class TestLoQueSeCura:
 
 
 class TestListasCuradas:
-    """Mismo contrato que artistas_locales.py: nada entra sin una fuente
+    """El mismo contrato de todas las listas curadas: nada entra sin una fuente
     consultable escrita al lado."""
 
     def test_cada_grafia_deja_escrito_de_donde_salio(self):

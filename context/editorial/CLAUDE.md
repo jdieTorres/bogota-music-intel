@@ -23,15 +23,26 @@ artista de cartel a quien preguntarle de dónde es**. Su `is_local` en null es
 la respuesta correcta, no un hueco — al contar "sin origen resuelto" hay que
 mirar solo los conciertos.
 
-## El origen del artista (`is_local`)
+## La escena local (`is_local`) — lo escribe una persona
 
-Tres estados y no dos: `null` (no sabemos), `true`, `false`. El ranking solo
-castiga al `false`. Se resuelve con `artistas_locales.py` + MusicBrainz —
-detalle en `context/ingesta/CLAUDE.md`.
+Tres estados y no dos: `null` (nadie lo ha decidido), `true`, `false`. El
+ranking solo castiga al `false`.
+
+⚠️ **Desde el 2026-09-08 no lo calcula nada.** Se resolvía con MusicBrainz más
+una lista curada, y se dio de baja porque la API contesta **nacionalidad**
+mientras la pantalla dice «de la escena local», que es otra afirmación: Carlos
+Vives y Juanes salían marcados igual que El Kalvo. Hoy el campo se escribe en
+el formulario de `/admin` y en ningún otro lado — ni el clasificador ni el
+traspaso del crudo al canónico lo tocan. El detalle, en
+`context/archivo/musicbrainz-y-artistas-locales.md`.
+
+Que sea un juicio y no una medición es lo que lo hace confiable: la marca
+afirma que **Juan dice** que ese toque es de la escena, y eso sí es verdad por
+construcción.
 
 Reclasificar todo cuesta nada: `python -m bogota_music_intel.classify_cli
-[--dry-run] [--todas]`. Corre aparte del scraping y por defecto solo mira lo
-que llegó sin clasificar.
+[--dry-run] [--todas]`. Corre aparte del scraping, solo decide `event_type`, y
+por defecto solo mira lo que llegó sin clasificar.
 
 El criterio que consume el frontend vive en `apps/web/src/lib/editorial.ts`, y
 los tres consumidores lo importan de ahí.

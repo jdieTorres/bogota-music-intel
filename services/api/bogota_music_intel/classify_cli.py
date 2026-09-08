@@ -1,4 +1,4 @@
-"""Clasifica los eventos guardados: qué es música y qué artista es local.
+"""Clasifica los eventos guardados: qué es música, qué es fiesta, qué no va.
 
 Uso:
     python -m bogota_music_intel.classify_cli            # solo los nuevos
@@ -9,25 +9,27 @@ Corre después del scraping, no dentro: la ingesta guarda crudo y esto marca
 encima. Reclasificar con `--todas` es barato y no pierde nada, que es
 justamente lo que permite cambiar el criterio editorial sin re-scrapear.
 
+**Ya no consulta nada por red** (2026-09-08). Antes preguntaba a MusicBrainz
+el país del artista para llenar `is_local`, y con eso venía todo un aparato:
+límite de peticiones, tres reintentos, un contador de fallas seguidas para
+rendirse, y eventos que quedaban sin clasificar cuando el servicio no
+respondía. Nada de eso hace falta: `is_local` lo escribe una persona en
+`/admin`, y lo que queda acá son reglas locales que corren en milisegundos y
+no pueden fallar por causas ajenas.
+
 Conviene leer la salida: cada línea dice por qué quedó así. Un evento que
 desaparece de la cartelera sin explicación no hay forma de auditarlo.
 """
 import argparse
 from datetime import UTC, datetime
 
-import httpx
-
 from bogota_music_intel.classify import clasificar
-from bogota_music_intel.musicbrainz import USER_AGENT, MusicBrainzNoDisponible
 from bogota_music_intel.storage import get_client
-from bogota_music_intel.tipos_evento import FIESTA, NO_MUSICA
+from bogota_music_intel.tipos_evento import FESTIVAL, FIESTA, NO_MUSICA
 
 CAMPOS = "id,source,source_event_id,title,category"
 
-# Si MusicBrainz se cae, seguir preguntando es perder el tiempo: cada
-# consulta gasta tres reintentos con espera. Se corta y se avisa, dejando
-# esos eventos sin clasificar para el próximo intento.
-FALLAS_SEGUIDAS_PARA_RENDIRSE = 3
+MARCAS = {NO_MUSICA: "FUERA ", FIESTA: "FIESTA", FESTIVAL: "FESTI "}
 
 
 def main() -> int:
@@ -51,9 +53,9 @@ def main() -> int:
         if "event_type" in str(exc):
             print(
                 "La tabla events todavía no tiene las columnas de clasificación.\n"
-                "Aplicá la migración "
+                "Aplica la migración "
                 "supabase/migrations/20260828000000_clasificacion_editorial.sql "
-                "en el SQL editor de Supabase (o con `supabase db push`) y volvé "
+                "en el SQL editor de Supabase (o con `supabase db push`) y vuelve "
                 "a correr esto."
             )
             return 1
@@ -63,80 +65,31 @@ def main() -> int:
         print("No hay eventos sin clasificar.")
         return 0
 
-    excluidos = 0
-    fiestas = 0
-    locales = 0
-    internacionales = 0
-    sin_resolver = 0
-    sin_preguntar = 0
-    fallas_seguidas = 0
+    conteo: dict[str, int] = {}
 
-    with httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=30) as http:
-        for evento in eventos:
-            # El ritmo de peticiones lo maneja el módulo de MusicBrainz: lo
-            # que se excluye por patrón o por categoría ni toca la red.
-            try:
-                resultado = clasificar(evento, client=http)
-            except MusicBrainzNoDisponible as exc:
-                # No se pudo preguntar. Se deja sin clasificar a propósito,
-                # para que el próximo intento lo vuelva a tomar; guardar
-                # "origen desconocido" lo daría por resuelto para siempre.
-                sin_preguntar += 1
-                fallas_seguidas += 1
-                print(f"[ ... ] {evento['title'][:60]}\n        {exc}")
-                if fallas_seguidas >= FALLAS_SEGUIDAS_PARA_RENDIRSE:
-                    print(
-                        f"\nMusicBrainz no responde ({fallas_seguidas} seguidas). "
-                        "Se corta acá; los eventos que faltan quedan sin "
-                        "clasificar y se retoman en la próxima corrida."
-                    )
-                    break
-                continue
-            fallas_seguidas = 0
+    for evento in eventos:
+        resultado = clasificar(evento)
+        conteo[resultado.event_type] = conteo.get(resultado.event_type, 0) + 1
 
-            if resultado.event_type == NO_MUSICA:
-                excluidos += 1
-                marca = "FUERA"
-            elif resultado.event_type == FIESTA:
-                fiestas += 1
-                marca = "FIESTA"
-            elif resultado.is_local is True:
-                locales += 1
-                marca = "LOCAL"
-            elif resultado.is_local is False:
-                internacionales += 1
-                marca = "INTL "
-            else:
-                sin_resolver += 1
-                marca = "  ?  "
+        marca = MARCAS.get(resultado.event_type, "MÚSICA")
+        print(f"[{marca}] {evento['title'][:60]}\n        {resultado.detalle}")
 
-            print(f"[{marca}] {evento['title'][:60]}\n        {resultado.detalle}")
+        if not args.dry_run:
+            # ⚠️ **No se escribe `is_local`.** La columna sigue existiendo en
+            # `events` con lo que dejó MusicBrainz, pero nadie la actualiza
+            # ya: el origen del artista lo decide una persona sobre el
+            # canónico, y pisarlo desde acá sería devolverle el volante al
+            # automatismo que se dio de baja.
+            client.table("events").update(
+                {
+                    "event_type": resultado.event_type,
+                    "classification_source": resultado.classification_source,
+                    "classified_at": datetime.now(UTC).isoformat(),
+                }
+            ).eq("id", evento["id"]).execute()
 
-            if not args.dry_run:
-                client.table("events").update(
-                    {
-                        "event_type": resultado.event_type,
-                        "is_local": resultado.is_local,
-                        "classification_source": resultado.classification_source,
-                        "classified_at": datetime.now(UTC).isoformat(),
-                    }
-                ).eq("id", evento["id"]).execute()
-
-    print(
-        f"\n{len(eventos)} eventos: {excluidos} no son música, "
-        f"{fiestas} fiestas, {locales} locales, "
-        f"{internacionales} internacionales, {sin_resolver} sin resolver."
-    )
-    if sin_preguntar:
-        print(
-            f"{sin_preguntar} quedaron sin clasificar porque MusicBrainz no "
-            "respondió. Volvé a correr esto más tarde."
-        )
-    if sin_resolver:
-        print(
-            "Los «sin resolver» se siguen mostrando en su lugar normal: no se "
-            "penaliza un evento por no haber podido identificar al artista."
-        )
+    resumen = ", ".join(f"{n} {tipo}" for tipo, n in sorted(conteo.items()))
+    print(f"\n{len(eventos)} eventos: {resumen}.")
     if args.dry_run:
         print("(dry-run: no se guardó nada)")
     return 0

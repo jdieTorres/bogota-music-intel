@@ -144,33 +144,34 @@ class TestCambiosEnElOrigen:
 
 
 class TestClasificacionTardia:
-    """MusicBrainz puede fallar el primer día y resolver el segundo, cuando
-    el canónico ya existe. Sin esto, esa clasificación no llegaría nunca."""
+    """Un evento puede llegar sin clasificar y resolverse en una corrida
+    posterior, cuando el canónico ya existe. Sin esto, esa clasificación no
+    llegaría nunca."""
 
     def test_rellena_el_hueco_que_el_crudo_resolvio_despues(self):
-        canonico = {"event_type": None, "is_local": None}
-        resuelto = crudo(event_type="music", is_local=True)
-        assert clasificacion_pendiente(canonico, [resuelto]) == {
+        canonico = {"event_type": None}
+        assert clasificacion_pendiente(canonico, [crudo(event_type="music")]) == {
             "event_type": "music",
-            "is_local": True,
         }
 
     def test_no_pisa_lo_que_el_admin_ya_decidio(self):
         # Si el admin corrigió el tipo a mano, su decisión gana sobre lo que
-        # diga MusicBrainz mañana: para eso existe la revisión.
-        canonico = {"event_type": "fiesta", "is_local": None}
+        # diga el clasificador mañana: para eso existe la revisión.
+        canonico = {"event_type": "fiesta"}
         assert clasificacion_pendiente(canonico, [crudo(event_type="music")]) == {}
 
-    def test_is_local_false_es_un_dato_y_se_baja(self):
-        # False es "internacional confirmado", tan bueno como True. Tratarlo
-        # como vacío dejaría el canónico sin un dato que sí se resolvió.
+    def test_is_local_no_baja_del_crudo_nunca(self):
+        # Las filas crudas viejas conservan el `is_local` que les dejó
+        # MusicBrainz antes de que se diera de baja (2026-09-08). Bajarlo
+        # haría que el canónico heredara un origen que nadie decidió, que es
+        # exactamente el automatismo que se quitó: hoy ese campo lo escribe
+        # una persona en /admin y en ningún otro lado.
         canonico = {"event_type": "music", "is_local": None}
-        assert clasificacion_pendiente(canonico, [crudo(is_local=False)]) == {
-            "is_local": False
-        }
+        assert clasificacion_pendiente(canonico, [crudo(is_local=False)]) == {}
+        assert clasificacion_pendiente(canonico, [crudo(is_local=True)]) == {}
 
     def test_sin_fuentes_no_hay_nada_que_bajar(self):
-        assert clasificacion_pendiente({"event_type": None, "is_local": None}, []) == {}
+        assert clasificacion_pendiente({"event_type": None}, []) == {}
 
 
 class TestCamposQueSePiden:

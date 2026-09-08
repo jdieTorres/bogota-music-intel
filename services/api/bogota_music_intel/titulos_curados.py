@@ -1,7 +1,8 @@
 """Cómo se escriben de verdad los artistas y los shows, cuando la sala los
 publica mal o de una forma que ninguna regla honesta puede desarmar.
 
-Es el equivalente de `artistas_locales.py` para el título. Las reglas de
+Es una lista curada del título, con la misma exigencia de evidencia que
+las demás. Las reglas de
 `titulos.py` corrigen lo que es estructura (mayúsculas gritadas, "en Bogotá"
 al final, varios artistas separados por barras); acá va solo lo que exige
 saber algo que el título no dice.
@@ -65,7 +66,7 @@ GRAFIAS: list[GrafiaCurada] = [
         nombre="Slaughter to Prevail",
         evidencia=(
             "Errata del Royal Center, que publica 'SLAUHGTER TO PREVAIL'. Ya "
-            "estaba registrada en artistas_locales.py como `tambien_como` de "
+            "estaba registrada como grafía alterna de "
             "'Slaughter to Prevail'."
         ),
     ),
@@ -95,7 +96,8 @@ GRAFIAS: list[GrafiaCurada] = [
             "Se estiliza en minúscula. Rockal Live lo publica en mayúscula "
             "sostenida ('PABLOPABLO EN BOGOTÁ'), que la regla de mayúsculas "
             "convierte en 'Pablopablo'. Ya está escrito así en "
-            "artistas_locales.py (Pablo Drexler, escena alternativa española)."
+            "la lista de artistas que se archivó en 2026-09-08 (Pablo Drexler, "
+            "escena alternativa española)."
         ),
     ),
     GrafiaCurada(
@@ -104,7 +106,7 @@ GRAFIAS: list[GrafiaCurada] = [
         evidencia=(
             "Lleva tilde. Latino Power lo publica sin ella "
             "('Mukangu/Atake Mapale/ Los Yoryis'). Ya está con tilde y con su "
-            "evidencia en artistas_locales.py."
+            "evidencia en la lista de artistas archivada."
         ),
     ),
     GrafiaCurada(

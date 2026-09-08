@@ -8,10 +8,8 @@ La regla que ordena todo: **excluir es caro y silencioso**. Un evento que se
 cae de la cartelera no deja rastro para el usuario, así que solo se excluye
 con una señal fuerte; ante la duda el evento se muestra.
 """
-import httpx
 import pytest
 
-from bogota_music_intel.artistas_locales import ARTISTAS
 from bogota_music_intel.ciclos_curados import CICLOS
 from bogota_music_intel.clasificacion_manual import CLASIFICACION_MANUAL
 from bogota_music_intel.classify import clasificar
@@ -23,13 +21,11 @@ from bogota_music_intel.festivales_curados import FESTIVALES, festival_de
 from bogota_music_intel.tipos_evento import (
     FESTIVAL,
     FIESTA,
-    FUENTE_ARTISTA_CURADO,
     FUENTE_ASUMIDO,
     FUENTE_CATEGORIA,
     FUENTE_CICLO,
     FUENTE_FESTIVAL,
     FUENTE_MANUAL,
-    FUENTE_MUSICBRAINZ,
     FUENTE_PATRON,
     MUSICA,
     NO_MUSICA,
@@ -122,59 +118,56 @@ def _evento(source="movistar_arena", source_event_id="x", title="X", category=No
     }
 
 
-def _cliente_falso(handler) -> httpx.Client:
-    return httpx.Client(transport=httpx.MockTransport(handler))
-
-
-def _responde(artistas: list[dict]):
-    return lambda request: httpx.Response(200, json={"artists": artistas})
-
-
 class TestPrecedencia:
     """La primera señal que contesta gana, de la más confiable a la más
-    frágil: curada > categoría > patrón > MusicBrainz."""
+    frágil: curada > ciclo > festival > categoría > patrón."""
 
     def test_lo_curado_a_mano_gana_sobre_todo(self):
-        evento = _evento(
-            source="royal_center",
-            source_event_id="hombres-a-la-plancha",
-            title="HOMBRES A LA PLANCHA",
+        resultado = clasificar(
+            _evento(
+                source="royal_center",
+                source_event_id="hombres-a-la-plancha",
+                title="HOMBRES A LA PLANCHA",
+            )
         )
-        # Ni siquiera debería consultar la red.
-        def handler(request):
-            raise AssertionError("no debería consultar MusicBrainz")
-
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(evento, client=cliente)
-
         assert resultado.event_type == NO_MUSICA
         assert resultado.classification_source == FUENTE_MANUAL
-        assert resultado.consulto_red is False
 
-    def test_la_categoria_excluye_sin_consultar_la_red(self):
-        evento = _evento(
-            source="idartes_teatro_jeg",
-            source_event_id="ella",
-            title="'Ella' de Luisa Fernanda Hoyos en la Sala Gaitán",
-            category="Teatro",
+    def test_la_categoria_de_la_fuente_gana_sobre_el_titulo(self):
+        resultado = clasificar(
+            _evento(
+                source="idartes_teatro_jeg",
+                source_event_id="ella",
+                title="'Ella' de Luisa Fernanda Hoyos en la Sala Gaitán",
+                category="Teatro",
+            )
         )
-
-        def handler(request):
-            raise AssertionError("no debería consultar MusicBrainz")
-
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(evento, client=cliente)
-
         assert resultado.event_type == NO_MUSICA
         assert resultado.classification_source == FUENTE_CATEGORIA
 
-    def test_el_patron_excluye_sin_consultar_la_red(self):
-        with _cliente_falso(_responde([])) as cliente:
-            resultado = clasificar(_evento(title="WWE Bogota 2026"), client=cliente)
-
+    def test_el_patron_atrapa_lo_que_la_fuente_no_categoriza(self):
+        resultado = clasificar(_evento(title="WWE Bogota 2026"))
         assert resultado.event_type == NO_MUSICA
         assert resultado.classification_source == FUENTE_PATRON
-        assert resultado.consulto_red is False
+
+    def test_lo_que_ninguna_regla_excluye_es_musica(self):
+        # Es el camino más transitado desde que se dio de baja MusicBrainz
+        # (2026-09-08): sin la consulta de origen, casi todo llega acá.
+        #
+        # Asumir música es lo correcto, y el nombre de la fuente lo dice sin
+        # mentir: nadie verificó que lo sea, solo que nada dice que no. El
+        # costo de mostrar de más es un evento que sobra en una lista; el de
+        # excluir de más es un toque que desaparece sin que nadie se entere.
+        resultado = clasificar(_evento(title="Mukangu & Atake Mapalé & Los Yoryis"))
+        assert resultado.event_type == MUSICA
+        assert resultado.classification_source == FUENTE_ASUMIDO
+
+    def test_el_clasificador_no_afirma_nada_sobre_el_origen(self):
+        # `Clasificacion` ya no tiene el campo, y que no exista es lo que
+        # garantiza que ningún automatismo lo escriba: `is_local` lo decide
+        # una persona en /admin.
+        resultado = clasificar(_evento(title="Carlos Vives & La Provincia"))
+        assert not hasattr(resultado, "is_local")
 
 
 class TestFiestasYCiclos:
@@ -183,128 +176,29 @@ class TestFiestasYCiclos:
     No es un concierto con el artista sin identificar — es que no hay
     artista que identificar. Se muestra en la cartelera, en su pestaña."""
 
-    def test_una_fiesta_no_se_excluye_ni_gasta_una_peticion(self):
-        def handler(request):
-            raise AssertionError("no debería consultar MusicBrainz")
-
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(_evento(title="Que Chimba Puñeta Vol. 4"), client=cliente)
-
+    def test_una_fiesta_no_se_excluye(self):
+        resultado = clasificar(_evento(title="Que Chimba Puñeta Vol. 4"))
         assert resultado.event_type == FIESTA
         assert resultado.classification_source == FUENTE_CICLO
-        assert resultado.consulto_red is False
 
     def test_la_edicion_siguiente_entra_sola(self):
         # La razón de curar por nombre de ciclo y no por id del evento.
-        with _cliente_falso(_responde([])) as cliente:
-            resultado = clasificar(_evento(title="QUE CHIMBA PUNETA VOL 5"), client=cliente)
+        resultado = clasificar(_evento(title="QUE CHIMBA PUNETA VOL 5"))
         assert resultado.event_type == FIESTA
 
-    def test_una_fiesta_no_afirma_nada_sobre_el_origen(self):
-        # is_local es sobre el artista, y acá no hay uno.
-        with _cliente_falso(_responde([])) as cliente:
-            resultado = clasificar(_evento(title="THE JAZZ ROOM"), client=cliente)
-        assert resultado.is_local is None
-
-    def test_un_concierto_en_la_misma_sala_no_se_vuelve_fiesta(self):
+    def test_un_toque_en_la_misma_sala_no_se_vuelve_fiesta(self):
         # "Todo copas en Latino Power Bogota 20 Años" parecía una fiesta por
         # el título y es una banda de hip hop colombiana. La sala no decide.
-        handler = _responde([])
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(
-                _evento(source="latino_power", title="Todo copas en Latino Power Bogota 20 Años"),
-                client=cliente,
-            )
+        resultado = clasificar(
+            _evento(source="latino_power", title="Todo copas en Latino Power Bogota 20 Años")
+        )
         assert resultado.event_type == MUSICA
-        assert resultado.is_local is True
-        assert resultado.classification_source == FUENTE_ARTISTA_CURADO
 
 
-class TestArtistasCurados:
-    def test_toda_entrada_documenta_su_evidencia(self):
-        for artista in ARTISTAS:
-            assert len(artista.evidencia) > 40, artista.nombre
-
-    def test_encuentra_al_artista_aunque_la_sala_lo_escriba_mal(self):
-        # Royal Center publica "SLAUHGTER TO PREVAIL". El emparejamiento es
-        # exacto a propósito, así que la errata se declara como grafía
-        # alternativa en vez de aflojar la comparación.
-        with _cliente_falso(_responde([])) as cliente:
-            resultado = clasificar(_evento(title="SLAUHGTER TO PREVAIL"), client=cliente)
-
-        assert resultado.is_local is False
-        assert resultado.classification_source == FUENTE_ARTISTA_CURADO
-        assert resultado.consulto_red is False
-
-    def test_el_artista_curado_puede_estar_en_un_candidato_posterior(self):
-        # "Gaitán al Aire Vol. 57" abre el título y el artista viene
-        # después: la lista curada se revisa entera antes de salir a la red.
-        titulo = "Gaitán al Aire Vol. 57: Ancestral Beats presenta 'Human Design'"
-        with _cliente_falso(_responde([])) as cliente:
-            resultado = clasificar(_evento(title=titulo, category="Música"), client=cliente)
-
-        assert resultado.is_local is True
-        assert resultado.consulto_red is False
-
+class TestCiclosCurados:
     def test_todo_ciclo_documenta_su_evidencia(self):
         for ciclo in CICLOS:
             assert len(ciclo.evidencia) > 40, ciclo.nombre
-
-    def test_la_lista_curada_gana_sobre_musicbrainz(self):
-        # Sirve para cubrir lo que MusicBrainz no tiene y para corregirlo
-        # cuando se equivoca, así que va antes y sin gastar petición.
-        def handler(request):
-            raise AssertionError("no debería consultar MusicBrainz")
-
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(_evento(title="Todo Copas"), client=cliente)
-
-        assert resultado.is_local is True
-        assert resultado.consulto_red is False
-
-
-class TestOrigenDelArtista:
-    def test_un_internacional_se_marca_pero_no_se_excluye(self):
-        # La decisión editorial: los internacionales van en segundo plano,
-        # no fuera de la cartelera.
-        handler = _responde([{"name": "Robbie Williams", "score": 100, "country": "GB"}])
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(_evento(title="ROBBIE WILLIAMS | BRITPOP"), client=cliente)
-
-        assert resultado.event_type == MUSICA
-        assert resultado.is_local is False
-        assert resultado.classification_source == FUENTE_MUSICBRAINZ
-
-    def test_un_local_se_marca_como_local(self):
-        handler = _responde([{"name": "El Kalvo", "score": 100, "country": "CO"}])
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(
-                _evento(title="El Kalvo: 20 años del rap rolo", category="Música"),
-                client=cliente,
-            )
-
-        assert resultado.is_local is True
-
-    def test_un_artista_no_resuelto_queda_sin_origen_y_se_muestra(self):
-        # is_local None no es lo mismo que False: la cartelera no lo
-        # penaliza, solo no lo destaca.
-        with _cliente_falso(_responde([])) as cliente:
-            resultado = clasificar(_evento(title="Laura & Brenda"), client=cliente)
-
-        assert resultado.event_type == MUSICA
-        assert resultado.is_local is None
-        assert resultado.classification_source == FUENTE_ASUMIDO
-
-    def test_un_titulo_sin_nada_consultable_no_gasta_una_peticion(self):
-        def handler(request):
-            raise AssertionError("no debería consultar MusicBrainz")
-
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(_evento(title="EN BOGOTÁ"), client=cliente)
-
-        assert resultado.event_type == MUSICA
-        assert resultado.is_local is None
-        assert resultado.consulto_red is False
 
 
 class TestFestivalesCurados:
@@ -334,28 +228,12 @@ class TestFestivalesCurados:
         assert festival_de("Aterciopelados en Rock al Parque") is None
         assert festival_de("Rock al Parque: el documental") is None
 
-    def test_clasifica_sin_consultar_la_red(self):
-        # No hay artista de cartel, así que preguntarle a MusicBrainz por el
-        # título completo sería gastar una petición para nada.
-        def handler(request):
-            raise AssertionError("no debería consultar MusicBrainz")
-
-        with _cliente_falso(handler) as cliente:
-            resultado = clasificar(
-                _evento(source="visitbogota", title="Rock al Parque 2026", category="Conciertos"),
-                client=cliente,
-            )
-
+    def test_gana_sobre_el_titulo_completo(self):
+        resultado = clasificar(
+            _evento(source="visitbogota", title="Rock al Parque 2026", category="Conciertos")
+        )
         assert resultado.event_type == FESTIVAL
         assert resultado.classification_source == FUENTE_FESTIVAL
-        assert resultado.consulto_red is False
-
-    def test_el_origen_queda_en_null_a_proposito(self):
-        # Mismo criterio que la fiesta: no es "no sabemos de dónde es el
-        # artista", es que no hay un artista del cual afirmarlo. Marcarlo
-        # como internacional o local sería inventar.
-        resultado = clasificar(_evento(title="Festival Cordillera 2026"))
-        assert resultado.is_local is None
 
     def test_gana_sobre_la_categoria_de_la_fuente(self):
         # visitbogota escribe "Conciertos" en todo lo suyo. Si la categoría

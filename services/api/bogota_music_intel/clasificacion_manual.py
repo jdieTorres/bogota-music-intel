@@ -27,7 +27,6 @@ from bogota_music_intel.tipos_evento import NO_MUSICA
 class ClasificacionManual:
     event_type: str
     evidencia: str
-    is_local: bool | None = None
 
 
 # Clave: (source, source_event_id), la identidad estable del evento en la
