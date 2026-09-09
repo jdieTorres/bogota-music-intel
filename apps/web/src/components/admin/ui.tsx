@@ -9,6 +9,20 @@ import { getGeneros } from "@/lib/admin/generos";
 
 export const BOTON =
   "rounded-md px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90";
+
+/**
+ * La acción principal de un formulario.
+ *
+ * Más grande y con más peso que `BOTON`, y con el hundido al oprimir que
+ * tiene el resto del sitio. El problema que resuelve no era el color —ya era
+ * verde— sino el tamaño y **dónde estaba**: al final de un formulario largo,
+ * fuera de la pantalla. Va siempre dentro de `BarraDeAcciones`.
+ */
+export const BOTON_PRIMARIO =
+  "rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-background transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-40";
+
+export const BOTON_SECUNDARIO =
+  "rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-[transform,background-color] duration-150 hover:bg-surface-hover active:scale-[0.97] disabled:opacity-40";
 export const BOTON_TENUE =
   "rounded-md border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:text-foreground";
 export const BOTON_ROJO =
@@ -19,6 +33,25 @@ export const BOTON_ROJO =
 // se agradece también al hacer click.
 export const CAMPO =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-accent";
+
+/**
+ * La fila de acciones de un formulario, pegada al pie de la pantalla.
+ *
+ * ⚠️ **Existe porque el botón de guardar se perdía.** Las fichas de sala y de
+ * artista son formularios largos; con las acciones al final, guardar obligaba
+ * a bajar hasta el fondo y a acordarse de que estaban ahí. Pegadas abajo, la
+ * acción está donde uno la busca sin importar dónde vaya el desplazamiento.
+ *
+ * El `z-40` la deja por debajo de la bandeja de la rockola, que es `z-50`: si
+ * hay música sonando mientras se modera, la que manda es la que suena.
+ */
+export function BarraDeAcciones({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="sticky bottom-0 z-40 -mx-5 mt-10 flex flex-wrap items-center gap-3 border-t border-border bg-surface px-5 py-4">
+      {children}
+    </div>
+  );
+}
 
 export function Marco({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto max-w-4xl px-5 py-10 sm:py-14">{children}</div>;
@@ -63,10 +96,16 @@ export function CampoDeImagen({
   valor,
   alCambiar,
   ayuda,
+  // El rótulo es un parámetro desde que también hay fotos de artista y
+  // carátulas: el campo hace lo mismo en los tres casos —una URL pegada a
+  // mano que hay que ver antes de guardar— y duplicarlo por cada uso sería
+  // copiar la vista previa tres veces.
+  rotulo = "Foto de la sala",
 }: {
   valor: string | null;
   alCambiar: (v: string | null) => void;
   ayuda?: React.ReactNode;
+  rotulo?: string;
 }) {
   const url = valor?.trim() ?? "";
   // No se valida "que parezca una URL de imagen" por la extensión: media
@@ -76,7 +115,7 @@ export function CampoDeImagen({
 
   return (
     <div>
-      <Rotulo>Foto de la sala</Rotulo>
+      <Rotulo>{rotulo}</Rotulo>
       <input
         value={url}
         onChange={(e) => alCambiar(e.target.value.trim() || null)}

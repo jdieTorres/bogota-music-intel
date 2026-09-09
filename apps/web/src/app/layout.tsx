@@ -5,6 +5,8 @@ import "./globals.css";
 
 import { BrandMark } from "@/components/icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ProveedorDeRockola } from "@/components/rockola/Rockola";
+import { Tornamesa } from "@/components/rockola/Tornamesa";
 
 const workSans = Work_Sans({
   variable: "--font-work-sans",
@@ -86,12 +88,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+        <ProveedorDeRockola>
         {/* Masthead: filete abajo y nada más. La barra con fondo propio y
             sombra es lenguaje de aplicación; una publicación se separa de su
             contenido con una línea. `z-20` porque el riel de fechas de la
             cartelera es sticky con `z-10` y tiene que pasar por debajo. */}
         <header className="relative z-20 border-b border-border">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
+          {/* ⚠️ Envuelve en móvil desde que la barra tiene tres destinos.
+              Con "Directorio" adentro ya no caben en una línea de 390px, y lo
+              que cedía era el nombre de marca, que se partía en dos —
+              exactamente lo que se había evitado escondiendo "Cartelera" en
+              móvil. Cede la navegación, que baja entera a su propia línea, y
+              la marca se queda como está. En escritorio no cambia nada. */}
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
             <Link href="/" className="group flex items-center gap-2.5">
               <BrandMark className="h-7 w-7 shrink-0" />
               <span className="flex items-baseline gap-2">
@@ -105,7 +114,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 </span>
               </span>
             </Link>
-            <nav className="flex items-center gap-5 text-sm">
+            <nav className="flex w-full items-center justify-end gap-5 text-sm sm:w-auto">
               {/* En móvil no se muestra: va al mismo sitio que el logo, y dos
                   enlaces a la portada en una barra de 390px obligaban al
                   nombre de marca a partirse en dos líneas. */}
@@ -114,6 +123,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 className="hidden text-muted transition-colors hover:text-foreground sm:inline"
               >
                 Cartelera
+              </Link>
+              <Link
+                href="/directorio"
+                className="text-muted transition-colors hover:text-foreground"
+              >
+                Directorio
               </Link>
               <Link
                 href="/mapa"
@@ -148,6 +163,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </p>
           </div>
         </footer>
+
+        {/* La bandeja va acá, en el layout, y no dentro de una página: es lo
+            que hace que la música siga sonando mientras se recorre el mapa y
+            la cartelera. Montada en una página, cambiar de ruta cortaría la
+            canción. No pinta nada hasta que alguien pone algo.
+
+            El `pb` del footer no se toca: la bandeja tapa el final del
+            desplazamiento solo mientras suena, y el propio componente reserva
+            su alto cuando existe. */}
+        <Tornamesa />
+        </ProveedorDeRockola>
       </body>
     </html>
   );

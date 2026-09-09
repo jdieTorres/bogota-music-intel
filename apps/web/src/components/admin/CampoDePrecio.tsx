@@ -26,7 +26,7 @@ const MODOS: { modo: Modo; etiqueta: string; ayuda: string }[] = [
   { modo: "gratis", etiqueta: "Gratis", ayuda: "Sale como “Entrada libre”." },
   { modo: "unico", etiqueta: "Único", ayuda: "Un solo precio para todo el mundo." },
   { modo: "rango", etiqueta: "Rango", ayuda: "Varía por localidad, o el festival vende varias boletas." },
-  { modo: "desde", etiqueta: "Desde", ayuda: "Sabés el más barato y no el techo." },
+  { modo: "desde", etiqueta: "Desde", ayuda: "Sabes el más barato y no el techo." },
   { modo: "con_costo", etiqueta: "Con costo", ayuda: "Cuesta, pero la fuente no publicó cuánto." },
 ];
 

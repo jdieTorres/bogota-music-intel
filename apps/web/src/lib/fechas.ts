@@ -106,3 +106,46 @@ export function fechaLarga(iso: string): string {
     year: "numeric",
   }).format(new Date(iso));
 }
+
+/**
+ * El inicio del día de hoy en Bogotá, como texto para la consulta.
+ *
+ * Un toque que empezó a las 8 p. m. sigue siendo "de hoy" a las 11, así que el
+ * corte va por día y no por hora.
+ *
+ * ⚠️ **Esto se le pasa a PostgREST, que lo parsea como instante.** Para
+ * comparar en TypeScript está `siguePorVenir`: dos cadenas ISO con husos
+ * distintos no se pueden comparar como texto.
+ *
+ * Existe una copia de esto en `events.ts` y otra en `venues.ts`, las dos
+ * anteriores a este archivo y marcadas como duplicadas a propósito. Lo nuevo
+ * usa esta.
+ */
+export function inicioDeHoyEnBogota(): string {
+  const partes = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  // Colombia es UTC-5 todo el año: no hay horario de verano que corregir.
+  return `${partes}T00:00:00-05:00`;
+}
+
+/**
+ * ¿Este toque todavía no ha pasado?
+ *
+ * ⚠️ **Compara instantes, nunca texto.** `starts_at` llega de la base con
+ * huso `+00:00` y el corte del día se escribe con `-05:00`: comparadas como
+ * cadenas, `"2026-10-13T01:00:00+00:00" >= "2026-09-09T00:00:00-05:00"`
+ * responde sobre el orden de los caracteres y no sobre el orden de los
+ * instantes. Es el mismo error de razonar sobre el texto ISO que este
+ * proyecto ya cometió dos veces, con otra cara.
+ *
+ * El corte es el inicio del día en Bogotá, no "ahora": un show de las 8 p. m.
+ * sigue estando por venir a las 9, para quien va saliendo.
+ */
+export function siguePorVenir(iso: string | null): boolean {
+  if (!iso) return false;
+  return new Date(iso).getTime() >= new Date(inicioDeHoyEnBogota()).getTime();
+}

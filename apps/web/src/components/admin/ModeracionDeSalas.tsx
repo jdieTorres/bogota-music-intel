@@ -17,7 +17,9 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   BOTON,
+  BOTON_PRIMARIO,
   BOTON_TENUE,
+  BarraDeAcciones,
   CAMPO,
   CampoDeImagen,
   Etiqueta,
@@ -60,7 +62,7 @@ const AYUDA_FOTO = (
   <>
     La fachada o el interior de la sala, de su sitio oficial, su Instagram o Google
     Maps. Un logo no sirve, y el afiche de un evento tampoco: sería mostrar el show
-    en el lugar de la sala. Si no hay una buena, dejalo vacío — la sala sale con el
+    en el lugar de la sala. Si no hay una buena, déjalo vacío — la sala sale con el
     ícono de respaldo, que no afirma nada.
   </>
 );
@@ -316,12 +318,15 @@ function FichaDeSala({
         preferible a un pin en el lugar equivocado — pega el punto desde Google Maps.
       </p>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+      {/* Pegada al pie: la ficha es larga y con las acciones al final había
+          que bajar hasta el fondo para guardar, y acordarse de que estaban
+          ahí. */}
+      <BarraDeAcciones>
         {sala.status === "publicado" ? (
           <button
             disabled={ocupado}
             onClick={() => accion(() => guardarSala(sala.id, campos))}
-            className={`${BOTON} bg-accent text-background`}
+            className={BOTON_PRIMARIO}
           >
             Guardar cambios
           </button>
@@ -329,7 +334,7 @@ function FichaDeSala({
           <button
             disabled={ocupado || !campos.name?.trim()}
             onClick={() => accion(() => aprobarSala(sala.id, campos))}
-            className={`${BOTON} bg-accent text-background disabled:opacity-40`}
+            className={BOTON_PRIMARIO}
           >
             Aprobar sala
           </button>
@@ -344,7 +349,7 @@ function FichaDeSala({
             No va
           </button>
         )}
-      </div>
+      </BarraDeAcciones>
     </div>
   );
 }

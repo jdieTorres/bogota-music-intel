@@ -370,3 +370,155 @@ body::after {
     display: none;
   }
 }
+
+/* --- La rockola ----------------------------------------------------------
+   El módulo del directorio (2026-09-09). Acá solo va lo que Tailwind no
+   expresa: las curvas de movimiento y el giro del disco.
+
+   **Las curvas son propias porque las de fábrica de CSS son flojas.** `ease`
+   y `ease-out` a secas arrancan y frenan sin carácter, y el movimiento se lee
+   como un cambio de estado y no como un gesto. Estas dos vienen del criterio
+   de ingeniería de diseño que se sumó como skill el mismo día.
+
+   ⚠️ **`ease-in` no aparece y no es un olvido.** Arranca lento, justo en el
+   instante que el ojo está mirando, y por eso una animación con `ease-in`
+   *se siente* más lenta que la misma animación con `ease-out` durando lo
+   mismo. */
+:root {
+  /* Para lo que entra o sale: arranca rápido, se acomoda al final. */
+  --ease-salida: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Para lo que se mueve en pantalla sin entrar ni salir. */
+  --ease-relevo: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* El disco.
+
+   ⚠️ **Gira solo mientras suena, y eso es lo que lo justifica.** Una rotación
+   permanente sería decoración, y la decoración que se ve todo el rato cansa;
+   atada a `animation-play-state`, la misma rotación pasa a ser el indicador
+   de si hay algo sonando — se responde de un vistazo y desde el otro lado de
+   la habitación.
+
+   Y gira lento a propósito. Un LP de verdad da una vuelta cada 1,8 s (33⅓
+   rpm) y a esa velocidad en pantalla marea: 7 s es la licencia que hace que
+   se lea como un disco andando en vez de como una ruleta. */
+@keyframes girar-disco {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.disco {
+  animation: girar-disco 7s linear infinite;
+  animation-play-state: paused;
+}
+
+.disco[data-sonando="si"] {
+  animation-play-state: running;
+}
+
+/* La regla global de movimiento reducido de más arriba acorta las duraciones,
+   pero una animación infinita acortada sigue corriendo. Acá se apaga entera:
+   el disco se queda quieto y quien quiera saber si algo suena lo lee en el
+   texto de la bandeja, que nunca dependió del giro. */
+@media (prefers-reduced-motion: reduce) {
+  .disco {
+    animation: none !important;
+  }
+}
+
+/* El relevo de la bandeja.
+
+   Cuando termina un track y entra el siguiente, el bloque de título no
+   parpadea: sale y entra. Un cambio seco de texto se lee como un error de
+   pintado; un relevo corto se lee como que algo pasó.
+
+   200 ms y con la curva de salida: por debajo de eso no se percibe, y por
+   encima de 300 el cambio empieza a estorbar en algo que ocurre en cada
+   canción. Lo dispara la clave por track en React, no una clase que haya que
+   poner y quitar a mano. */
+@keyframes entrar-relevo {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.relevo {
+  animation: entrar-relevo 200ms var(--ease-salida) both;
+}
+
+/* El iframe que arma YouTube.
+
+   Se estiliza desde acá y no con clases porque el elemento no es nuestro: la
+   API lo crea reemplazando el nodo que le damos, así que cualquier clase que
+   le pongamos al nodo desaparece con él. Los atributos `width`/`height` que
+   se le pasan al Player ya dicen 100%, y esto lo sostiene contra las hojas de
+   estilo del navegador. */
+.caja-de-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* --- Las etiquetas del vinilo -------------------------------------------
+   Los cuatro colores que puede tomar la etiqueta central de un track que no
+   trae carátula.
+
+   **No son tokens del tema y no cambian con el toggle**: la etiqueta va sobre
+   un disco negro, que es negro en los dos modos. Son ácidos a propósito —
+   sobre un fondo de papel apagado o de casi negro, un sello impreso es lo
+   único de la pantalla que puede gritar.
+
+   ⚠️ **Ninguno es magenta.** En este sitio el magenta tiene un solo trabajo,
+   que es la marca de escena local, y un sello rosa en la bandeja lo diría sin
+   querer sobre cualquiera que suene.
+
+   Cuál le toca a cada track se decide por su identificador, no al azar: la
+   etiqueta de una canción tiene que ser la misma cada vez que suena, o deja
+   de ser una etiqueta y pasa a ser un parpadeo. */
+:root {
+  --etiqueta-a: #c9f227;
+  --etiqueta-b: #27f2d0;
+  --etiqueta-c: #f2d327;
+  --etiqueta-d: #ff8a3d;
+  /* La tinta del sello. Casi negro y no negro puro, como el resto del sitio. */
+  --etiqueta-tinta: #10160f;
+}
+
+/* La entrada de la bandeja.
+
+   Sube desde su propio borde. Un elemento fijo que aparece de golpe donde
+   antes no había nada se lee como un fallo de pintado; entrando por abajo
+   dice de dónde viene, y el desplazamiento en porcentaje se adapta al alto
+   que tenga —que cambia con la plataforma que suene—.
+
+   La curva es la de los cajones de iOS: arranca rápido y frena largo, que es
+   lo que hace que algo con peso se sienta con peso. 420 ms está dentro del
+   rango de un cajón (200–500) y por encima del de un menú, a propósito: esto
+   ocupa un quinto de la pantalla y entrar en 150 ms se sentiría un salto.
+
+   `both` deja el estado final fijo, para que no vuelva al principio al
+   terminar. */
+@keyframes entrar-bandeja {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.entrar-bandeja {
+  animation: entrar-bandeja 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Con movimiento reducido no se desplaza: solo aparece. La regla general de
+   más arriba ya acorta las duraciones, pero lo que molesta acá es el
+   recorrido, no el tiempo. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes entrar-bandeja {
+    from {
+      opacity: 0;
+    }
+  }
+}

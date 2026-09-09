@@ -27,6 +27,7 @@ const PANTALLAS = [
   { nombre: "fiestas", ruta: "/fiestas" },
   { nombre: "festivales", ruta: "/festivales" },
   { nombre: "mapa", ruta: "/mapa" },
+  { nombre: "directorio", ruta: "/directorio" },
 ];
 
 const MODOS = ["claro", "oscuro"];
@@ -39,15 +40,18 @@ const VISTAS = [
   { nombre: "movil", ancho: 390, alto: 844 },
 ];
 
-/** El detalle de evento necesita un id real, y sale de la propia cartelera. */
-async function primerEvento(pagina) {
-  await pagina.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  const href = await pagina
-    .locator('a[href^="/evento/"]')
+/**
+ * Las dos páginas de detalle necesitan un identificador real, y sale de la
+ * lista que las lista. Si no hay ninguna, la captura de ese detalle no se
+ * toma: es correcto, porque la página tampoco existe.
+ */
+async function primerEnlace(pagina, desde, prefijo) {
+  await pagina.goto(`${BASE}${desde}`, { waitUntil: "networkidle" });
+  return pagina
+    .locator(`a[href^="${prefijo}"]`)
     .first()
     .getAttribute("href")
     .catch(() => null);
-  return href;
 }
 
 const navegador = await chromium.launch();
@@ -92,8 +96,10 @@ for (const vista of VISTAS) {
     const pagina = await contexto.newPage();
 
     const rutas = [...PANTALLAS];
-    const evento = await primerEvento(pagina);
+    const evento = await primerEnlace(pagina, "/", "/evento/");
     if (evento) rutas.push({ nombre: "evento", ruta: evento });
+    const artista = await primerEnlace(pagina, "/directorio", "/artista/");
+    if (artista) rutas.push({ nombre: "artista", ruta: artista });
 
     for (const { nombre, ruta } of rutas) {
       await pagina.goto(`${BASE}${ruta}`, { waitUntil: "networkidle" });

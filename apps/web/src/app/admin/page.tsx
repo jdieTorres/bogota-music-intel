@@ -16,13 +16,14 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { FormularioDeEvento } from "@/components/admin/FormularioDeEvento";
+import { ModeracionDeArtistas } from "@/components/admin/ModeracionDeArtistas";
 import { ModeracionDeEventos } from "@/components/admin/ModeracionDeEventos";
 import { ModeracionDeSalas } from "@/components/admin/ModeracionDeSalas";
 import { BOTON, BOTON_TENUE, CAMPO, Marco } from "@/components/admin/ui";
 import { esAdmin } from "@/lib/admin/sesion";
 import { supabase } from "@/lib/supabase";
 
-type Seccion = "eventos" | "salas";
+type Seccion = "eventos" | "salas" | "artistas";
 
 export default function AdminPage() {
   const [sesion, setSesion] = useState<"cargando" | "fuera" | "sin-permiso" | "dentro">(
@@ -82,7 +83,7 @@ export default function AdminPage() {
     return (
       <Marco>
         <p className="text-muted">
-          Esta cuenta no está en la lista de admins. Pedile a quien administre el
+          Esta cuenta no está en la lista de admins. Pídele a quien administre el
           proyecto que la agregue.
         </p>
         <button onClick={() => void supabase.auth.signOut()} className={BOTON_TENUE}>
@@ -96,7 +97,7 @@ export default function AdminPage() {
     <Marco>
       <div className="flex flex-wrap items-baseline justify-between gap-4">
         <div className="flex items-baseline gap-4">
-          {(["eventos", "salas"] as Seccion[]).map((cual) => (
+          {(["eventos", "salas", "artistas"] as Seccion[]).map((cual) => (
             <button
               key={cual}
               onClick={() => {
@@ -108,7 +109,7 @@ export default function AdminPage() {
                 seccion === cual ? "text-foreground" : "text-muted hover:text-foreground"
               }`}
             >
-              {cual === "eventos" ? "Eventos" : "Salas"}
+              {cual === "eventos" ? "Eventos" : cual === "salas" ? "Salas" : "Artistas"}
             </button>
           ))}
         </div>
@@ -134,6 +135,8 @@ export default function AdminPage() {
 
       {seccion === "salas" ? (
         <ModeracionDeSalas setError={setError} />
+      ) : seccion === "artistas" ? (
+        <ModeracionDeArtistas setError={setError} />
       ) : creandoEvento ? (
         <FormularioDeEvento
           setError={setError}

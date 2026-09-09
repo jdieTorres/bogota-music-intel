@@ -140,6 +140,127 @@ export function IconMoon({ className }: { className?: string }) {
 }
 
 /**
+ * Los controles de la rockola.
+ *
+ * Son de otra familia que los de categoría, y a propósito: los de 42px con
+ * aro **nombran una cosa** —un concierto, una sala— y estos **hacen** algo.
+ * Siguen el modelo de `IconSun`/`IconMoon`: grilla de 20, `currentColor`,
+ * trazo 1.6, sin aro. Puestos en una barra de botones, un aro por control
+ * daría cuatro medallas en fila.
+ *
+ * El de play va relleno y es la única excepción de todo el set. Es la
+ * convención universal del triángulo de reproducción, y dibujarlo en trazo
+ * para respetar la regla de la casa lo haría irreconocible — que es un precio
+ * más alto que la coherencia que compra.
+ */
+export function IconPlay({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path d="M6.5 4.2 15.5 10l-9 5.8V4.2Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function IconPausa({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M7.5 4.5v11M12.5 4.5v11"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function IconSiguiente({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path d="M5.5 4.8 13 10l-7.5 5.2V4.8Z" fill="currentColor" />
+      <path d="M15.5 4.5v11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/**
+ * Encolar: mandarlo al final de lo que ya suena.
+ *
+ * Tres renglones y un signo de más. Es la convención de "añadir a la cola" en
+ * cualquier reproductor, y acá hace falta que se distinga del triángulo de un
+ * vistazo: son las dos únicas acciones de una fila del tracklist y una pone y
+ * la otra guarda para después.
+ */
+export function IconEncolar({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M3 5.5h11M3 10h11M3 14.5h6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M14 12v5M11.5 14.5h5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Parar: vacía la cola y con eso la bandeja se va. */
+export function IconParar({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <rect
+        x="5.3"
+        y="5.3"
+        width="9.4"
+        height="9.4"
+        rx="1"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+    </svg>
+  );
+}
+
+/**
+ * El artista, para el directorio.
+ *
+ * Sí es de la familia de 42px: nombra una cosa, como la sala y el concierto.
+ * El motivo es un disco —el aro exterior ya lo da la familia, así que
+ * adentro va la etiqueta y el surco—, que es lo que distingue a quien graba
+ * de quien programa.
+ */
+export function IconArtista({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 42 42" fill="none" className={className} aria-hidden="true">
+      <circle cx="21" cy="21" r="19" stroke="var(--accent)" strokeWidth="2.5" />
+      <circle
+        cx="21"
+        cy="21"
+        r="11"
+        stroke="var(--accent-2)"
+        strokeWidth="2.2"
+        fill="none"
+      />
+      <circle
+        cx="21"
+        cy="21"
+        r="6"
+        stroke="var(--accent-2)"
+        strokeWidth="2.2"
+        fill="none"
+      />
+      <circle cx="21" cy="21" r="2.6" fill="var(--foreground)" />
+    </svg>
+  );
+}
+
+/**
  * Los íconos de categoría.
  *
  * `IconSala` no está acá porque la sala **es** `BrandMark`: Juan pidió

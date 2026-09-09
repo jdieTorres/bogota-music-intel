@@ -29,7 +29,7 @@ export function EventoCard({ evento }: { evento: Evento }) {
     <li className="scroll-mt-24 border-t border-border first:border-t-0">
       <Link
         href={`/evento/${evento.id}`}
-        className="group flex items-start gap-4 py-4 transition-colors hover:bg-surface-hover sm:gap-5"
+        className="group -mx-3 flex items-start gap-4 rounded-sm px-3 py-4 transition-colors hover:bg-surface-hover sm:gap-5"
       >
         {/* El afiche es el único activo visual que las fuentes publican de
             forma consistente: las fotos de sala no las publica ninguna.
