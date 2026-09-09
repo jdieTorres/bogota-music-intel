@@ -21,14 +21,10 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 - **4 salas por aprobar**: Parque de la 93, Teatro Panorama, Ágora Bogotá
   Centro de Convenciones y Museo de Arte Moderno de Bogotá MAMBO. Ojo:
   aprobarlas mueve el denominador de las dos líneas de arriba.
-- **El género: 10 de 50 publicados lo tienen**, con 7 géneros distintos en uso.
-  Desde el 2026-09-08 **ninguna fuente lo escribe**: `generos` es columna propia
-  y la llena Juan en `/admin`. Ya no hay nada que filtrar ni taxonomías que se
-  cuelen — pero tampoco entra ninguno solo.
-- **Queda un evento con el género compuesto "Rock/Punk/Metal"**, *Helloween |
-  40 Years Anniversary Tour*. Salió de las sugerencias, pero **mientras ese
-  evento lo tenga se va a seguir ofreciendo**: el vocabulario son los géneros
-  ya usados. Juan lo cambia por el específico y desaparece solo.
+- **El género: 10 de 50 publicados lo tienen**, con 7 en uso —Pop, Rock, Hip
+  Hop/Rap, Popular, Reggaeton, Jazz, Vallenato—. Desde el 2026-09-08 **ninguna
+  fuente lo escribe**: `generos` es columna propia y la llena Juan en `/admin`.
+  Ya no hay taxonomías que se cuelen, pero tampoco entra ninguno solo.
 - **La fecha de vencimiento del token de Supabase hay que anotarla.** El
   2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
   reemplazó al de solo lectura que vencía el 2026-12-06. Los tokens scoped
@@ -60,10 +56,6 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   nada** en vez de completar con lo verosímil. Los tres casos que lo prueban
   son un afiche sin año, uno sin hora y uno de una sala que no está cargada.
   Hasta correr esos tres, "funciona" significa "responde", no "no inventa".
-- **El campo de géneros no se ha visto renderizado.** Se agregó el 2026-09-08 y
-  `/admin` pide sesión, así que las capturas no llegan. Falta comprobar dos
-  cosas: que elegir del desplegable agregue el género, y que Enter agregue en
-  vez de enviar el formulario entero.
 - **`/admin` no se ha visto renderizado desde los cambios del 2026-09-08.**
   Pide sesión, así que `npm run capturas` —que cubre las cinco páginas
   públicas— no llega ahí. Compila, los tipos cierran y los tests pasan, pero
@@ -122,7 +114,7 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 | Fotos de sala | **11 de 19** |
 | Afiche | **49 de 50** publicados lo tienen |
 | Precio | **17 de 50** publicados |
-| Género | **10 de 50** publicados, 7 géneros distintos en uso |
+| Género | **10 de 50** publicados, 7 géneros en uso, ninguno compuesto |
 | Escena local marcada | **4 de 50** — se marca a mano y nada la calcula |
 | Bloqueados | **36** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3 |
 | Duplicados sugeridos | **0** |
