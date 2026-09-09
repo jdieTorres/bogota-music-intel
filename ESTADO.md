@@ -1,7 +1,8 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-08**, recontado contra la base con el MCP
-después de la primera corrida del cron sin MusicBrainz.
+Última actualización: **2026-09-09**, recontado contra la base con el MCP
+después de que ticketlive corriera en producción y Juan aprobara sus eventos y
+sus salas.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -12,19 +13,25 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-- **8 de 19 salas publicadas sin foto**: La Mecánica, La Media Torta, Parque el
-  Country, Proyecto Kinder, Teatro Astor Plaza, Teatro Cafam, Teatro Colón y
-  Teatro Mayor Julio Mario Santo Domingo. Se pegan como URL en `/admin` →
-  Salas, con vista previa.
-- **2 de 19 salas publicadas sin coordenada**: La Mecánica y Teatro Cafam. Se
-  arregla pegando el punto desde Google Maps en `/admin` → Salas.
-- **4 salas por aprobar**: Parque de la 93, Teatro Panorama, Ágora Bogotá
-  Centro de Convenciones y Museo de Arte Moderno de Bogotá MAMBO. Ojo:
-  aprobarlas mueve el denominador de las dos líneas de arriba.
-- **El género: 10 de 50 publicados lo tienen**, con 7 en uso —Pop, Rock, Hip
+- 🔥 **5 de 22 salas publicadas sin coordenada, y tres son las nuevas**: Ace Of
+  Spades, La Sucursal y Teatro Republik, más La Mecánica y Teatro Cafam. Juan lo
+  dejó anotado para después (2026-09-09). Duele más que antes: esas tres salas
+  son las que traen la escena, y sin punto se listan bajo el mapa como "sin
+  ubicar" en vez de aparecer en él. Se arregla pegando el punto desde Google
+  Maps en `/admin` → Salas.
+- **11 de 22 salas publicadas sin foto**, incluidas las tres nuevas — que son
+  justo las que más ganarían con una, porque nadie las conoce. Se pegan como URL
+  en `/admin` → Salas, con vista previa.
+- **2 salas por aprobar**: Ágora Bogotá Centro de Convenciones y Museo de Arte
+  Moderno de Bogotá MAMBO. Ninguna tiene eventos vigentes, así que no corre
+  prisa.
+- **El género: 10 de 56 publicados lo tienen**, con 7 en uso —Pop, Rock, Hip
   Hop/Rap, Popular, Reggaeton, Jazz, Vallenato—. Desde el 2026-09-08 **ninguna
-  fuente lo escribe**: `generos` es columna propia y la llena Juan en `/admin`.
-  Ya no hay taxonomías que se cuelen, pero tampoco entra ninguno solo.
+  fuente lo escribe**: `generos` es columna propia (`text[]`, varios por evento)
+  y la llena Juan en `/admin`. Ya no hay taxonomías que se cuelen, pero tampoco
+  entra ninguno solo.
+- **La escena local marcada: 4 de 56.** Mismo caso: desde que se dio de baja
+  MusicBrainz nada la calcula. La marca rosa solo sale si Juan la pone.
 - **La fecha de vencimiento del token de Supabase hay que anotarla.** El
   2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
   reemplazó al de solo lectura que vencía el 2026-12-06. Los tokens scoped
@@ -50,18 +57,24 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 2. Lo que quedó a medias
 
-- 🟠 **El lector de afiches funciona, y falta medir de qué calidad.** El
-  2026-09-08 Juan cargó saldo y lo probó: lee. Lo que **no** está medido es lo
-  único que importa de verdad — **que devuelva vacío donde el afiche no dice
-  nada** en vez de completar con lo verosímil. Los tres casos que lo prueban
-  son un afiche sin año, uno sin hora y uno de una sala que no está cargada.
-  Hasta correr esos tres, "funciona" significa "responde", no "no inventa".
+- **El lector de afiches funciona y deja huecos.** Juan lo probó el 2026-09-08
+  con saldo cargado: lee, y **los campos que el afiche no dice quedan vacíos con
+  su explicación en las notas**, que era lo único que hacía falta medir. Queda
+  sin ejercitar el caso extremo —un afiche sin año— pero el comportamiento de
+  fondo está comprobado.
 - **`/admin` no se ha visto renderizado desde los cambios del 2026-09-08.**
   Pide sesión, así que `npm run capturas` —que cubre las cinco páginas
   públicas— no llega ahí. Compila, los tipos cierran y los tests pasan, pero
   este proyecto ya tuvo el mapa en negro con el CI entero en verde. Sin
   verificar: el bloque de carga de afiche, los dos campos de fecha, y que
   guardar un evento al que se llegó con `?evento=` devuelva a su ficha pública.
+- **`latino_power` falló dos corridas seguidas y a la tercera pasó sin tocar
+  nada.** Su API devolvió 200 con un cuerpo que no era JSON —una página de
+  desafío de WAF—, y `.json()` murió con un mensaje mudo. **Era transitorio**,
+  no un bloqueo de IP: es el mismo susto que dio MusicBrainz en agosto, donde un
+  fallo se leyó como "esta API trata distinto a CI" y ocho días después resultó
+  ruido. El error ahora dice el estado, el `content-type`, el cuerpo y las
+  cabeceras que delatan al WAF, así que si vuelve se diagnostica de un vistazo.
 - **6 eventos del Movistar cuelgan solo de `visitbogota`, que ya no corre.**
   LosPetitFellas (9 oct), Kris R (23 oct), Aterciopelados (30 oct), Reykon (6
   nov), Todos Somos Ángeles Rock Fest (8 nov) y Juanes (19 nov). Recuperar
@@ -81,12 +94,12 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   `npm run capturas` cubren escritorio y móvil en los dos modos, pero son
   Chromium headless a tamaño simulado: no dicen nada de un teléfono de verdad
   ni de Safari.
-- **24 publicados sin revisar** (de 50). Tienen `reviewed_at` en null y eso es
+- **21 publicados sin revisar** (de 56). Tienen `reviewed_at` en null y eso es
   correcto: nadie los revisó. El número baja solo a medida que Juan toca cada
   evento por otro motivo.
 - **12 publicados ya pasaron de fecha** y siguen en `publicado`. No se ven —la
   cartelera filtra por `starts_at >= hoy`— así que no es un bug, pero explica
-  por qué "50 publicados" y "38 en pantalla" no cuadran.
+  por qué "56 publicados" y "44 en pantalla" no cuadran.
 - **Sin verificar, porque no se ve desde fuera del dashboard:** si el proyecto
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
@@ -104,21 +117,20 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 
 | | |
 |---|---|
-| Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, **ticketlive** *(nueva, sin correr contra la base)* |
-| Filas crudas | **113** — visitbogota 56 *(congeladas)*, royal 14, movistar 13, lourdes 9, latino 8, rockal 8, idartes 5 |
+| Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
+| Filas crudas | **125** — visitbogota 56 *(congeladas)*, royal 15, movistar 13, ticketlive 10, lourdes 9, latino 9, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **101** — 50 publicados, **0 borradores**, 51 descartados |
-| En pantalla | **29 toques, 2 fiestas, 7 festivales**, en 13 salas |
-| Salas | **23** — 19 publicadas, 4 por aprobar |
-| Coordenadas | **17 de 19** salas publicadas ubicadas |
-| Fotos de sala | **11 de 19** |
-| Afiche | **49 de 50** publicados lo tienen |
-| Precio | **17 de 50** publicados |
-| Género | **10 de 50** publicados, 7 géneros en uso, ninguno compuesto |
-| Escena local marcada | **4 de 50** — se marca a mano y nada la calcula |
+| Canónicos | **110** — 56 publicados, 1 borrador, 53 descartados |
+| En pantalla | **33 toques, 5 fiestas, 6 festivales**; el mapa cuenta 10 salas y 44 eventos |
+| Salas | **24** — 22 publicadas, 2 por aprobar |
+| Coordenadas | **17 de 22** salas publicadas ubicadas |
+| Fotos de sala | **11 de 22** |
+| Precio | **22 de 56** publicados |
+| Género | **10 de 56** publicados, 7 géneros en uso, ninguno compuesto |
+| Escena local marcada | **4 de 56** — se marca a mano y nada la calcula |
 | Bloqueados | **36** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3 |
 | Duplicados sugeridos | **0** |
-| Tests | **239 backend + 69 frontend**, verdes en local |
+| Tests | **239 backend + 69 frontend**, verdes en local y en CI |
 
 Cómo leerlas sin equivocarse:
 
@@ -142,17 +154,45 @@ Cómo leerlas sin equivocarse:
 
 ## 4. El siguiente paso
 
-Por orden de lo que destraba más:
+**Decidido con Juan el 2026-09-09, en este orden:**
 
-1. **Correr el cron con ticketlive**, que nunca se ha ejecutado contra la base.
-   Va a abrir unos 10 borradores, entre ellos los primeros de Ace Of Spades y
-   La Sucursal. ⚠️ **Y va a reabrir lo que Juan ya descartó desde otra fuente**:
-   el bloqueo es por `(fuente, id)` y no puede saber de fuentes que no existían.
-2. **Medir la calidad del lector de afiches** con los tres casos de la sección
-   anterior. Responde y deja huecos; falta saber si inventa.
-3. **Más fuentes**: queda `mitaquilla.com.co` —abierta, reconfirmada el
-   2026-09-08 con el User-Agent correcto— y `feverup.com` sin explorar.
-   Passline queda fuera: está detrás de una sala de espera virtual.
-4. **El directorio de la escena local**, el único módulo del MVP que no ha
-   arrancado.
-5. **Desplegar a Vercel**, cuando el producto deje de cambiar de forma.
+1. 🎯 **El directorio de la escena local.** Es el único módulo del MVP que no ha
+   arrancado —mapa y calendario están hechos— y el que convierte esto en lo que
+   dice ser: la referencia de la escena, no una cartelera más. Para el pivote de
+   Juan hacia periodismo importa que produzca material propio, no que agregue lo
+   que otros publican.
+
+   Ya está sembrado sin que nadie haya hecho nada: los artistas que tocan en La
+   Sucursal, Ace Of Spades, Latino Power y Teatro Republik ya están en la base.
+
+   ⚠️ **Lo que hay que saber antes de diseñarlo**, y está medido, no supuesto:
+
+   - **El artista no existe como entidad en ninguna capa.** No hay tabla; lo
+     único que hay es el booleano `is_local` sobre el evento. Hay que crearla, y
+     conviene copiar la forma de moderación de `venues` (borrador/publicado,
+     `reviewed_at`, evidencia) en vez de inventar otra.
+   - **No hay fuente legal del audio de esta escena.** Está verificado y
+     archivado dos veces: fue lo que mató el Motor de similitud sonora. La
+     rockola que quiere Juan **embebe reproductores de terceros, no aloja
+     nada** — YouTube es la única con control programático real de la cola, que
+     es lo que separa una rockola de una pared de iframes. El vinilo que gira
+     es CSS.
+   - **Ninguna API conoce al artista local emergente.** Se probaron MusicBrainz,
+     Deezer, iTunes y Wikidata (`context/archivo/apis-de-musica.md`). El
+     directorio se llena a mano, y eso no es un parche: es el activo.
+
+   El boceto del módulo está en el plan de la sesión del 2026-09-08,
+   `~/.claude/plans/como-vas-quiero-armar-prancy-bubble.md`, fase 4.
+
+2. **Desplegar a Vercel.** Pospuesto por Juan mientras el producto cambiaba de
+   forma, y esa razón se está agotando: el pipeline lleva dos corridas estables.
+   **Nada de lo construido lo ha visto nadie más que Juan.** Hacen falta
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y
+   `ANTHROPIC_API_KEY` en Vercel, y hay dos cosas que **solo se prueban ahí**: el
+   tope de 60 s del route handler del afiche y el sitio en un teléfono real.
+
+3. **Más fuentes.** `mitaquilla.com.co` quedó confirmada abierta el 2026-09-08 —
+   con el User-Agent correcto, ver `context/ingesta/fuentes-y-legalidad.md`— y
+   `feverup.com` sigue sin explorar. Passline queda fuera: está detrás de una
+   sala de espera virtual, y meter un cron ahí ocuparía puestos en una cola de
+   compra.
