@@ -10,8 +10,15 @@ producto sostenible a mediano plazo.
 
 1. **Mapa de escena en vivo** — hecho.
 2. **Calendario agregador de eventos** — hecho.
-3. **Directorio / wiki de la escena local** — no ha arrancado. Entró el
-   2026-08-31 reemplazando al Radar de tendencias.
+3. **Directorio / wiki de la escena local** — **arrancó el 2026-09-09**.
+   Entró al MVP el 2026-08-31 reemplazando al Radar de tendencias. El artista
+   existe como entidad, tiene ficha pública con forma de contratapa de LP, y la
+   rockola suena sin cortarse al navegar (`context/frontend/CLAUDE.md`).
+
+   ⚠️ **Está construido y casi vacío, y eso no es un detalle de avance.** Se
+   llena a mano porque ninguna base global conoce al artista local emergente —
+   la búsqueda está cerrada, `context/archivo/apis-de-musica.md`—, así que la
+   curación **es** el módulo, no su costo. Cuántos hay hoy, en `ESTADO.md`.
 
 La **API pública** queda para fase futura. Ritmo de dedicación: medio tiempo.
 
@@ -27,8 +34,8 @@ Radar— está en `context/producto/diseno-del-producto.md`.
 | 2 | Scrapers | hecha, y desde el 2026-09-08 **encoge a propósito** |
 | 3 | Calendario | hecha |
 | 4 | Mapa | hecha |
-| 5 | Moderación + directorio | moderación hecha, directorio sin arrancar |
-| 6 | Pulido y deploy | sin arrancar |
+| 5 | Moderación + directorio | hecha |
+| 6 | Pulido y deploy | **es lo que sigue**: nada se ha desplegado nunca |
 
 **La Fase 2 dejó de medirse por cuántas fuentes tiene.** Al enfocar el producto
 en la escena underground, `visitbogota` salió del cron: traía 58 filas y 49

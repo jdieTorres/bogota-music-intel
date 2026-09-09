@@ -195,6 +195,47 @@ Dos criterios que valen más allá del mapa:
 Los colores, las medidas y el recorte del borde superior, en
 `context/look-and-feel/iconografia.md`.
 
+## El movimiento, y la única paleta que no es del tema
+
+Entró con el directorio el 2026-09-09.
+
+**Las curvas son propias porque las de fábrica son flojas.** `ease` y `ease-out`
+a secas arrancan y frenan sin carácter, y el movimiento se lee como un cambio de
+estado en vez de como un gesto. Hay dos en `globals.css`: `--ease-salida` para
+lo que entra o sale y `--ease-relevo` para lo que se mueve en pantalla.
+
+⚠️ **`ease-in` no se usa nunca.** Arranca lento justo en el instante que el ojo
+está mirando, así que una animación con `ease-in` *se siente* más lenta que la
+misma con `ease-out` durando lo mismo.
+
+**Toda animación tiene que contestar por qué anima.** El disco de la rockola
+gira solo mientras suena: atado al estado es un indicador que se lee de un
+vistazo, suelto sería decoración — y la decoración que se ve todo el rato cansa.
+Si la única respuesta es "se ve bien" y se ve seguido, no va.
+
+### Las etiquetas del vinilo son la excepción a la paleta
+
+Cuatro colores ácidos —lima, cyan, amarillo y naranja— que **no son tokens del
+tema y no cambian con el toggle**: van sobre un disco negro, que es negro en los
+dos modos. Sobre un fondo de papel apagado o de casi negro, un sello impreso es
+lo único de la pantalla que puede gritar.
+
+- ⚠️ **Ninguno es magenta**, que sigue teniendo un solo trabajo. Un sello rosa
+  en la bandeja diría "escena local" sobre cualquiera que suene.
+- **Cuál le toca a cada track sale de su identificador, nunca al azar.** El
+  sello de una canción tiene que ser el mismo cada vez que suena, o deja de ser
+  una etiqueta y pasa a ser un parpadeo.
+- **Por debajo de 140 px la etiqueta no lleva texto.** El sello mide el 48% del
+  disco: en el de 64 px de la bandeja móvil son 30, donde un nombre de banda no
+  entra ni recortado. Un sello de 45 rpm visto de lejos tampoco se lee.
+
+### El masthead cede la navegación, no la marca
+
+Desde el 2026-09-09 la barra tiene tres destinos y en 390 px ya no caben en una
+línea. Lo que baja a su propia fila es la navegación; **el nombre de marca se
+queda entero**. Es la misma decisión que ya se había tomado escondiendo
+"Cartelera" en móvil: lo que no puede partirse en dos es la marca.
+
 ## Qué queda abierto
 
 - **El nombre y la identidad de marca definitivos.** Sigue en el placeholder
@@ -251,6 +292,8 @@ Cómo se corre y qué hace el script a propósito, en
   direcciones de paleta y por qué quedó a medias. Histórico.
 - `context/look-and-feel/iconografia.md` — las medidas del set, lo que se
   aprendió dibujándolo y la excepción de color del marcador.
+- `context/frontend/rockola.md` — por qué el reproductor de YouTube se ve, que
+  es la restricción que ordenó el diseño de la bandeja.
 - `context/look-and-feel/capturas.md` — cómo se corre `npm run capturas`, qué
   hace el script a propósito y qué no cubre.
 - `context/look-and-feel/tokens.css` — los valores vivos.

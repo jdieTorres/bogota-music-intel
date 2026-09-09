@@ -91,11 +91,17 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   convertir a hora de Bogotá primero.** Colombia es UTC-5 todo el año:
   medianoche local es `T05:00:00Z` y un show de las 7 p. m. se guarda como
   `T00:00:00Z` del día siguiente. Buscar `"T00:00:00"` en la cadena responde
-  sobre UTC y da lo contrario de lo que se busca. Este error ya se cometió dos
-  veces; los dos tienen test de regresión.
-- **El límite de peticiones de una API se respeta dentro del módulo que la
-  consulta, nunca en el llamador.** Dejarlo del lado del CLI parece más
-  flexible y falla.
+  sobre UTC y da lo contrario de lo que se busca. **Y comparar dos cadenas ISO
+  entre sí tampoco vale si traen husos distintos**: `"…T04:00:00+00:00"` es
+  mayor que `"…T00:00:00-05:00"` en texto y menor en el tiempo, así que un show
+  de anoche aparece como futuro. Tres caras del mismo error; las tres tienen
+  test de regresión, y el de fechas **se comprueba al revés** —reintroduciendo
+  el bug— porque uno que pasa con el bug puesto no es un test.
+- **Lo que impone una plataforma se respeta dentro del módulo que la usa, nunca
+  en el llamador.** Vale para el límite de peticiones de una API —dejarlo del
+  lado del CLI parece más flexible y falla— y para el tamaño mínimo que YouTube
+  le exige a su reproductor embebido. Repartir esa responsabilidad termina
+  siempre igual: alguien la olvida en un sitio.
 - **A una API se le pregunta llamándola, no leyendo su documentación.** La
   investigación documental de APIs de música se armó leyendo docs oficiales, y
   al llamarlas cuatro entradas resultaron falsas. Una duda que se pueda

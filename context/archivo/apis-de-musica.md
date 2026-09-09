@@ -33,7 +33,7 @@
 - **Bandcamp** — el API real es Account/Sales/Merch para labels y partners, no para descubrir catálogo.
 
 ### Rotas / muertas / muriendo
-- **SoundCloud** — registro de apps nuevas cerrado desde hace años.
+- **SoundCloud** — registro de apps nuevas cerrado desde hace años. ⚠️ **Corregido el 2026-09-09: eso vale para el Data API y no para el Widget API**, que se embebe con la dirección pública de un track, no pide clave y sí expone control por JavaScript. La rockola lo usa — `context/frontend/rockola.md`. Esta entrada estuvo desde el 2026-08-28 dando a entender que SoundCloud estaba cerrado entero.
 - **MuseScore** (developers.musescore.com) — dominio muerto (DNS no resuelve).
 - **Songlink / Odesli** — aviso oficial de cierre ("Shutting Down July 31st 2026" — fecha ya pasada).
 - **Metal Archives** — no existe API oficial, solo scrapers no oficiales de terceros.
@@ -99,7 +99,7 @@ La Fase 5 se implementó completa (migración, `deezer.py`, `radar.py`, `radar_c
 **Nota de método:** esto es el mismo error que ya cerró la sección 2.1 (Napster) un nivel más abajo. "Se verificó llamando a la API" no alcanza si se llama siempre desde el mismo lugar — la respuesta puede depender de dónde se llama, no solo de qué se pide. La próxima vez que una fuente geolocalice contenido (charts, precios, disponibilidad), probarla también desde el entorno real donde va a correr en producción, no solo desde la máquina de desarrollo.
 
 ### Mapa recomendado por módulo (fuentes gratuitas apiladas)
-- **Directorio/wiki de la escena local:** MusicBrainz (principal) + Discogs + Genius.
+- ~~**Directorio/wiki de la escena local:** MusicBrainz (principal) + Discogs + Genius.~~ ⚠️ **Caducó.** MusicBrainz se dio de baja el 2026-09-08 —clasificaba nacionalidad y la pantalla decía "escena local", que es otra cosa— y el directorio se construyó el 2026-09-09 **sin ninguna fuente automática**: se llena a mano en `/admin`, que era la conclusión de esta misma investigación.
 - **Scout de emergentes:** Jamendo (principal) + Openwhyd (señal social). ~~Napster~~ sale: la API dejó de existir (ver 2.1).
 - **Radar de tendencias (Fase 5) — implementado el 2026-08-28, un solo eje activo.** Last.fm `geo.gettopartists?country=colombia` funciona en producción. Deezer editorial 498 ("Música colombiana") está pausado: geolocaliza por IP y no sirve corrido desde GitHub Actions — ver 2.3. Openwhyd como señal cruzada queda para más adelante, sin arrancar.
 - **Mapa de escena en vivo / Calendario de eventos:** ninguna API gratuita lo cubre — depende 100% de scraping (ver sección 3).

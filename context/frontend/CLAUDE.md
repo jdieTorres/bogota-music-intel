@@ -56,6 +56,35 @@ lateral aceptado: el mapa no avisa que una sala tiene eventos sin fecha.
 **Una sala sin coordenada se lista bajo el mapa como "sin ubicar"**, no se le
 pone un pin aproximado.
 
+## El directorio y la rockola
+
+`/directorio` lista a los artistas y `/artista/[slug]` es su ficha, con forma de
+contratapa de LP. La bandeja que suena es `components/rockola/Tornamesa.tsx`.
+
+- ⚠️ **El reproductor vive en el layout raíz, no en una página.** Es lo que hace
+  que la música siga sonando al recorrer el mapa y la cartelera. Montado dentro
+  de una página, cambiar de ruta corta la canción.
+- **El reproductor de YouTube se ve, y no es una decisión de diseño.** Sus
+  políticas exigen 200 px de lado como mínimo y prohíben taparlo con nada,
+  atribución incluida. Los controles propios van **al lado**, que sí está
+  permitido. Ese mínimo se fija dentro del componente que lo embebe, nunca del
+  lado de quien lo usa.
+- **La cola es de lo que se puede encadenar.** Solo entran plataformas que
+  avisan cuando el track termina: YouTube y SoundCloud. Bandcamp tiene la mejor
+  cobertura de esta escena y **ningún control por JavaScript**, así que va en la
+  ficha como el disco completo. Por eso el track guarda `plataforma` +
+  `id_externo` y no un id de una plataforma concreta.
+- ⚠️ **Un nodo que va a manejar una librería externa no puede ser un nodo de
+  React.** `YT.Player` no monta dentro del elemento que recibe: lo reemplaza. Y
+  al cederlo se cede también su estilo, así que el tamaño hay que devolvérselo
+  por la API de la librería o por una regla de CSS que no dependa de clases. Las
+  dos mitades de esa lección costaron un bug cada una, y **ninguna daba error en
+  consola**.
+- **La rockola se emula por comportamiento, no por estética.** Se encola en vez
+  de reemplazar, la cola se ve, el cambio de track es un relevo y el disco gira
+  solo mientras suena — atada al estado, esa rotación es un indicador; suelta,
+  es decoración. Nada de mueble, madera ni neón.
+
 ## El precio se escribe en lucas
 
 240.000 se muestra como **`$240 lks`**, que es como se habla de plata acá. La
@@ -126,5 +155,7 @@ que no carga se ve antes de guardarla, no cuando alguien abre el mapa.
 
 - `context/frontend/trampas.md` — el detalle de las trampas encontradas al
   implementar el mapa y el script del tema.
+- `context/frontend/rockola.md` — por qué se eligieron esos dos reproductores
+  y no otros, y el relato de las dos trampas mudas que costaron.
 - `context/look-and-feel/CLAUDE.md` — **leer antes de tocar `globals.css`,
   `layout.tsx` o cualquier componente de UI.**
