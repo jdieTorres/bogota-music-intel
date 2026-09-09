@@ -30,8 +30,9 @@ primera que contesta gana:
     1. lista curada de eventos (alguien lo verificó en la fuente)
     2. lista curada de ciclos  (fiestas, por nombre para que vuelvan solas)
     3. lista curada de festivales (por título completo, ver el módulo)
-    4. categoría de la fuente  (la publicó la sala)
-    5. patrón en el título     (heurística nuestra)
+    4. tipo declarado por la fuente (cuando lo publica y acierta)
+    5. categoría de la fuente  (la publicó la sala)
+    6. patrón en el título     (heurística nuestra)
 
 Si ninguna contesta, es música. Asumir que sí es lo correcto: el costo de
 mostrar de más es un evento que sobra en una lista, y el de excluir de más
@@ -49,6 +50,7 @@ from bogota_music_intel.exclusion_patterns import (
     patron_no_musical,
 )
 from bogota_music_intel.festivales_curados import festival_de
+from bogota_music_intel.tipos_de_fuente import tipo_de_fuente
 from bogota_music_intel.tipos_evento import (
     FESTIVAL,
     FIESTA,
@@ -58,6 +60,7 @@ from bogota_music_intel.tipos_evento import (
     FUENTE_FESTIVAL,
     FUENTE_MANUAL,
     FUENTE_PATRON,
+    FUENTE_TIPO_DE_FUENTE,
     MUSICA,
     NO_MUSICA,
 )
@@ -102,6 +105,18 @@ def clasificar(evento: dict) -> Clasificacion:
             event_type=FESTIVAL,
             classification_source=FUENTE_FESTIVAL,
             detalle=f"festival «{festival.nombre}»: {festival.evidencia}",
+        )
+
+    # Antes de las heurísticas: si la fuente declara el tipo y lo hace bien
+    # —comprobado fuente por fuente—, ese dato gana sobre cualquier patrón
+    # sobre el título. Va después de las listas curadas porque esas corrigen
+    # a la fuente cuando se equivoca en un evento puntual.
+    declarado = tipo_de_fuente(evento.get("source"), evento.get("category"))
+    if declarado is not None:
+        return Clasificacion(
+            event_type=declarado,
+            classification_source=FUENTE_TIPO_DE_FUENTE,
+            detalle=f"la fuente lo publica como «{evento['category']}»",
         )
 
     motivo = categoria_no_musical(evento.get("category"))

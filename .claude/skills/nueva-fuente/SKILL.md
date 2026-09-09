@@ -112,11 +112,10 @@ El bloqueo de eventos es por `(source, source_event_id)`, así que **una fuente
 nueva esquiva todo lo que Juan ya rechazó** — no puede saber de fuentes que no
 existían. Avisale: la cola va a traer de vuelta cosas ya descartadas.
 
-Y la clasificación: los artistas que las bases globales no conocen van a caer
-en "sin origen" y alguien tiene que decidir si entran a `artistas_locales`.
-**Esa decisión es de Juan, y la entrada exige `evidencia` de una fuente
-consultable.** Antes de agregar una, leé `context/ingesta/listas-curadas.md`:
-cada lista tiene una regla de emparejamiento propia que no se adivina.
+Y la escena: `is_local` **ya no lo calcula nada** desde el 2026-09-08 —se dio
+de baja MusicBrainz junto con la lista de artistas curados—, así que todo lo
+que traiga la fuente nueva entra sin marcar y lo decide Juan en `/admin`. No
+hay lista que actualizar; hay eventos que mirar.
 
 ## 9. Dejarlo escrito
 

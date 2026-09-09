@@ -46,9 +46,10 @@ Hecha al buscar cómo tapar el hueco de cobertura: el scraping actual solo ve la
 | Fuente | ¿Nos deja? | Nota |
 |---|---|---|
 | **visitbogota.co** | ✅ | **El hallazgo.** Agenda oficial del distrito, sobre Drupal; su `robots.txt` solo veda rutas de sistema (`/core/`, `/admin/`, `/user/…`). `/es/agenda-de-eventos` está abierto. **Agrega eventos vendidos por Tuboleta** — el Carlos Vives del Movistar aparece ahí. |
-| **ticketlive.com.co** | ✅ | Ticketera; publica salas que ya seguimos (Lourdes Music Hall). |
-| **mitaquilla.com.co** | ✅ | Ticketera; publicaba el Bloodbath de Lourdes. |
-| **feverup.com** | ✅ | Agregador; tiene ficha de Lourdes Music Hall. |
+| **ticketlive.com.co** | ✅ | Ticketera; publica salas que ya seguimos (Lourdes Music Hall). Reconfirmada el 2026-09-08 llamándola. |
+| **mitaquilla.com.co** | ✅ | Reconfirmada el 2026-09-08 con nuestro User-Agent: `robots.txt` permisivo y ficha en 200. |
+| **feverup.com** | ✅ | Agregador; tiene ficha de Lourdes Music Hall. Reconfirmada el 2026-09-08. |
+| **passline.com** | ❌ | Auditada el 2026-09-08 (a donde apuntan los botones de compra de Lourdes). **Sala de espera virtual**, no bloqueo de bots — ver abajo. |
 | idartes.gov.co, tickets.eticketablanca.com | ✅ | Ya en uso. |
 | **tuboleta.com** | ❌ | Bloquea ClaudeBot, GPTBot, CCBot, Google-Extended. Sin cambios: sigue vedada. |
 | **bandsintown.com** | ❌ | Bloquea los mismos cuatro. Ya estaba cerrada por API; ahora también por `robots.txt`. |
@@ -93,6 +94,95 @@ Verificadas contra los sitios reales; hay tests de regresión en `services/api/t
 
 
 ---
+
+### ticketlive: qué publica y qué publica mal (2026-09-08)
+
+La primera fuente que entra después del giro a la escena. Es la mejor
+estructurada del proyecto: `schema.org/MusicEvent` con ciudad en
+`addressLocality`, y el tipo de evento en la propia URL (`/co/<tipo>/<slug>/`).
+
+**Se le piden dos cosas y no una.** El catálogo pasa de 600 productos y pedir
+cada ficha serían 600 peticiones por corrida. La Store API de WooCommerce
+(`/wp-json/wc/store/v1/products`, pública y sin auth) enumera todo en páginas
+de 100 con título, enlace, precio e imagen — **pero sin sala ni fecha**. El
+título sí las trae: *"Boletas Camila en concierto: 27 noviembre 2026, Bogotá"*.
+Con eso se filtra barato y solo se pide la ficha de lo que sobrevive: unas
+pocas decenas en vez de 600.
+
+Qué señal sirve: **la de la URL, no la del listado.** El tipo del permalink es
+consistente; las categorías de WooCommerce (`externos`, `destacado`) describen
+cómo se vende el evento, no qué es.
+
+**Las trampas, medidas contra 14 fichas:**
+
+| Campo | Qué parece | Qué es |
+|---|---|---|
+| `startDate` (hora) | la hora del show | **relleno**: 6 de 12 decían las 15:00, y el resto iba de 10:00 a 19:00. Militarie Gun en La Sucursal figuraba de 2 a 5 de la tarde. Se descarta entera; entra solo el día. |
+| `performer` | el artista, estructurado | `"Artista por confirmar"` o `"Boletas, fechas y conciertos…"`. Un marcador de posición con forma de dato. |
+| `offers.price` = 0 | gratis | **no publicado**. Sale 0 en todo lo que lista pero no vende. Guardarlo como gratis diría que la entrada al Gorillaz es libre. |
+| `location.name` | el nombre de la sala | sala **y** dirección pegadas con una coma sin espacio: `"La Sucursal,Calle 59 13 32, Bogotá"`. |
+| `location.name` (a veces) | la sala | solo la ciudad: `"Bogotá"`. Esos eventos se saltan — una sala llamada como la ciudad no se puede ubicar. |
+| el nombre del producto | texto plano | trae entidades HTML sin decodificar (`&#038;`). |
+
+⚠️ **Escribe la misma sala de varias maneras** —"La Sucursal" y "La Sucursal
+Venue", "Vive Claro" y "Vive Claro Music Hall"— y eso genera dos salas con
+slugs distintos. **No se unifican en el scraper**: las direcciones que publica
+no alcanzan para probar que sean la misma (una trae calle y la otra solo la
+ciudad), y afirmarlo sería curar de memoria. Las salas se moderan, así que
+entran como borradores y Juan decide al aprobarlas. Por eso los filtros de sala
+comparan **por prefijo**: una lista de grafías exactas se le escapa a la
+tercera.
+
+**Qué se descarta en la ingesta, y por qué no contradice "guardar crudo":**
+
+- **Lo que no es de Bogotá**, por `addressLocality`. No es criterio editorial
+  sino alcance — mismo caso que `rockal_live.py`, que ya filtra por ciudad.
+- **Las salas que ya cubre otro scraper** (Movistar, Royal Center, Lourdes,
+  Latino Power, Teatro JEG). Traerlas no sumaría un evento: abriría un
+  borrador duplicado que alguien tendría que unificar a mano.
+- **Estadios y arenas** (El Campín, Techo, Vive Claro, Chamorro City Hall).
+  Su programación es toda gira internacional: en la primera corrida traían
+  BTS, Karol G, Anuel AA, Maná y Bad Gyal.
+
+⚠️ **Coliseo Medplus se dejó entrar a propósito**, aunque sea masivo y traiga
+Gorillaz, The Strokes y Calvin Harris. Decisión de Juan el 2026-09-08:
+descartar esos eventos a mano y medir en la práctica si conviene vetarlo. Es un
+experimento con fecha, no un olvido.
+
+**Rinde:** de 27 eventos de Bogotá, los filtros dejan 10. De esos, La Sucursal
+(2), Ace Of Spades (1) y Teatro Republik (3) son exactamente el circuito que
+ninguna otra fuente alcanzaba — **Ace of Spades estaba en la lista de salas
+imposibles de scrapear desde el 2026-08-27**.
+
+### Auditar con el User-Agent equivocado da la respuesta equivocada (2026-09-08)
+
+Al ir a construir sobre las fuentes que quedaban se las llamó de verdad, pero
+la primera pasada usó **`ClaudeBot`** — que no es quien scrapea. El pipeline se
+identifica como `BogotaMusicIntelBot` (ver `scrapers/http.py`). Con el agente
+equivocado, dos fuentes parecían cerradas y no lo estaban:
+
+| Fuente | Con `ClaudeBot` | Con `BogotaMusicIntelBot` |
+|---|---|---|
+| mitaquilla.com.co | **403** | **200**, y su `robots.txt` permite todo |
+| www.passline.com | **403** | 302 a una sala de espera |
+
+**mitaquilla está abierta.** Su `robots.txt` trae `Disallow:` vacío y publica
+sitemap; el 403 lo devolvía **Imunify360**, el WAF del hosting, que veda por
+nombre a los crawlers de IA. Su propio `robots.txt` deja ver la pista:
+`Disallow: /imunify-bot-check`.
+
+**Passline queda fuera igual, pero por otro motivo y uno mejor:** el 302 lleva
+a `passline.queue-it.net`, una **sala de espera virtual** para venta de alta
+demanda. No es un bloqueo de bots — es una fila que hace todo el mundo. Meter
+un cron ahí ocuparía puestos en una cola de compra, que sería abusivo aunque
+nadie lo prohíba. Duele, porque es a donde apunta la boletería de Lourdes.
+
+⚠️ **La lección de método, que costó dos conclusiones falsas en una hora:**
+auditar una fuente es preguntarle **con el User-Agent con el que se va a
+scrapear**, no con cualquiera. Un 403 a un agente distinto del nuestro no dice
+nada sobre nosotros, y tomarlo como respuesta descarta fuentes que sí nos
+dejan. Vale también al revés: un `robots.txt` permisivo no garantiza que el
+servidor responda — hay que pedir una ficha real, no el `robots.txt`.
 
 ### El horizonte de una fuente: lo que se perdió al sacar visitbogota (2026-09-08)
 

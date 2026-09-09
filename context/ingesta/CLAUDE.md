@@ -13,6 +13,13 @@ el motivo verificado de cada uno.
 - **Guardar crudo, filtrar y clasificar en lectura.** La ingesta no descarta:
   el criterio editorial se aplica al leer. Así, cuando cambie el criterio, no
   hay que volver a scrapear el pasado.
+- **Una fuente se audita con el User-Agent con el que se va a scrapear.** El
+  pipeline se identifica como `BogotaMusicIntelBot` (`scrapers/http.py`), no
+  como ClaudeBot. El 2026-09-08 se auditó con el agente equivocado y dos
+  fuentes abiertas quedaron marcadas como cerradas: un 403 a un agente que no
+  es el nuestro no dice nada sobre nosotros. Y al revés, **un `robots.txt`
+  permisivo tampoco alcanza**: hay que pedir una ficha real, porque el WAF del
+  hosting puede aplicar algo distinto de lo que declara ese archivo.
 - **Una fuente no se compara solo por qué salas cubre, sino por cuán lejos
   publica.** Medido el 2026-09-08: `movistararena.co` lista alrededor de un
   mes hacia adelante y `visitbogota` llegaba a tres. Al sacar visitbogota, seis

@@ -23,6 +23,10 @@ FUENTE_MANUAL = "manual"
 FUENTE_CICLO = "curated_cycle"
 FUENTE_FESTIVAL = "curated_festival"
 FUENTE_CATEGORIA = "source_category"
+# La fuente declaró el tipo de evento y lo declara bien. Es distinto de
+# `source_category`: aquella dice "esto no es música", esta dice "esto es una
+# fiesta". Ver `tipos_de_fuente.py`.
+FUENTE_TIPO_DE_FUENTE = "source_event_type"
 FUENTE_PATRON = "exclusion_pattern"
 # Ninguna regla lo excluyó, así que es música. Se llama "asumido" y no
 # "confirmado" a propósito: nadie verificó que lo sea, solo que nada dice
