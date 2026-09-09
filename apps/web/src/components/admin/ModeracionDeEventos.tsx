@@ -18,7 +18,7 @@ import {
   BOTON_ROJO,
   BOTON_TENUE,
   CAMPO,
-  CampoDeGenero,
+  CampoDeGeneros,
   CampoDeFechaYHora,
   Etiqueta,
   Rotulo,
@@ -251,7 +251,7 @@ function Ficha({
     price_kind: evento.price_kind,
     price_min: evento.price_min,
     price_max: evento.price_max,
-    category: evento.category,
+    generos: evento.generos,
     ticket_url: evento.ticket_url,
     event_type: evento.event_type,
     is_local: evento.is_local,
@@ -356,7 +356,10 @@ function Ficha({
           }}
           alCambiar={(p: PrecioEvento) => editar(p)}
         />
-        <CampoDeGenero valor={campos.category ?? null} alCambiar={(g) => editar({ category: g })} />
+        <CampoDeGeneros
+          valor={campos.generos ?? []}
+          alCambiar={(g) => editar({ generos: g })}
+        />
 
         <label>
           <Rotulo>Qué es</Rotulo>

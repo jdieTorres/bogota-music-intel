@@ -47,7 +47,12 @@ export type EventoEnCola = {
   price_kind: ClasePrecio | null;
   price_min: number | null;
   price_max: number | null;
+  /** La señal cruda de la fuente. **No es el género** y no se muestra: es
+   *  lo que el clasificador mira para saber que algo es danza o una
+   *  fiesta. Se ve en la ficha como dato de procedencia, no se edita. */
   category: string | null;
+  /** Los géneros del toque, escritos a mano. Varios por evento. */
+  generos: string[];
   ticket_url: string | null;
   image_url: string | null;
   event_type: TipoEvento;
@@ -63,7 +68,7 @@ export type EventoEnCola = {
 
 const CAMPOS = `
   id, status, origin, title, starts_at, description, price_text,
-  price_kind, price_min, price_max, category,
+  price_kind, price_min, price_max, category, generos,
   ticket_url, image_url, event_type, is_local, evidence, source_snapshot,
   change_detail, change_detected_at, suggested_duplicate_of,
   venues ( slug, name ),
@@ -72,6 +77,9 @@ const CAMPOS = `
 `;
 
 /** Los campos que el admin puede corregir a mano. */
+/** ⚠️ `category` no está acá a propósito: la escribe el clasificador y el
+ *  admin no la corrige. Lo que el admin escribe es `generos`, que es otra
+ *  cosa — ver el comentario de `EventoNuevo.generos`. */
 export type Correccion = Partial<
   Pick<
     EventoEnCola,
@@ -81,7 +89,7 @@ export type Correccion = Partial<
     | "price_kind"
     | "price_min"
     | "price_max"
-    | "category"
+    | "generos"
     | "ticket_url"
     | "event_type"
     | "is_local"
@@ -270,11 +278,15 @@ export type EventoNuevo = {
   price_min?: number | null;
   price_max?: number | null;
   ticket_url?: string | null;
-  /** El género que sale como chip en la cartelera. Opcional: vacío es el
-   *  hueco honesto, y el chip no aparece. Va en `category`, la misma
-   *  columna que llena el scraper — en el canónico, que es la copia
-   *  editable, no en la fila cruda que el cron reescribe. */
-  category?: string | null;
+  /** Los géneros que salen como chips en la cartelera. Vacío es el hueco
+   *  honesto y no sale ninguno.
+   *
+   *  ⚠️ **Columna propia desde el 2026-09-08, ya no `category`.** Esa guarda
+   *  la señal cruda de la fuente —"Conciertos" en visitbogota, "dix-fm" en
+   *  ticketlive— que el clasificador necesita y que no es un género.
+   *  Compartir campo hacía que la cartelera mostrara la taxonomía de la
+   *  cartelera de origen como si fuera el género del toque. */
+  generos?: string[];
   event_type: TipoEvento;
   is_local: boolean | null;
   /** El afiche. En un evento cargado a mano es el que subió el admin al

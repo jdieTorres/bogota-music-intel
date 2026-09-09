@@ -1,9 +1,4 @@
-import {
-  SOLO_CONCIERTOS,
-  SOLO_FESTIVALES,
-  SOLO_FIESTAS,
-  generoVisible,
-} from "@/lib/editorial";
+import { SOLO_CONCIERTOS, SOLO_FESTIVALES, SOLO_FIESTAS } from "@/lib/editorial";
 import { formatearPrecio, type PrecioEvento } from "@/lib/precio";
 import { supabase } from "@/lib/supabase";
 
@@ -52,19 +47,18 @@ export type Evento = {
   ticket_url: string | null;
   image_url: string | null;
   /**
-   * El género a mostrar, ya filtrado.
+   * Los géneros del toque. Varios, como en AOTY o RYM: un show puede ser
+   * "Post-punk" y "Shoegaze" a la vez, y obligar a elegir uno inventaría una
+   * precisión que la música no tiene.
    *
-   * **La columna cruda es `category` y no se expone acá a propósito.** Guarda
-   * cosas distintas según la fuente: un género en Rockal Live ("Pop"), una
-   * taxonomía en visitbogota ("Conciertos"), una disciplina en Idartes
-   * ("Música"). Mostrarla tal cual pone "Género: Conciertos" en la pestaña de
-   * conciertos, que fue justo lo que pasó el 2026-09-01.
-   *
-   * Se filtró primero en cada componente y se olvidó uno —la página de
-   * detalle—, así que ahora se filtra al leer: si el tipo no trae el valor
-   * crudo, ningún componente puede equivocarse con él.
+   * **Los escribe una persona en `/admin` y nada más.** Hasta el 2026-09-08
+   * salían de `category`, la columna cruda de la fuente, y por eso un evento
+   * mostraba "Género: Conciertos" o "Género: destacado" según qué cartelera lo
+   * hubiera traído. `category` sigue existiendo —el clasificador la necesita
+   * para saber que algo es danza o una fiesta— pero **ya no llega a la vista**:
+   * si el crudo no está acá, ningún componente puede equivocarse con él.
    */
-  genero: string | null;
+  generos: string[];
   event_type: TipoEvento;
   /** null = no se pudo resolver el origen del artista. Distinto de false,
    *  que es un internacional confirmado. */
@@ -84,7 +78,7 @@ export type Evento = {
 
 const CAMPOS = `
   id, title, starts_at, ends_at, date_precision, description,
-  price_kind, price_min, price_max, category, ticket_url, image_url,
+  price_kind, price_min, price_max, generos, ticket_url, image_url,
   event_type, is_local, origin, evidence, reviewed_at,
   venues ( slug, name, city ),
   events ( source, source_url )
@@ -133,18 +127,18 @@ async function proximos(filtroEditorial: string): Promise<Evento[]> {
   return (data ?? []).map(paraLaVista);
 }
 
-/** Deriva `genero` y `precio`, y suelta las columnas crudas de las que salen.
+/** Deriva `precio` y suelta las tres columnas crudas de las que sale.
  *
- *  Las dos siguen la misma regla: lo que llega a la vista ya está interpretado,
- *  porque interpretar en el componente es lo que hizo que un chip dijera
- *  "Género: Conciertos" y se arreglara sitio por sitio olvidando uno. */
+ *  Lo que llega a la vista ya está interpretado, porque interpretar en el
+ *  componente es lo que hizo que un chip dijera "Género: Conciertos" y se
+ *  arreglara sitio por sitio olvidando uno.
+ *
+ *  El género ya no necesita interpretación: `generos` lo escribe una persona,
+ *  así que llega listo, y `category` directamente no se pide. */
 function paraLaVista(fila: Record<string, unknown>): Evento {
-  const { category, price_kind, price_min, price_max, ...resto } = fila as {
-    category: string | null;
-  } & PrecioEvento;
+  const { price_kind, price_min, price_max, ...resto } = fila as PrecioEvento;
   return {
     ...resto,
-    genero: generoVisible(category),
     precio: formatearPrecio({ price_kind, price_min, price_max }),
   } as unknown as Evento;
 }

@@ -118,12 +118,12 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
             </h1>
             <p className="mt-3 text-lg text-muted">
               {venue}
-              {evento.genero && (
-                <>
+              {evento.generos.map((genero) => (
+                <span key={genero}>
                   {" · "}
-                  <span className="text-accent-2">{evento.genero}</span>
-                </>
-              )}
+                  <span className="text-accent-2">{genero}</span>
+                </span>
+              ))}
             </p>
           </header>
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { GENEROS_SUGERIDOS } from "@/lib/admin/generos";
+import { useEffect, useState } from "react";
+
+import { getGeneros } from "@/lib/admin/generos";
 
 /** Los átomos visuales que comparten las dos secciones de moderación.
  *  Viven aparte para que eventos y salas se vean iguales sin copiar clases. */
@@ -183,47 +185,100 @@ export function CampoDeFechaYHora({
 
 
 /**
- * El campo de género, compartido por la carga a mano y la ficha de la cola.
+ * Los géneros del toque: varios, y con memoria.
  *
- * Escribe en `category`, que es la misma columna que llena el scraper. No
- * hace falta una columna aparte —la regla de "las ediciones del admin van
- * en columnas propias" es para `events`, el crudo que el cron reescribe—:
- * `canonical_events` es justamente la copia editable, y lo que se escribe
- * acá sobrevive a las corridas del cron.
+ * **Varios y no uno**, como en AOTY o RYM: un show puede ser "Post-punk" y
+ * "Shoegaze" a la vez, y obligar a elegir uno inventaría una precisión que la
+ * música no tiene. Se guardan en `canonical_events.generos`.
  *
- * Es opcional. Vacío significa "no lo sé", que es el hueco honesto de
- * siempre; el chip simplemente no sale.
+ * **Con memoria**: las sugerencias salen de los géneros que ya se escribieron
+ * alguna vez (`lib/admin/generos.ts`), así que uno nuevo se escribe una sola
+ * vez y desde ahí se ofrece solo. No hay lista en git que mantener.
+ *
+ * Escribe en columna propia y no en `category`. Hasta el 2026-09-08 los dos
+ * compartían campo, y por eso la cartelera mostraba "Género: Conciertos" o
+ * "Género: destacado" según qué fuente hubiera traído el evento: `category` es
+ * la señal cruda de la cartelera de origen —el clasificador la necesita— y no
+ * un género.
  */
-export function CampoDeGenero({
+export function CampoDeGeneros({
   valor,
   alCambiar,
 }: {
-  valor: string | null;
-  alCambiar: (valor: string | null) => void;
+  valor: string[];
+  alCambiar: (valor: string[]) => void;
 }) {
+  const [escribiendo, setEscribiendo] = useState("");
+  const [sugerencias, setSugerencias] = useState<string[]>([]);
+
+  useEffect(() => {
+    getGeneros()
+      .then(setSugerencias)
+      // Sin sugerencias el campo sigue sirviendo: se escribe a mano.
+      .catch(() => setSugerencias([]));
+  }, []);
+
+  function agregar(bruto: string) {
+    const genero = bruto.trim();
+    // Comparación sin distinguir mayúsculas: la lista existe justamente para
+    // que no convivan "rock" y "Rock".
+    const yaEsta = valor.some((g) => g.toLowerCase() === genero.toLowerCase());
+    if (genero && !yaEsta) alCambiar([...valor, genero]);
+    setEscribiendo("");
+  }
+
   return (
-    <label>
-      <Rotulo>Género (opcional)</Rotulo>
+    <label className="sm:col-span-2">
+      <Rotulo>Géneros (opcional)</Rotulo>
+
+      {valor.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {valor.map((genero) => (
+            <button
+              key={genero}
+              type="button"
+              onClick={() => alCambiar(valor.filter((g) => g !== genero))}
+              className="rounded-full border border-border px-2.5 py-1 text-xs text-accent-2 transition-colors hover:border-red-500/40 hover:text-red-400"
+              title="Quitar"
+            >
+              {genero} ×
+            </button>
+          ))}
+        </div>
+      )}
+
       <input
-        value={valor ?? ""}
-        onChange={(e) => alCambiar(e.target.value || null)}
-        list="generos-sugeridos"
-        placeholder="Salsa, Rock/Punk/Metal…"
+        value={escribiendo}
+        onChange={(e) => {
+          // Elegir del datalist dispara un change con el valor completo, sin
+          // Enter de por medio: si coincide con una sugerencia, entra sola.
+          const v = e.target.value;
+          if (sugerencias.includes(v)) agregar(v);
+          else setEscribiendo(v);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === ",") {
+            // Sin esto, Enter enviaría el formulario entero.
+            e.preventDefault();
+            agregar(escribiendo);
+          }
+        }}
+        onBlur={() => agregar(escribiendo)}
+        list="generos-conocidos"
+        placeholder="Salsa, Post-punk… (Enter para agregar)"
         className={CAMPO}
       />
-      <datalist id="generos-sugeridos">
-        {GENEROS_SUGERIDOS.map((g) => (
-          <option key={g} value={g} />
-        ))}
+      <datalist id="generos-conocidos">
+        {sugerencias
+          .filter((g) => !valor.includes(g))
+          .map((g) => (
+            <option key={g} value={g} />
+          ))}
       </datalist>
-      {/* Por qué esto importa: la fuente escribe acá su taxonomía —"Conciertos"
-          en visitbogota, "Música" en Idartes— y eso no es un género. La
-          cartelera esconde esos valores (`generoVisible`), así que si el campo
-          dice uno de esos, el evento sale sin chip hasta que lo corrijas. */}
+
       <span className="mt-1 block text-xs leading-relaxed text-muted">
-        Sale como chip al lado del título. &ldquo;Conciertos&rdquo;,
-        &ldquo;Música&rdquo; y &ldquo;Otro&rdquo; no se muestran: son la etiqueta
-        de la fuente, no un género.
+        Salen como chips al lado del título. Se pueden poner varios; uno nuevo
+        queda guardado y se sugiere en los eventos siguientes.
       </span>
     </label>
   );

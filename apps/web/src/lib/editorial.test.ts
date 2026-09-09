@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { GENEROS_SUGERIDOS } from "@/lib/admin/generos";
 import {
   EN_CARTELERA,
   SOLO_CONCIERTOS,
   SOLO_FESTIVALES,
   SOLO_FIESTAS,
-  generoVisible,
   priorizarLocales,
 } from "@/lib/editorial";
 
@@ -105,37 +103,4 @@ describe("filtros editoriales", () => {
   });
 });
 
-describe("generoVisible", () => {
-  it("muestra el género cuando dice algo", () => {
-    expect(generoVisible("Rock/Punk/Metal")).toBe("Rock/Punk/Metal");
-    expect(generoVisible("Hip Hop/Rap")).toBe("Hip Hop/Rap");
-  });
 
-  it("esconde la categoría que no aporta nada", () => {
-    // visitbogota escribe su taxonomía en `category` desde el 2026-09-01,
-    // y "Conciertos" en la pestaña de conciertos es puro ruido.
-    expect(generoVisible("Conciertos")).toBeNull();
-    // "Otro" es el valor de Rockal Live para "otro género": tampoco dice nada.
-    expect(generoVisible("Otro")).toBeNull();
-  });
-
-  it("no se deja engañar por mayúsculas ni espacios", () => {
-    expect(generoVisible("  CONCIERTOS ")).toBeNull();
-  });
-
-  it("sin categoría no hay chip", () => {
-    expect(generoVisible(null)).toBeNull();
-  });
-});
-
-describe("los géneros que sugiere el admin", () => {
-  it("ninguno es de los que la cartelera esconde", () => {
-    // Si una sugerencia cayera en la lista de "no aporta nada", el admin la
-    // elegiría del desplegable y el chip no saldría, sin nada que se lo
-    // explique. Ofrecer un valor que después se descarta es mentirle sobre
-    // lo que va a pasar.
-    for (const genero of GENEROS_SUGERIDOS) {
-      expect(generoVisible(genero)).toBe(genero);
-    }
-  });
-});

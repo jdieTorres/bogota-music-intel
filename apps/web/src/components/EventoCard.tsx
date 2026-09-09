@@ -86,12 +86,12 @@ export function EventoCard({ evento }: { evento: Evento }) {
 
           <p className="truncate text-sm text-muted">
             {venue}
-            {evento.genero && (
-              <>
+            {evento.generos.map((genero) => (
+              <span key={genero}>
                 {" · "}
-                <span className="text-accent-2">{evento.genero}</span>
-              </>
-            )}
+                <span className="text-accent-2">{genero}</span>
+              </span>
+            ))}
           </p>
 
           {esLocal && (

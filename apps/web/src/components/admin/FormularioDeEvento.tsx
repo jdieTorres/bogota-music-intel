@@ -21,7 +21,7 @@ import {
   BOTON_TENUE,
   CAMPO,
   CampoDeFechaYHora,
-  CampoDeGenero,
+  CampoDeGeneros,
   Rotulo,
 } from "@/components/admin/ui";
 import { CampoDePrecio } from "@/components/admin/CampoDePrecio";
@@ -51,7 +51,7 @@ export function FormularioDeEvento({
     price_max: null,
   });
   const [boleteria, setBoleteria] = useState("");
-  const [genero, setGenero] = useState<string | null>(null);
+  const [generos, setGeneros] = useState<string[]>([]);
   // "" es la opción "todavía no sé", que se guarda como null. Se separa
   // del union porque un <select> no puede tener valor null.
   const [tipo, setTipo] = useState<Exclude<TipoEvento, null> | "">("music");
@@ -94,7 +94,9 @@ export function FormularioDeEvento({
       const encontrada = salaQueCoincide(c.sala_nombre, salas);
       if (!sala) setSala(encontrada ?? "");
       if (!boleteria && c.boleteria_url) setBoleteria(c.boleteria_url);
-      if (!genero && c.genero) setGenero(c.genero);
+      // El género que leyó el afiche entra como uno más, sin pisar los que
+      // ya estén escritos.
+      if (c.genero && !generos.includes(c.genero)) setGeneros([...generos, c.genero]);
       // El precio no se autocompleta: son tres columnas que hay que leer
       // juntas para no afirmar de más, y el afiche solo da texto suelto.
       // Se muestra crudo abajo para que se transcriba a mano.
@@ -143,7 +145,7 @@ export function FormularioDeEvento({
         starts_at: desdeCamposDeFecha(fecha, hora),
         ...precio,
         ticket_url: boleteria.trim() || null,
-        category: genero?.trim() || null,
+        generos,
         event_type: tipo || null,
         is_local: local === "" ? null : local === "true",
         image_url: afiche,
@@ -342,7 +344,7 @@ export function FormularioDeEvento({
           />
         </label>
 
-        <CampoDeGenero valor={genero} alCambiar={setGenero} />
+        <CampoDeGeneros valor={generos} alCambiar={setGeneros} />
 
         <label>
           <Rotulo>Qué es</Rotulo>
