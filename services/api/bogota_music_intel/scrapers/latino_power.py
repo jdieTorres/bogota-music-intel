@@ -47,16 +47,51 @@ def _precio(item: dict) -> dict:
     return precio.as_row() if precio else SIN_DATO
 
 
+def _json(response: httpx.Response) -> dict:
+    """El cuerpo como JSON, o un error que diga qué llegó en su lugar.
+
+    ⚠️ **Un 200 no garantiza JSON.** El 2026-09-09 esta API devolvió desde
+    GitHub Actions un 200 con un cuerpo que no era JSON —una página de desafío
+    de WAF, la misma familia que el Radware de Teatro Cafam— y `.json()` murió
+    con `Expecting value: line 1 column 1`, que no dice nada de lo que pasó.
+    Diagnosticarlo costó ir a buscar el log a mano.
+
+    La fuente sigue fallando entera, y eso no se toca: con `_prune_missing_events`
+    de por medio, un lote incompleto borraría eventos futuros en vez de
+    omitirlos. Lo que cambia es que el mensaje ahora se puede leer.
+    """
+    try:
+        return response.json()
+    except ValueError as exc:
+        tipo = response.headers.get("content-type", "?")
+        inicio = response.text[:200].replace("\n", " ").strip()
+        # Las cabeceras que delatan quién contestó. Un `cf-ray` es Cloudflare,
+        # un `x-sucuri-id` es Sucuri, y `server` suele nombrar al WAF. Sin
+        # esto hay que adivinar si el bloqueo lo pone el hosting o el sitio.
+        pistas = {
+            k: v
+            for k, v in response.headers.items()
+            if k.lower()
+            in ("server", "cf-ray", "cf-mitigated", "x-sucuri-id", "x-powered-by")
+        }
+        raise RuntimeError(
+            f"la API respondió {response.status_code} con content-type «{tipo}», "
+            f"que no es JSON. Cabeceras: {pistas}. Empieza así: {inicio!r}"
+        ) from exc
+
+
 def scrape() -> list[ScrapedEvent]:
     events: list[ScrapedEvent] = []
     page = 1
     with httpx.Client(headers=DEFAULT_HEADERS, timeout=30) as client:
         while True:
             response = client.get(API_URL, params={"per_page": 50, "page": page})
-            if response.status_code == 400:
-                break  # past the last page
+            # Pasada la última página la API contesta 400 o 404 según versión:
+            # el 2026-09-09 devolvía 404 con cuerpo JSON. No es un fallo.
+            if response.status_code in (400, 404):
+                break
             response.raise_for_status()
-            payload = response.json()
+            payload = _json(response)
 
             for item in payload.get("events", []):
                 venue = item.get("venue") or {}

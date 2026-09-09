@@ -47,6 +47,7 @@ En una corrida típica eso son unas pocas decenas de fichas en vez de 600.
 import html
 import json
 import re
+import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -200,8 +201,31 @@ def _precio(monto):
     return desde_piso(monto)
 
 
+# Una petición por segundo entre fichas.
+#
+# ⚠️ **El ritmo va acá y nunca en el CLI que llama.** Es la regla del proyecto,
+# y se pagó con MusicBrainz: espaciar desde el bucle del llamador dejaba
+# escapar dos peticiones pegadas al arrancar.
+#
+# Sin esto son unas 30 peticiones seguidas contra un servidor ajeno. Desde una
+# máquina de casa pasa; desde una IP de datacenter —que es donde corre el
+# cron— es lo que un WAF corta. Que el diseño de dos pasos exista para no ser
+# groseros y después no espaciara las que sí pide era una contradicción.
+SEGUNDOS_ENTRE_FICHAS = 1.0
+_ultima_peticion = 0.0
+
+
+def _esperar_turno() -> None:
+    global _ultima_peticion
+    espera = SEGUNDOS_ENTRE_FICHAS - (time.monotonic() - _ultima_peticion)
+    if espera > 0:
+        time.sleep(espera)
+    _ultima_peticion = time.monotonic()
+
+
 def _ficha(url: str) -> dict | None:
     """El `MusicEvent` de la ficha, que es donde vive la sala."""
+    _esperar_turno()
     soup = BeautifulSoup(http.get(url).text, "html.parser")
     for etiqueta in soup.find_all("script", type="application/ld+json"):
         if not etiqueta.string:
