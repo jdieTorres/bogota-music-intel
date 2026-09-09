@@ -12,16 +12,6 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-- 🔥 **La cuenta de Anthropic no tiene saldo, y eso deja el lector de afiches
-  sin probar.** La key está en `apps/web/.env.local` y la API la acepta; lo que
-  devuelve es *"Your credit balance is too low"*. Se recarga en
-  `console.anthropic.com` → Plans & Billing. Es la única dependencia paga del
-  proyecto y leer un afiche cuesta cerca de US$0,01.
-- **La cartelera sigue encabezada por el Movistar Arena.** De 38 eventos en
-  pantalla, **9 son de esa sala** — más que ninguna otra — y otros 5 de Royal
-  Center. Son publicados de antes del giro: la cola se vació pero la cartelera
-  no. Se sacan con "No va" en `/admin`, que es reversible; **"Borrar" no**,
-  porque su bloqueo es por `(fuente, id)` y una fuente nueva lo esquiva.
 - **8 de 19 salas publicadas sin foto**: La Mecánica, La Media Torta, Parque el
   Country, Proyecto Kinder, Teatro Astor Plaza, Teatro Cafam, Teatro Colón y
   Teatro Mayor Julio Mario Santo Domingo. Se pegan como URL en `/admin` →
@@ -31,10 +21,14 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 - **4 salas por aprobar**: Parque de la 93, Teatro Panorama, Ágora Bogotá
   Centro de Convenciones y Museo de Arte Moderno de Bogotá MAMBO. Ojo:
   aprobarlas mueve el denominador de las dos líneas de arriba.
-- **El género: 6 de 50 publicados muestran chip.** Otros 5 tienen `category`
-  pero es taxonomía de la fuente —3 "Música", 1 "Conciertos", 1 "Otro"— y
-  `generoVisible` la esconde a propósito. Ninguna fuente publica género real
-  salvo Rockal Live: o lo escribe Juan en `/admin` o el chip no existe.
+- **El género: 10 de 50 publicados lo tienen**, con 7 géneros distintos en uso.
+  Desde el 2026-09-08 **ninguna fuente lo escribe**: `generos` es columna propia
+  y la llena Juan en `/admin`. Ya no hay nada que filtrar ni taxonomías que se
+  cuelen — pero tampoco entra ninguno solo.
+- **Queda un evento con el género compuesto "Rock/Punk/Metal"**, *Helloween |
+  40 Years Anniversary Tour*. Salió de las sugerencias, pero **mientras ese
+  evento lo tenga se va a seguir ofreciendo**: el vocabulario son los géneros
+  ya usados. Juan lo cambia por el específico y desaparece solo.
 - **La fecha de vencimiento del token de Supabase hay que anotarla.** El
   2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
   reemplazó al de solo lectura que vencía el 2026-12-06. Los tokens scoped
@@ -60,13 +54,16 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 2. Lo que quedó a medias
 
-- 🟠 **El lector de afiches está escrito y a medio probar.** Lo verificado de
-  punta a punta es la subida al bucket —hay un evento con su afiche servido
-  desde Storage— y que un POST sin sesión de admin recibe 401 o 403. **La
-  extracción nunca corrió**, por el saldo. Lo que hay que mirar cuando corra no
-  es si acierta el título: es **que devuelva vacío donde el afiche no dice
-  nada**. Los tres casos que lo prueban son un afiche sin año, uno sin hora y
-  uno de una sala que no está cargada.
+- 🟠 **El lector de afiches funciona, y falta medir de qué calidad.** El
+  2026-09-08 Juan cargó saldo y lo probó: lee. Lo que **no** está medido es lo
+  único que importa de verdad — **que devuelva vacío donde el afiche no dice
+  nada** en vez de completar con lo verosímil. Los tres casos que lo prueban
+  son un afiche sin año, uno sin hora y uno de una sala que no está cargada.
+  Hasta correr esos tres, "funciona" significa "responde", no "no inventa".
+- **El campo de géneros no se ha visto renderizado.** Se agregó el 2026-09-08 y
+  `/admin` pide sesión, así que las capturas no llegan. Falta comprobar dos
+  cosas: que elegir del desplegable agregue el género, y que Enter agregue en
+  vez de enviar el formulario entero.
 - **`/admin` no se ha visto renderizado desde los cambios del 2026-09-08.**
   Pide sesión, así que `npm run capturas` —que cubre las cinco páginas
   públicas— no llega ahí. Compila, los tipos cierran y los tests pasan, pero
@@ -80,12 +77,14 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   ventana de un mes y esos seis caen fuera. Se reenganchan solos cuando su
   fecha entre en la ventana; hasta entonces, si el Movistar mueve una de esas
   fechas nadie se entera. El detalle en `context/ingesta/fuentes-y-legalidad.md`.
-- **Nunca se ha desplegado a Vercel.** Todo se ha verificado en local. Hacen
-  falta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y
-  ahora también `ANTHROPIC_API_KEY` en el proyecto de Vercel. ⚠️ El route
-  handler del afiche declara `maxDuration = 60`, que es el tope del plan Hobby:
-  **eso solo se prueba desplegado**, porque el límite es del entorno y no del
-  código.
+- **Nunca se ha desplegado a Vercel, y queda pospuesto a propósito** —
+  decisión de Juan el 2026-09-08: el producto todavía está cambiando de forma y
+  desplegar ahora sería congelar una foto que va a durar días. No es un
+  bloqueo, es una espera. Cuando toque hacen falta `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `ANTHROPIC_API_KEY` en el proyecto
+  de Vercel. ⚠️ Y hay algo que **solo se prueba desplegado**: el route handler
+  del afiche declara `maxDuration = 60`, el tope del plan Hobby, y ese límite
+  es del entorno y no del código.
 - **El sitio no se ha visto en un dispositivo real.** Las 30 capturas de
   `npm run capturas` cubren escritorio y móvil en los dos modos, pero son
   Chromium headless a tamaño simulado: no dicen nada de un teléfono de verdad
@@ -113,6 +112,7 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 
 | | |
 |---|---|
+| Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, **ticketlive** *(nueva, sin correr contra la base)* |
 | Filas crudas | **113** — visitbogota 56 *(congeladas)*, royal 14, movistar 13, lourdes 9, latino 8, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
 | Canónicos | **101** — 50 publicados, **0 borradores**, 51 descartados |
@@ -122,11 +122,11 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 | Fotos de sala | **11 de 19** |
 | Afiche | **49 de 50** publicados lo tienen |
 | Precio | **17 de 50** publicados |
-| Género visible | **6 de 50** |
+| Género | **10 de 50** publicados, 7 géneros distintos en uso |
 | Escena local marcada | **4 de 50** — se marca a mano y nada la calcula |
 | Bloqueados | **36** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3 |
 | Duplicados sugeridos | **0** |
-| Tests | **221 backend + 74 frontend**, verdes en local y en CI (`8048df2`) |
+| Tests | **239 backend + 69 frontend**, verdes en local |
 
 Cómo leerlas sin equivocarse:
 
@@ -152,17 +152,15 @@ Cómo leerlas sin equivocarse:
 
 Por orden de lo que destraba más:
 
-1. **Recargar el saldo y probar el lector de afiches.** Es lo único que
-   convierte la feature más grande de la semana en algo usable, y es la vía
-   principal por la que entra la escena desde que salió `visitbogota`.
-2. **Desplegar a Vercel.** Nunca se ha hecho, y hay dos cosas que solo se
-   prueban ahí: el tope de 60 s del route handler y el sitio en un teléfono de
-   verdad.
-3. **Sacar de la cartelera lo masivo que quedó publicado**, o la portada la
-   sigue encabezando el Movistar.
-4. **Fuentes que sí lleguen a la escena.** Quedan `ticketlive.com.co` y
-   `mitaquilla.com.co` —las dos auditadas como abiertas y las dos venden para
-   clubes— más `feverup.com`. Y una pista sin auditar: **Passline**, a donde
-   apuntan los botones de compra de Lourdes.
-5. **El directorio de la escena local**, el único módulo del MVP que no ha
+1. **Correr el cron con ticketlive**, que nunca se ha ejecutado contra la base.
+   Va a abrir unos 10 borradores, entre ellos los primeros de Ace Of Spades y
+   La Sucursal. ⚠️ **Y va a reabrir lo que Juan ya descartó desde otra fuente**:
+   el bloqueo es por `(fuente, id)` y no puede saber de fuentes que no existían.
+2. **Medir la calidad del lector de afiches** con los tres casos de la sección
+   anterior. Responde y deja huecos; falta saber si inventa.
+3. **Más fuentes**: queda `mitaquilla.com.co` —abierta, reconfirmada el
+   2026-09-08 con el User-Agent correcto— y `feverup.com` sin explorar.
+   Passline queda fuera: está detrás de una sala de espera virtual.
+4. **El directorio de la escena local**, el único módulo del MVP que no ha
    arrancado.
+5. **Desplegar a Vercel**, cuando el producto deje de cambiar de forma.
