@@ -612,7 +612,7 @@ function PosibleDuplicado({
           disabled={ocupado || !otro}
           onClick={alUnificar}
           className={`${BOTON} bg-accent text-background disabled:opacity-40`}
-          title={!otro ? "Esperá a ver contra qué se compara" : undefined}
+          title={!otro ? "Espera a ver contra qué se compara" : undefined}
         >
           Sí, es el mismo
         </button>

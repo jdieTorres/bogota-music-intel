@@ -58,7 +58,7 @@ export default async function Page() {
         vacio={
           <EstadoVacio
             titulo="No hay toques en cartelera"
-            detalle="El recolector corre todos los días a las 9:00 a. m. Si acabás de montar el proyecto, corré el scraper para poblar la base."
+            detalle="El recolector corre todos los días a las 9:00 a. m. Si acabas de montar el proyecto, corre el scraper para poblar la base."
           />
         }
       />

@@ -42,7 +42,7 @@ export default async function Page() {
     <div className="mx-auto max-w-5xl px-5 pb-16">
       <EncabezadoDePagina
         titulo="Dónde está sonando la ciudad"
-        bajada="Las salas con programación activa, ubicadas en el mapa. Tocá un punto para ver qué viene."
+        bajada="Las salas con programación activa, ubicadas en el mapa. Toca un punto para ver qué viene."
       />
 
       {/* Sin pestañas donde apoyarlo, el conteo va sobre el filete que abre
