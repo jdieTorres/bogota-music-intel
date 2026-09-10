@@ -1,8 +1,9 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-09**, recontado contra la base con el MCP
-después de que el directorio de la escena arrancara y Juan cargara su primer
-artista.
+Última actualización: **2026-09-09**, recontado contra la base con el MCP al
+cierre de una pasada de salas de Juan: completó todas las coordenadas, bajó
+Teatro Republik por ser discoteca, y esa baja destapó un bug que quedó
+arreglado y con sus datos reparados.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -13,36 +14,37 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-- 🔥 **El directorio tiene un artista.** Nicolás y los Fumadores, con 6 tracks
-  y su Bandcamp. El módulo está construido y probado, pero **una plataforma que
+⚠️ **Los dos primeros van después del despliegue, no antes.** Lo decidió Juan
+el 2026-09-09: primero se pule y se despliega, y el contenido se carga sobre el
+sitio ya en pie. Siguen siendo lo que le falta al producto — no lo que bloquea
+el siguiente paso.
+
+- **El directorio tiene un artista.** Nicolás y los Fumadores, con 6 tracks y su
+  Bandcamp. El módulo está construido y probado, pero **una plataforma que
   existe para dar a conocer la escena con un solo artista no da a conocer
   nada**, y esa parte no la puede hacer nadie más: ninguna base global sabe
   quiénes son. Se cargan en `/admin` → Artistas.
-- 🔥 **Nadie ha vinculado un cartel todavía**: `event_artists` está en 0. La
-  tabla existe y el formulario también, pero hasta que un evento publicado
-  tenga sus artistas, **dos de las tres señales de recomendación no tienen de
-  dónde salir** ("compartieron cartel" y "también ha tocado en"), y los enlaces
-  entre la cartelera y la ficha del artista no existen. Es lo más barato de
-  destrabar: se hace al pasar por un evento en la cola.
-- 🔥 **5 de 22 salas publicadas sin coordenada, y tres son las nuevas**: Ace Of
-  Spades, La Sucursal y Teatro Republik, más La Mecánica y Teatro Cafam. Juan lo
-  dejó anotado para después (2026-09-09). Esas tres salas son las que traen la
-  escena, y sin punto se listan bajo el mapa como "sin ubicar" en vez de
-  aparecer en él. Se arregla pegando el punto desde Google Maps en `/admin` →
-  Salas.
-- **11 de 22 salas publicadas sin foto**, incluidas las tres nuevas — que son
-  justo las que más ganarían con una, porque nadie las conoce. Se pegan como URL
-  en `/admin` → Salas, con vista previa.
+- **Nadie ha vinculado un cartel todavía**: `event_artists` está en 0. La tabla
+  existe y el formulario también, pero hasta que un evento publicado tenga sus
+  artistas, **dos de las tres señales de recomendación no tienen de dónde
+  salir** ("compartieron cartel" y "también ha tocado en"), y los enlaces entre
+  la cartelera y la ficha del artista no existen. Es lo más barato de destrabar:
+  se hace al pasar por un evento en la cola.
+- **7 de 20 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
+  con vista previa. Es lo único que le falta al mapa: **las 20 ya tienen
+  coordenada** (Juan las completó el 2026-09-09) y ninguna se lista ya como
+  "sin ubicar".
 - **2 salas por aprobar**: Ágora Bogotá Centro de Convenciones y Museo de Arte
   Moderno de Bogotá MAMBO. Ninguna tiene eventos vigentes, así que no corre
   prisa.
-- **El género: 10 de 56 publicados lo tienen**, con 7 en uso —Pop, Rock, Hip
-  Hop/Rap, Popular, Reggaeton, Jazz, Vallenato—. Desde el 2026-09-08 **ninguna
+- 🔥 **El género: 9 de 52 publicados lo tienen**, con 5 en uso —Rock, Hip
+  Hop/Rap, Popular, Reggaeton, Vallenato—. Eran 7: Pop y Jazz se fueron con los
+  eventos que Juan descartó el 2026-09-09. Desde el 2026-09-08 **ninguna
   fuente lo escribe**: `generos` es columna propia (`text[]`, varios por evento)
   y la llena Juan en `/admin`. Ahora además **es la navegación del directorio**:
   los géneros del filtro salen de los eventos donde tocó cada artista, así que
   un directorio sin géneros se queda sin su único eje de exploración.
-- **La escena local marcada: 3 de 56.** Mismo caso: desde que se dio de baja
+- **La escena local marcada: 3 de 52.** Mismo caso: desde que se dio de baja
   MusicBrainz nada la calcula. La marca rosa solo sale si Juan la pone.
 - **La fecha de vencimiento del token de Supabase hay que anotarla.** El
   2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
@@ -115,12 +117,24 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   Vercel. ⚠️ Y hay algo que **solo se prueba desplegado**: el route handler del
   afiche declara `maxDuration = 60`, el tope del plan Hobby, y ese límite es del
   entorno y no del código.
-- **21 publicados sin revisar** (de 56). Tienen `reviewed_at` en null y eso es
+- **Al compartir un enlace no sale nada.** No hay `openGraph` ni
+  `metadataBase` en `apps/web/src/app/layout.tsx`, así que un evento pegado en
+  WhatsApp o en una historia sale como texto pelado, sin imagen ni título. ⚠️
+  **Para una plataforma que existe para promover toques, compartir es el caso
+  de uso principal**, y hoy es lo peor resuelto del sitio. El afiche del evento
+  ya está en la base: la imagen de compartir sale de ahí.
+- **`/admin` es indexable.** No declara `robots: { index: false }`, así que el
+  panel de moderación puede terminar en Google. Los datos están protegidos por
+  RLS —no es un agujero— pero no tiene por qué salir en una búsqueda.
+- **No hay `robots.ts` ni `sitemap.ts`.** Con cinco rutas públicas y fichas por
+  evento y por artista, el sitemap deja de ser opcional el día que esto sea
+  público.
+- - **21 publicados sin revisar** (de 52). Tienen `reviewed_at` en null y eso es
   correcto: nadie los revisó. El número baja solo a medida que Juan toca cada
   evento por otro motivo.
 - **12 publicados ya pasaron de fecha** y siguen en `publicado`. No se ven —la
-  cartelera filtra por `starts_at >= hoy`— así que no es un bug, y con los 44
-  vigentes cierran los 56. ⚠️ **Contarlos con `starts_at < now()` da 13 y está
+  cartelera filtra por `starts_at >= hoy`— así que no es un bug, y con los 40
+  vigentes cierran los 52. ⚠️ **Contarlos con `starts_at < now()` da 13 y está
   mal**: un show de hoy que empezó hace dos horas sigue en pantalla, porque el
   corte es el **inicio del día en Bogotá**, no el instante. El mismo cuidado que
   pide la regla dura de las horas, aplicado a una consulta de conteo.
@@ -128,9 +142,6 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
   `sb_*` del 2026-08-28 no tocó.
-- ⚠️ **`.claude/settings.local.json` tiene el token de Supabase en texto
-  plano.** Con escritura habilitada desde el 2026-09-08 y sin branching —esa
-  base es la única copia—, vale confirmar que el archivo está en `.gitignore`.
 - **Opcional:** añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para
   que el CI prerenderice contra la base real en vez de contra placeholders.
 
@@ -145,16 +156,16 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 | | |
 |---|---|
 | Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
-| Filas crudas | **125** — visitbogota 56 *(congeladas)*, royal 15, movistar 13, ticketlive 10, lourdes 9, latino 9, rockal 8, idartes 5 |
+| Filas crudas | **126** — visitbogota 56 *(congeladas)*, royal 15, movistar 13, ticketlive 10, latino 10, lourdes 9, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **110** — 56 publicados, 1 borrador, 53 descartados |
-| En pantalla | **33 toques, 5 fiestas, 6 festivales**; 44 eventos vigentes en 15 salas, de las que **10 llevan pin** (las otras 5 no tienen coordenada) |
-| Salas | **39 filas** — 22 publicadas, 2 por aprobar, 15 descartadas |
-| Coordenadas | **17 de 22** salas publicadas ubicadas |
-| Fotos de sala | **11 de 22** |
-| Precio | **22 de 56** publicados |
-| Género | **10 de 56** publicados, 7 géneros en uso, ninguno compuesto |
-| Escena local marcada | **3 de 56** — se marca a mano y nada la calcula |
+| Canónicos | **111** — 52 publicados, 2 borradores, 57 descartados |
+| En pantalla | **32 toques, 2 fiestas, 6 festivales** = 40 vigentes. La cartelera dice "32 toques en 11 salas" y el mapa "13 salas · 40 eventos": cuentan distinto **a propósito** (`context/frontend/CLAUDE.md`) |
+| Salas | **39 filas** — 20 publicadas, 2 por aprobar, 17 descartadas |
+| Coordenadas | **20 de 20** — ninguna sala publicada queda sin ubicar |
+| Fotos de sala | **13 de 20** |
+| Precio | **19 de 52** publicados |
+| Género | **9 de 52** publicados, 5 géneros en uso, ninguno compuesto |
+| Escena local marcada | **3 de 52** — se marca a mano y nada la calcula |
 | **Directorio** | **1 artista publicado**, 6 tracks (4 de YouTube, 2 de SoundCloud), 3 con carátula |
 | **Carteles vinculados** | **0** — `event_artists` está vacía |
 | Bloqueados | **36** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3 |
@@ -167,9 +178,14 @@ Cómo leerlas sin equivocarse:
   descartados que conservan la fecha en la que estuvieron publicados, y es
   correcto que la conserven.
 - ⚠️ **"Salas 39" es el total de filas, no lo que se ve.** Hasta el 2026-09-09
-  esta línea decía "24" y contaba solo publicadas más borradores: las 15
+  esta línea decía "24" y contaba solo publicadas más borradores: las 17
   descartadas existían y no aparecían en ningún lado. Se corrigió acá porque el
   número que engaña es el que se cita.
+- **Los publicados bajaron de 56 a 52 el 2026-09-09** y no es pérdida de datos:
+  Juan bajó Teatro Republik por ser discoteca y descartó sus tres eventos, más
+  uno suyo. Desde ese día **descartar una sala arrastra sus eventos a la cola**
+  (`context/moderacion/CLAUDE.md`), así que este tipo de salto va a repetirse
+  cada vez que una sala se caiga.
 - ⚠️ **Las 56 filas de visitbogota están congeladas, no vivas.** La fuente salió
   del registry el 2026-09-08; sus filas quedan como registro y no se actualizan.
   Lo mismo vale para `scraped_at`, que es "cuándo se vio por primera vez" y no
@@ -199,9 +215,11 @@ que Juan fijó ese mismo día. Lo que queda, en el orden que él decidió:
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y
    `ANTHROPIC_API_KEY` en Vercel.
 
-   ⚠️ Antes de desplegar conviene resolver lo de arriba que se nota de
-   inmediato: **el directorio con un solo artista** y **los carteles sin
-   vincular**. Las dos son carga manual, no código.
+   **Juan decidió el 2026-09-09 cargar artistas y afiches después del
+   despliegue, no antes.** Eso cambia qué bloquea: el contenido deja de ser
+   requisito y pasa a ser lo primero que se hace con el sitio ya en pie. Lo que
+   sí conviene resolver antes es lo que **se congela al desplegar y se nota en
+   el primer enlace compartido**: `openGraph`, `robots` y el sitemap (§ 2).
 
 2. **Más fuentes.** `mitaquilla.com.co` quedó confirmada abierta el 2026-09-08 —
    con el User-Agent correcto, ver `context/ingesta/fuentes-y-legalidad.md`— y
