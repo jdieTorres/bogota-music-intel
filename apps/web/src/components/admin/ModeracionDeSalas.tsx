@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   BOTON,
   BOTON_PRIMARIO,
+  BOTON_ROJO,
   BOTON_TENUE,
   BarraDeAcciones,
   CAMPO,
@@ -28,15 +29,18 @@ import {
 import { VOLVER } from "@/components/admin/ModeracionDeEventos";
 import {
   type CorreccionDeSala,
+  type EventoDeLaSala,
   type PestañaDeSala,
   type SalaEnModeracion,
   aprobarSala,
   crearSala,
   descartarSala,
+  getEventosDeLaSala,
   getSalas,
   guardarSala,
 } from "@/lib/admin/salas";
 import { slugDeSala } from "@/lib/admin/slug";
+import { fechaCorta } from "@/lib/fechas";
 
 const PESTAÑAS: [PestañaDeSala, string][] = [
   ["borrador", "Por aprobar"],
@@ -229,6 +233,9 @@ function FichaDeSala({
     longitude: sala.longitude,
   });
   const [ocupado, setOcupado] = useState(false);
+  // Los eventos que cuelgan de la sala, pedidos solo al ir a bajarla. `null`
+  // es "todavía no se preguntó", que no es lo mismo que "no tiene ninguno".
+  const [porBajar, setPorBajar] = useState<EventoDeLaSala[] | null>(null);
 
   async function accion(fn: () => Promise<void>) {
     setOcupado(true);
@@ -238,6 +245,18 @@ function FichaDeSala({
       alResolver();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      setOcupado(false);
+    }
+  }
+
+  async function preguntarAntesDeBajar() {
+    setOcupado(true);
+    setError(null);
+    try {
+      setPorBajar(await getEventosDeLaSala(sala.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
       setOcupado(false);
     }
   }
@@ -321,6 +340,65 @@ function FichaDeSala({
       {/* Pegada al pie: la ficha es larga y con las acciones al final había
           que bajar hasta el fondo para guardar, y acordarse de que estaban
           ahí. */}
+      {/* La advertencia antes de bajar la sala.
+          ⚠️ **Existe porque bajarla en silencio dejaba mentiras en pantalla.**
+          Hasta el 2026-09-09 descartar una sala no tocaba sus eventos, así que
+          seguían en la cartelera sin sala visible y el sitio escribía "Sala por
+          confirmar" sobre una sala que sí se sabía. Lo encontró Juan al bajar
+          Teatro Republik. La lista va completa y no un conteo: decidir si una
+          sala se baja depende de *cuáles* eventos se lleva por delante. */}
+      {porBajar !== null && (
+        <div className="mt-5 rounded-md border border-red-500/40 bg-background p-4">
+          {porBajar.length === 0 ? (
+            <p className="text-sm">
+              No tiene eventos en cartelera ni en la cola. Se puede bajar sin más.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm">
+                Se lleva <strong>{porBajar.length}</strong>{" "}
+                {porBajar.length === 1 ? "evento" : "eventos"}. Los que estén en
+                cartelera <strong>vuelven a la cola como borradores</strong>: sin
+                sala válida no pueden estar publicados, y ahí puedes reasignarles
+                una o descartarlos uno por uno.
+              </p>
+              <ul className="mt-3 max-h-56 space-y-1 overflow-y-auto font-mono text-xs">
+                {porBajar.map((evento) => (
+                  <li key={evento.id} className="flex gap-2">
+                    <span className="w-16 shrink-0 text-muted">
+                      {evento.starts_at ? fechaCorta(evento.starts_at) : "sin fecha"}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{evento.title}</span>
+                    <span className="shrink-0 text-muted">{evento.status}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              disabled={ocupado}
+              onClick={() =>
+                accion(async () => {
+                  await descartarSala(sala.id);
+                })
+              }
+              className={BOTON_ROJO}
+            >
+              {porBajar.length > 0
+                ? `Bajar la sala y sus ${porBajar.length} ${
+                    porBajar.length === 1 ? "evento" : "eventos"
+                  }`
+                : "Bajar la sala"}
+            </button>
+            <button disabled={ocupado} onClick={() => setPorBajar(null)} className={BOTON_TENUE}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <BarraDeAcciones>
         {sala.status === "publicado" ? (
           <button
@@ -342,7 +420,7 @@ function FichaDeSala({
         {sala.status !== "descartado" && (
           <button
             disabled={ocupado}
-            onClick={() => accion(() => descartarSala(sala.id))}
+            onClick={() => void preguntarAntesDeBajar()}
             className={`${BOTON_TENUE} ml-auto`}
             title="La saca del mapa pero no la borra: se puede volver atrás"
           >

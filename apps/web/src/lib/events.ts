@@ -181,7 +181,11 @@ export async function getEvento(id: string): Promise<Evento | null> {
  *  una. Puede pasar con un evento cargado a mano en un lugar que la base
  *  todavía no conoce: mejor decir que falta que inventar un nombre. */
 export function nombreDelVenue(evento: Evento): string {
-  return evento.venues?.name ?? "Sala por confirmar";
+  // "Sala por confirmar" sonaba a que el dato viene en camino, que es
+  // justamente la fórmula que el look & feel descartó para las horas y los
+  // precios. Casi nunca viene: o el evento se cargó a mano sin sala, o su
+  // sala se descartó. Lo honesto es decir el estado, no prometer.
+  return evento.venues?.name ?? "Sin sala anunciada";
 }
 
 /** Agrupa por día calendario de Bogotá, conservando el orden cronológico. */

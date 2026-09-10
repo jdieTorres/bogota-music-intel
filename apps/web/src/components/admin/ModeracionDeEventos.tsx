@@ -26,6 +26,7 @@ import {
 } from "@/components/admin/ui";
 import { aCamposDeFecha, desdeCamposDeFecha } from "@/lib/admin/fecha";
 import { CampoDePrecio } from "@/components/admin/CampoDePrecio";
+import { getSalasPublicadas } from "@/lib/admin/salas";
 import { formatearPrecio, type PrecioEvento } from "@/lib/precio";
 import {
   type Correccion,
@@ -39,6 +40,7 @@ import {
   guardar,
   publicar,
   resolverCambio,
+  salaEnLaCola,
   unificarDuplicado,
 } from "@/lib/admin/eventos";
 
@@ -217,7 +219,7 @@ function Renglon({ evento, alElegir }: { evento: EventoEnCola; alElegir: () => v
         <span className="min-w-0 flex-1">
           <span className="block truncate">{evento.title ?? "(sin título)"}</span>
           <span className="mt-0.5 block truncate text-xs text-muted">
-            {evento.venues?.name ?? "sala sin asignar"}
+            {salaEnLaCola(evento)}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
@@ -255,9 +257,19 @@ function Ficha({
     ticket_url: evento.ticket_url,
     event_type: evento.event_type,
     is_local: evento.is_local,
+    venue_id: evento.venue_id,
   });
+  // Las salas aprobadas, para poder reasignar. Se piden acá y no en la lista
+  // porque solo hacen falta con una ficha abierta.
+  const [salas, setSalas] = useState<{ id: string; name: string }[]>([]);
   const [ocupado, setOcupado] = useState(false);
   const [borrando, setBorrando] = useState(false);
+
+  useEffect(() => {
+    // Si falla, el resto de la ficha sigue sirviendo: lo único que se pierde
+    // es poder cambiar la sala, y eso no puede tumbar la pantalla entera.
+    void getSalasPublicadas().then(setSalas).catch(() => {});
+  }, []);
 
   const cambio = evento.change_detail;
   const editar = (parcial: Correccion) => setCampos((c) => ({ ...c, ...parcial }));
@@ -282,7 +294,7 @@ function Ficha({
         {cambio && <Etiqueta acento>la fuente cambió</Etiqueta>}
         {evento.suggested_duplicate_of && <Etiqueta>posible duplicado</Etiqueta>}
         <span className="ml-auto text-xs text-muted">
-          {evento.venues?.name ?? "sala sin asignar"}
+          {salaEnLaCola(evento)}
         </span>
       </div>
 
@@ -360,6 +372,31 @@ function Ficha({
           valor={campos.generos ?? []}
           alCambiar={(g) => editar({ generos: g })}
         />
+
+        {/* Reasignar la sala. Aparece siempre, pero es la razón de que
+            descartar una sala no deje a sus eventos en un callejón sin
+            salida: vuelven a la cola sin sala y acá se les da otra. */}
+        <label className={evento.sala_descartada ? "sm:col-span-2" : undefined}>
+          <Rotulo>Sala</Rotulo>
+          <select
+            value={campos.venue_id ?? ""}
+            onChange={(e) => editar({ venue_id: e.target.value || null })}
+            className={CAMPO}
+          >
+            <option value="">sin sala</option>
+            {salas.map((sala) => (
+              <option key={sala.id} value={sala.id}>
+                {sala.name}
+              </option>
+            ))}
+          </select>
+          {evento.sala_descartada && (
+            <span className="mt-1 block text-xs text-red-400">
+              Su sala se descartó, así que volvió a la cola. Dale una nueva o
+              descártalo.
+            </span>
+          )}
+        </label>
 
         <label>
           <Rotulo>Qué es</Rotulo>
@@ -589,7 +626,7 @@ function PosibleDuplicado({
         <div className="mt-2 space-y-1 rounded bg-surface p-2 text-xs">
           <p className="font-medium">{otro.title}</p>
           <p className="text-muted">
-            {fechaCompacta(otro.starts_at)} · {otro.venues?.name ?? "sala sin asignar"} ·{" "}
+            {fechaCompacta(otro.starts_at)} · {salaEnLaCola(otro)} ·{" "}
             {otro.status}
           </p>
           <p className="text-muted">

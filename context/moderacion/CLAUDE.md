@@ -41,6 +41,19 @@ dentro de una fuente, por eso el mismo show llegaba dos veces. Revisar es
   paso que la rearma, ese evento dejaría de vigilarse para siempre.
 - **No hay política de DELETE sobre ninguna tabla.** La única forma de borrar
   es `borrar_evento()`.
+- ⚠️ **Descartar una sala baja sus eventos de la cartelera, y va por RPC.**
+  `descartar_sala()` pone la sala en `descartado` y devuelve sus eventos
+  publicados a `borrador`, en una sola operación. Hasta el 2026-09-09 solo
+  hacía lo primero, y como RLS no deja ver una sala descartada, esos eventos
+  seguían públicos con el embed en null: la cartelera escribía **"Sala por
+  confirmar" sobre una sala que sí se sabía**. Bajan a `borrador` y no a
+  `descartado` porque a un evento sin lugar válido le falta un dato, no le
+  sobra: descartarlo sería un juicio que nadie hizo. Y `/admin` **advierte
+  antes, con la lista de los eventos que se lleva** — el conteo no alcanza,
+  porque la decisión depende de cuáles son.
+- **Una sala que dejó de valer se reasigna, no se pierde.** El formulario del
+  evento tiene selector de sala desde el 2026-09-09: sin él, la regla de
+  arriba dejaba los eventos en un callejón sin salida.
 
 ## `/admin`
 

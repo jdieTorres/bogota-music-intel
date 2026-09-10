@@ -81,21 +81,53 @@ export async function guardarSala(id: string, correccion: CorreccionDeSala) {
   if (error) throw new Error(`No se pudo guardar: ${error.message}`);
 }
 
+/** Un evento que hoy cuelga de esta sala. Lo que hay que mirar antes de bajarla. */
+export type EventoDeLaSala = {
+  id: string;
+  title: string;
+  starts_at: string | null;
+  status: string;
+};
+
 /**
- * La saca del mapa sin borrarla.
+ * Qué eventos tiene la sala, para poder advertir antes de descartarla.
+ *
+ * Se piden todos y no solo los publicados: al decidir si una sala se baja,
+ * saber que además tiene cuatro borradores en la cola cambia la decisión.
+ */
+export async function getEventosDeLaSala(id: string): Promise<EventoDeLaSala[]> {
+  const { data, error } = await supabase
+    .from("canonical_events")
+    .select("id, title, starts_at, status")
+    .eq("venue_id", id)
+    .neq("status", "descartado")
+    .order("starts_at", { ascending: true });
+
+  if (error) throw new Error(`No se pudieron cargar sus eventos: ${error.message}`);
+  return data ?? [];
+}
+
+/**
+ * La saca del mapa sin borrarla, y baja sus eventos de la cartelera.
  *
  * **No hay borrado de salas y es a propósito.** Una sala la referencian sus
  * eventos por `venue_id`; borrarla los dejaría sin lugar, y además el
  * scraper la volvería a crear en la corrida siguiente en cuanto un evento
  * la nombre. `descartado` es la respuesta correcta: deja de mostrarse, la
  * fila queda, y si algún día vuelve a servir se aprueba de nuevo.
+ *
+ * ⚠️ **Va por RPC y no por un `update` de acá.** Bajar la sala y devolver sus
+ * eventos a la cola tienen que pasar juntos: hasta el 2026-09-09 solo pasaba
+ * lo primero, y los eventos se quedaban en la cartelera diciendo "Sala por
+ * confirmar" sobre una sala que sí se sabía. Dos updates desde el navegador
+ * pueden cortarse por la mitad; la función no.
+ *
+ * Devuelve cuántos eventos bajó, para poder decirlo.
  */
-export async function descartarSala(id: string) {
-  const { error } = await supabase
-    .from("venues")
-    .update({ ...revisada(), status: "descartado" })
-    .eq("id", id);
+export async function descartarSala(id: string): Promise<number> {
+  const { data, error } = await supabase.rpc("descartar_sala", { sala_id: id });
   if (error) throw new Error(`No se pudo descartar: ${error.message}`);
+  return (data as number) ?? 0;
 }
 
 export type SalaNueva = {

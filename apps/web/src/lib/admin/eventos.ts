@@ -62,16 +62,32 @@ export type EventoEnCola = {
   change_detail: Record<string, CambioDeOrigen> | null;
   change_detected_at: string | null;
   suggested_duplicate_of: string | null;
+  /**
+   * La sala, **solo si sigue publicada**.
+   *
+   * ⚠️ Una sala descartada llega acá como `null`, igual que si el evento no
+   * tuviera ninguna — y eso es a propósito. El admin ve todas las salas
+   * (`es_admin()` se lo permite), así que sin este filtro seguía escribiendo
+   * "Teatro Republik" al lado de eventos cuya sala Juan acababa de bajar. Se
+   * resuelve acá y no en cada componente por el mismo motivo que `precio`:
+   * si el crudo no llega a la vista, ninguna vista se puede equivocar.
+   *
+   * `venue_id` sí llega, porque el formulario tiene que poder reasignarla.
+   */
   venues: { slug: string; name: string } | null;
+  /** La sala existe pero está descartada. Distinto de no tener sala. */
+  sala_descartada: boolean;
+  /** La clave, que la vista necesita para poder reasignarla. */
+  venue_id: string | null;
   events: FuenteCruda[];
 };
 
 const CAMPOS = `
-  id, status, origin, title, starts_at, description, price_text,
+  id, status, origin, title, starts_at, description, price_text, venue_id,
   price_kind, price_min, price_max, category, generos,
   ticket_url, image_url, event_type, is_local, evidence, source_snapshot,
   change_detail, change_detected_at, suggested_duplicate_of,
-  venues ( slug, name ),
+  venues ( slug, name, status ),
   events ( source, source_url, title, starts_at, price_text,
            price_kind, price_min, price_max )
 `;
@@ -95,7 +111,29 @@ export type Correccion = Partial<
     | "is_local"
     | "evidence"
   >
->;
+> & {
+  /**
+   * Reasignar la sala.
+   *
+   * Va aparte del `Pick` porque `EventoEnCola` no expone `venue_id`: la vista
+   * recibe la sala ya resuelta, no su clave. Se agregó el 2026-09-09 porque
+   * descartar una sala devuelve sus eventos a la cola, y sin esto quedaban en
+   * un callejón sin salida — en borrador, sin sala, y sin forma de darles una.
+   */
+  venue_id?: string | null;
+};
+
+/**
+ * Qué sala mostrar en la cola, distinguiendo los dos huecos.
+ *
+ * "Nunca tuvo sala" y "su sala se descartó" piden cosas distintas de quien
+ * modera: el primero hay que averiguarlo, el segundo hay que reasignarlo.
+ * Colapsarlos en un solo texto esconde cuál de los dos es.
+ */
+export function salaEnLaCola(evento: EventoEnCola): string {
+  if (evento.venues) return evento.venues.name;
+  return evento.sala_descartada ? "su sala se descartó" : "sala sin asignar";
+}
 
 /** Las tres pestañas de la pantalla. */
 export type Pestaña = "cola" | "publicados" | "pasados";
@@ -118,7 +156,27 @@ async function consultar(
 ): Promise<EventoEnCola[]> {
   const { data, error } = await armar(consultaBase());
   if (error) throw new Error(`No se pudo cargar: ${error.message}`);
-  return (data ?? []) as unknown as EventoEnCola[];
+  return ((data ?? []) as unknown as FilaCruda[]).map(paraLaCola);
+}
+
+type FilaCruda = Omit<EventoEnCola, "venues" | "sala_descartada"> & {
+  venues: { slug: string; name: string; status: string } | null;
+};
+
+/**
+ * Suelta la sala que ya no vale, y deja dicho que existía.
+ *
+ * Los dos estados son distintos y no se colapsan: "este evento nunca tuvo
+ * sala" y "su sala se descartó" piden cosas distintas de quien modera.
+ */
+function paraLaCola(fila: FilaCruda): EventoEnCola {
+  const sala = fila.venues;
+  const descartada = Boolean(sala && sala.status !== "publicado");
+  return {
+    ...fila,
+    venues: sala && !descartada ? { slug: sala.slug, name: sala.name } : null,
+    sala_descartada: descartada,
+  };
 }
 
 function consultaBase() {
@@ -166,7 +224,7 @@ export async function getEventos(pestaña: Pestaña): Promise<EventoEnCola[]> {
 export async function getEvento(id: string): Promise<EventoEnCola | null> {
   const { data, error } = await consultaBase().eq("id", id).maybeSingle();
   if (error) throw new Error(`No se pudo cargar el evento: ${error.message}`);
-  return (data as unknown as EventoEnCola) ?? null;
+  return data ? paraLaCola(data as unknown as FilaCruda) : null;
 }
 
 function revisado() {
