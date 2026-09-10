@@ -98,7 +98,27 @@ el siguiente paso.
   con saldo cargado: lee, y **los campos que el afiche no dice quedan vacíos con
   su explicación en las notas**. Queda sin ejercitar el caso extremo —un afiche
   sin año— pero el comportamiento de fondo está comprobado.
-- **`latino_power` falló dos corridas seguidas y a la tercera pasó sin tocar
+- 🔥 **El `Scraper cron` falló el 2026-09-09 a las 17:33Z**, en el paso "Run
+  event scrapers", sobre `e390fd2`. **Es la primera corrida programada que
+  falla** desde que el pipeline se estabilizó: las tres anteriores (2026-09-09,
+  02:0x) eran disparadas a mano y fueron el episodio del WAF de Latino Power.
+
+  Lo que se sabe: el resto del pipeline siguió —clasificación y cola de
+  moderación pasaron— y **entró una fila cruda** (125 → 126), así que no fue un
+  fallo total. Lo que **no** se sabe: cuál de las siete fuentes falló.
+
+  ⚠️ **No se pudo leer el log.** La API de GitHub devuelve `403 Must have admin
+  rights` para los logs de un job, y `gh` no está instalado en esta máquina —
+  que es exactamente lo que `context/archivo/mcp-de-github.md` dejó anotado que
+  haría falta. **Instalar `gh` es lo que destraba diagnosticar esto.**
+
+  Y no basta con reproducirlo local: el 2026-09-09 los siete scrapers corrieron
+  bien en la máquina de Juan con `--dry-run` y salieron con 0. Es el caso que la
+  regla dura describe — lo que funciona local no dice nada de CI —, pero también
+  su recíproco: **una sola corrida roja tampoco prueba que haya un bloqueo**. Lo
+  del Latino Power fueron tres seguidas y a la cuarta pasó. Hay que mirar la
+  corrida siguiente antes de concluir.
+- - **`latino_power` falló dos corridas seguidas y a la tercera pasó sin tocar
   nada.** Su API devolvió 200 con un cuerpo que no era JSON —una página de
   desafío de WAF—, y `.json()` murió con un mensaje mudo. **Era transitorio**,
   no un bloqueo de IP. El error ahora dice el estado, el `content-type`, el
