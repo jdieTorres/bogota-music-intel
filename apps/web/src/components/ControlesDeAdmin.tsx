@@ -18,6 +18,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { CartelDeAdmin } from "@/components/CartelDeAdmin";
 import { borrar } from "@/lib/admin/eventos";
 import { esAdmin } from "@/lib/admin/sesion";
 
@@ -67,6 +68,7 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
       </p>
 
       {!confirmando ? (
+        <>
         <div className="mt-3 flex flex-wrap gap-2">
           <a
             href={`/admin?evento=${eventoId}`}
@@ -81,6 +83,13 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
             Borrar evento
           </button>
         </div>
+        {/* El cartel: quién tocó. Va dentro de este bloque porque comparte su
+            única razón de existir —estar mirando el toque y poder arreglarlo
+            ahí mismo— y su comprobación de sesión, que ya se hizo arriba.
+            Desaparece mientras se confirma un borrado: nadie va a anotar el
+            cartel de un evento que está a punto de no existir. */}
+        <CartelDeAdmin eventoId={eventoId} />
+        </>
       ) : (
         <div className="mt-3">
           <p className="text-sm">Borrar «{titulo}» para siempre</p>

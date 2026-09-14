@@ -12,6 +12,7 @@
  * manual: acá todo es manual.
  */
 
+import type { ArtistaVinculable } from "@/lib/admin/cartel";
 import { slugDeSala } from "@/lib/admin/slug";
 import { supabase } from "@/lib/supabase";
 import type { Plataforma } from "@/lib/enlaces-de-audio";
@@ -161,15 +162,61 @@ export async function crearArtista(artista: ArtistaNuevo) {
   return data as { id: string; nombre: string };
 }
 
-/** Los publicados, para vincular el cartel de un evento. */
-export async function getArtistasPublicados(): Promise<{ id: string; nombre: string }[]> {
+// --- El cartel: quién tocó en qué -----------------------------------------
+//
+// Se arma desde la ficha del toque, que es donde se sabe. La tabla
+// `event_artists` existía desde el 2026-09-09 con sus políticas puestas y
+// **sin una sola interfaz que la escribiera**; esto es lo que la llena.
+
+/** Los que se pueden poner en un cartel: publicados **y borradores**.
+ *
+ *  ⚠️ Los borradores entran a propósito. Un artista creado desde otro toque
+ *  nace en borrador, y si no se pudiera encontrar, el siguiente toque suyo
+ *  crearía un duplicado que además chocaría contra el slug repetido. */
+export async function getArtistasParaVincular(): Promise<ArtistaVinculable[]> {
   const { data, error } = await supabase
     .from("artists")
-    .select("id, nombre")
-    .eq("status", "publicado")
+    .select("id, nombre, slug, status")
+    .in("status", ["publicado", "borrador"])
     .order("nombre");
   if (error) throw new Error(`No se pudieron cargar los artistas: ${error.message}`);
-  return data ?? [];
+  return (data ?? []) as ArtistaVinculable[];
+}
+
+export type EnElCartel = ArtistaVinculable & { orden: number };
+
+/** Quién está en el cartel de este toque, en su orden. */
+export async function getCartelDelEvento(eventoId: string): Promise<EnElCartel[]> {
+  const { data, error } = await supabase
+    .from("event_artists")
+    .select("orden, artists ( id, nombre, slug, status )")
+    .eq("canonical_event_id", eventoId)
+    .order("orden");
+  if (error) throw new Error(`No se pudo cargar el cartel: ${error.message}`);
+
+  type Fila = { orden: number; artists: ArtistaVinculable | null };
+  return ((data ?? []) as unknown as Fila[])
+    .filter((f) => f.artists)
+    .map((f) => ({ ...(f.artists as ArtistaVinculable), orden: f.orden }));
+}
+
+/** Suma al artista al final del cartel. */
+export async function vincularAlCartel(eventoId: string, artistaId: string, orden: number) {
+  const { error } = await supabase
+    .from("event_artists")
+    .insert({ canonical_event_id: eventoId, artist_id: artistaId, orden });
+  if (error) throw new Error(`No se pudo vincular: ${error.message}`);
+}
+
+/** Lo saca del cartel. Borra el vínculo y nada más: ni el artista ni el
+ *  evento se tocan, que es lo que hace reversible equivocarse al vincular. */
+export async function desvincularDelCartel(eventoId: string, artistaId: string) {
+  const { error } = await supabase
+    .from("event_artists")
+    .delete()
+    .eq("canonical_event_id", eventoId)
+    .eq("artist_id", artistaId);
+  if (error) throw new Error(`No se pudo quitar del cartel: ${error.message}`);
 }
 
 // --- Los tracks -----------------------------------------------------------

@@ -65,6 +65,23 @@ Tres pestañas de eventos: *Por revisar* (la cola que caduca), *En la cartelera*
 (lo publicado vigente) y *Ya pasaron*. Los mismos controles están en la página
 de cada evento, para quien está mirando la cartelera y ve algo mal.
 
+**El cartel —quién tocó— se arma solo desde la ficha del toque**, no desde
+`/admin` (`components/CartelDeAdmin.tsx`, dentro del bloque de admin de la
+ficha). Ahí es donde se sabe: uno está mirando el afiche y la descripción, que
+es donde están los nombres. El campo busca entre los artistas que ya existen
+—**incluidos los borradores**, o el segundo toque de alguien crearía un
+duplicado— y crea el que falte.
+
+- ⚠️ **Crear desde ahí también vincula, y esa es la mitad que importa.** Un
+  artista suelto en el directorio no conecta nada: son los vínculos los que
+  dan "compartieron cartel" y "también ha tocado en".
+- **El artista nace en borrador y el vínculo no se ve en público hasta que se
+  publique** — la política de lectura de `event_artists` solo muestra vínculos
+  entre filas publicadas. Se anota cuando se sabe y se publica cuando la ficha
+  está lista.
+- **Quitar del cartel borra el vínculo y nada más.** Es lo que hace reversible
+  equivocarse; ni el artista ni el evento se tocan.
+
 **Quién puede escribir lo decide la tabla `admins` y RLS, no el frontend**
 (`20260831020000_admin.sql`). Se hizo con lista y no con "cualquiera
 autenticado" porque el registro público de Supabase Auth se configura en el
