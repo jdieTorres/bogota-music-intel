@@ -1,8 +1,9 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-13**, recontado contra la base con el MCP al
-cierre de una sesión que dejó lista la tarjeta de compartir y arregló la señal
-del cron. También corrigió dos cosas que este archivo venía diciendo mal.
+Última actualización: **2026-09-13** (última pasada de la noche), recontado
+contra la base con el MCP al cierre de una sesión larga: tarjetas de compartir,
+la señal del cron, el cartel de cada toque y una pasada al formulario de
+artistas. Corrigió además tres cosas que este archivo venía diciendo mal.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -18,30 +19,28 @@ el 2026-09-09: primero se pule y se despliega, y el contenido se carga sobre el
 sitio ya en pie. Siguen siendo lo que le falta al producto — no lo que bloquea
 el siguiente paso.
 
-- **El directorio tiene un artista.** Nicolás y los Fumadores, con 6 tracks y su
-  Bandcamp. El módulo está construido y probado, pero **una plataforma que
-  existe para dar a conocer la escena con un solo artista no da a conocer
-  nada**, y esa parte no la puede hacer nadie más: ninguna base global sabe
-  quiénes son. Se cargan en `/admin` → Artistas.
-- **Nadie ha vinculado un cartel todavía**: `event_artists` está en 0. ⚠️ Este
-  archivo decía que "la tabla existe y el formulario también" y **eso era
-  falso**: hasta el 2026-09-13 no había ninguna interfaz que escribiera esa
-  tabla —solo una función muerta en el lib de admin cuyo comentario prometía
-  justamente eso—, así que el 0 no era desidia, era que no se podía. Desde hoy
-  sí: se arma desde la ficha del toque, en el bloque de admin
-  (`context/moderacion/CLAUDE.md`). Hasta que un evento publicado tenga sus
-  artistas, **dos de las tres señales de recomendación no tienen de dónde
-  salir** ("compartieron cartel" y "también ha tocado en"), y los enlaces entre
-  la cartelera y la ficha del artista no existen.
+- **El directorio tiene dos artistas**, y el segundo entró el 2026-09-13:
+  Nicolás y los Fumadores (6 tracks) y El Kalvo (**ninguno**). Dos no son un
+  directorio: **una plataforma que existe para dar a conocer la escena con dos
+  fichas no da a conocer nada**, y esa parte no la puede hacer nadie más porque
+  ninguna base global sabe quiénes son. Se cargan en `/admin` → Artistas.
+- 🔥 **Las dos fichas publicadas tienen notas de prueba.** Dicen "hola / prueba
+  / test / avisos / bajo / tierra / formato?" y "test", y **se ven en la página
+  pública**. Las notas de contratapa son el material propio del proyecto —lo
+  único que no salió de otra parte— así que son justo lo que no puede quedar
+  así el día que esto se despliegue.
+- **Hay un cartel vinculado, y hacen falta muchos más.** El Kalvo quedó unido a
+  su toque del 17 de octubre el 2026-09-13, el primero desde que existe la
+  tabla. Con uno solo, **dos de las tres señales de recomendación siguen sin
+  poder calcularse** ("compartieron cartel" y "también ha tocado en"): las dos
+  necesitan artistas que coincidan en carteles distintos. Se arma desde la
+  ficha de cada toque (`context/moderacion/CLAUDE.md`).
 - **7 de 20 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
   con vista previa. Es lo único que le falta al mapa: las 20 ya tienen
   coordenada y ninguna se lista como "sin ubicar".
 - **2 salas por aprobar**: Ágora Bogotá Centro de Convenciones y Museo de Arte
   Moderno de Bogotá MAMBO. Ninguna tiene eventos vigentes, así que no corre
   prisa.
-- **2 duplicados sugeridos esperando en la cola.** Estaban en 0 el 2026-09-09;
-  los propuso el cron desde entonces. Se resuelven en `/admin`, unificando o
-  descartando la sugerencia.
 - 🔥 **El género: 9 de 52 publicados lo tienen**, con 5 en uso —Rock, Hip
   Hop/Rap, Popular, Reggaeton, Vallenato—. Desde el 2026-09-08 **ninguna fuente
   lo escribe**: `generos` es columna propia (`text[]`, varios por evento) y la
@@ -85,6 +84,10 @@ el siguiente paso.
   — no hay forma de distinguir "Juan dejó ese título" de "Juan nunca lo miró",
   y pisar una edición del admin es lo que el modelo de moderación prohíbe. Si
   Juan confirma que esos títulos no fueron decisión suya, es una corrida y ya.
+- **¿El riel de datos del artista también dice "Píllelo en"?** El encabezado de
+  la agenda cambió el 2026-09-13, pero arriba, junto al origen, sigue la
+  etiqueta "Toca en" con las salas. Es otro dato —dónde suele tocar, no
+  cuándo— y cambiarlo dejaría la misma frase dos veces en una pantalla.
 - **¿Se borra el secret `BMI_LASTFM_API_KEY`?** Ya no lo usa nadie.
 - **¿Se suelta `canonical_events.price_text`?** Desde el 2026-09-02 no la lee
   nadie: el precio sale de `price_kind`/`price_min`/`price_max`. Se conservó
@@ -95,22 +98,33 @@ el siguiente paso.
 
 ## 2. Lo que quedó a medias
 
-- ✅ **Lo del 2026-09-13 ya corrió en CI y funcionó** (corrida 28, disparada a
-  mano por Juan): la anotación salió en el resumen con el nombre de la fuente y
-  el motivo, y `json_de` contó qué le llegaba a Ticketlive. Lo único de esa
-  tanda que **sigue sin ejercitarse** es el "cero eventos es fallo": hasta hoy
-  ninguna fuente ha devuelto una lista vacía.
-- **El formulario de tracks de `/admin` no se ha visto renderizado.** `/admin`
-  pide sesión, así que `npm run capturas` no llega ahí. Compila, los tipos
-  cierran y los tests pasan, pero este proyecto ya tuvo el mapa en negro con el
-  CI entero en verde. Sin verificar: agregar un track pegando la dirección,
-  **editarlo** (título, año, carátula), quitarlo, y la barra de acciones pegada
-  al pie.
-- **`/admin` no se ha visto renderizado desde los cambios del 2026-09-08.**
-  Sigue sin verificar el bloque de carga de afiche, los dos campos de fecha, y
-  que guardar un evento al que se llegó con `?evento=` devuelva a su ficha
-  pública. Lo único que sí se comprobó el 2026-09-13 es que la página responde
-  y trae su `noindex`.
+- **Dos rutas del cron no se han estrenado en CI, por falta de ocasión.** El
+  mensaje que nombra al portero anti-bots y el "cero eventos es fallo": el
+  primero necesita que alguien nos desafíe con el código nuevo puesto —la
+  corrida 29 pasó entera—, y el segundo, que una fuente devuelva una lista
+  vacía, que nunca ha ocurrido. Lo demás de esa tanda sí corrió: la anotación
+  con la fuente y el motivo salió en la corrida 28.
+- **El formulario de tracks de `/admin` no se ha usado.** Sin verificar:
+  agregar un track pegando la dirección, **editarlo** (título, año, carátula) y
+  quitarlo. `npm run capturas` no llega ahí porque `/admin` pide sesión.
+- **Del `/admin` de eventos sigue sin verse el formulario.** El 2026-09-13 sí
+  se miraron con sesión de admin la sección de Artistas, su ficha entera y el
+  editor de notas; lo que no se ha visto renderizado desde los cambios del
+  2026-09-08 es **el formulario de eventos**: el bloque de carga de afiche, los
+  dos campos de fecha, y que guardar un evento al que se llegó con `?evento=`
+  devuelva a su ficha pública.
+- **Ninguna nota de contratapa está publicada con formato todavía**, así que
+  el camino que pinta HTML en la ficha pública no se ha visto con datos reales.
+  Las dos notas que hay son texto plano y se pintan por el otro camino. El CSS
+  del bloque sí se comprobó el 2026-09-13 inyectando una nota de prueba en la
+  página: viñetas, negrilla, itálica, párrafo centrado y enlace, los cinco
+  bien.
+- **El formulario de artistas no se ha probado guardando de verdad.** El
+  2026-09-13 se verificó con sesión de admin que el aviso de lo que falta
+  aparece y que la página baja hasta el campo, que la barra de formato produce
+  `<strong>` y que lo pegado entra pelado — pero **sin apretar Guardar sobre
+  los datos de Juan**. Que guardar vuelva a la lista y que publicar lleve a la
+  ficha pública son dos caminos que solo se estrenan usándolos.
 - **El módulo del directorio no se ha visto en un teléfono de verdad**, como el
   resto del sitio. Sí se midió en Chromium a 390 px —el reproductor de YouTube
   apaisado cabe y los controles bajan a su propia fila—, pero eso no dice nada
@@ -159,6 +173,13 @@ el siguiente paso.
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
   `sb_*` del 2026-08-28 no tocó.
+- **Cuatro `context/*/CLAUDE.md` pasaron de las ~150 líneas que su propia regla
+  de tamaño fija**: look-and-feel 305, frontend 199, ingesta 188, moderación
+  180. No es un problema de hoy —crecen desde el 2026-09-07— pero es cómo esta
+  documentación se volvió ilegible la primera vez. Lo que sobra es relato: el
+  diagnóstico del rediseño y lo que se descartó de la primera ronda tienen su
+  `.md` de detalle esperándolos (`verde-neon.md`). **Es una pasada propia, no
+  un arreglo al pasar**, y por eso sigue acá en vez de hacerse a medias.
 - **Opcional:** añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para
   que el CI prerenderice contra la base real en vez de contra placeholders.
 
@@ -168,14 +189,14 @@ el siguiente paso.
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-13 a las 19:10 de Bogotá** contra la base, con el MCP.
+**2026-09-13 a las 21:30 de Bogotá** contra la base, con el MCP.
 
 | | |
 |---|---|
 | Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
 | Filas crudas | **130** — visitbogota 56 *(congeladas)*, movistar 16, royal 15, ticketlive 11, latino 10, lourdes 9, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **115** — 52 publicados, 6 borradores, 57 descartados |
+| Canónicos | **113** — 52 publicados, 4 borradores, 57 descartados |
 | En pantalla | **28 toques, 0 fiestas, 4 festivales** = 32 vigentes. La cartelera dice "28 toques en 10 salas" y el mapa "11 salas · 32 eventos": cuentan distinto **a propósito** (`context/frontend/CLAUDE.md`) |
 | Publicados ya pasados | **20** — 32 + 20 cierran los 52 |
 | Sin revisar | **20 de 52** publicados |
@@ -186,11 +207,11 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 | Precio | **19 de 52** publicados |
 | Género | **9 de 52** publicados, 5 géneros en uso, ninguno compuesto |
 | Escena local marcada | **3 de 52** — se marca a mano y nada la calcula |
-| **Directorio** | **1 artista publicado**, 6 tracks (4 de YouTube, 2 de SoundCloud), 3 con carátula |
-| **Carteles vinculados** | **0** — `event_artists` está vacía |
+| **Directorio** | **2 artistas publicados**, 6 tracks entre los dos — El Kalvo entró el 2026-09-13 **sin ninguno** |
+| **Carteles vinculados** | **1** — El Kalvo con su toque del 17 de octubre, el primero de todos |
 | Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1 |
-| Duplicados sugeridos | **2** — esperando en `/admin` |
-| Tests | **248 backend + 110 frontend**, verdes en local y en CI (`Tests` #77) |
+| Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
+| Tests | **251 backend + 133 frontend**, verdes en local y en CI (`Tests` #84) |
 
 Cómo leerlas sin equivocarse:
 
@@ -212,6 +233,9 @@ Cómo leerlas sin equivocarse:
   hoy pasó de 126 a 130 después de haber tocado 131.
 - **Las fiestas y los festivales tienen `is_local = null` y eso es correcto.**
   No hay un artista de cartel a quien preguntarle.
+- **Los canónicos bajan al unificar duplicados.** Pasaron de 115 a 113 el
+  2026-09-13 sin que se borrara nada: Juan confirmó las dos sugerencias, y
+  unificar funde el borrador con el canónico que ya existía.
 
 ---
 
