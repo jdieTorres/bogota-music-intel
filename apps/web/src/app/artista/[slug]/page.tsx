@@ -9,6 +9,7 @@ import { type Artista, type ToqueDelArtista, getDirectorio } from "@/lib/artists
 import { recomendar } from "@/lib/directorio";
 import { fechaLarga, siguePorVenir } from "@/lib/fechas";
 import { metadatosDePagina } from "@/lib/sitio";
+import { aTextoPlano, esHtml } from "@/lib/texto-rico";
 
 export const revalidate = 1800;
 
@@ -23,7 +24,10 @@ export async function generateMetadata(
     return metadatosDePagina({
       titulo: artista.nombre,
       descripcion:
-        artista.bio ?? `${artista.nombre} en el directorio de la escena de Bogotá.`,
+        // Sin etiquetas: un `<strong>` en el og:description sale como
+        // texto literal en el chat de quien recibe el enlace.
+        aTextoPlano(artista.bio) ||
+        `${artista.nombre} en el directorio de la escena de Bogotá.`,
       ruta: `/artista/${artista.slug}`,
       imagen: artista.fotoUrl
         ? { url: artista.fotoUrl, alt: `Foto de ${artista.nombre}` }
@@ -68,9 +72,25 @@ export default async function Page(props: PageProps<"/artista/[slug]">) {
           <h2 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-muted">
             Notas
           </h2>
-          <p className="mt-3 max-w-2xl whitespace-pre-line text-pretty leading-relaxed">
-            {artista.bio}
-          </p>
+          {/* ⚠️ Dos caminos, y no es por gusto: las notas escritas antes del
+              editor son texto plano con saltos de línea, y pintarlas como
+              HTML las dejaría en un solo bloque sin los párrafos que quien
+              las escribió sí puso. `esHtml` distingue una de otra sin tocar
+              lo que ya está guardado.
+
+              El HTML que se pinta acá lo escribió un admin y pasó por la
+              lista blanca al guardarse (`lib/texto-rico.ts`); la escritura la
+              guarda RLS, no esta página. */}
+          {esHtml(artista.bio) ? (
+            <div
+              className="notas mt-3 max-w-2xl text-pretty leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: artista.bio }}
+            />
+          ) : (
+            <p className="mt-3 max-w-2xl whitespace-pre-line text-pretty leading-relaxed">
+              {artista.bio}
+            </p>
+          )}
         </section>
       )}
 

@@ -76,3 +76,19 @@ La documentación de Next lo dice en su sección "Merging" con un ejemplo
 idéntico, así que no hizo falta descubrirlo a los golpes — pero sí hubo que ir
 a leerla antes de escribir la primera página, que es lo que `apps/web/AGENTS.md`
 viene pidiendo.
+
+### Un scroll suave no ocurre donde no hay animación (2026-09-13)
+
+`scrollIntoView({ behavior: "smooth" })` **no hace nada** en una pestaña en
+segundo plano: el desplazamiento suave es una animación, y Chrome no anima lo
+que nadie está mirando. Lo mismo pasa con "reducir movimiento" activado.
+
+Apareció llevando el cursor al campo que falta en el formulario de artistas:
+el aviso se escribía y la página no se movía, así que el mensaje quedaba fuera
+de pantalla — justo lo que ese scroll venía a arreglar. Medido en la misma
+pestaña: con `behavior: "instant"` bajaba los 713 px; con `"smooth"`, cero.
+
+Es primo del mapa que parecía roto: **antes de diagnosticar cualquier cosa que
+se anime, mirar `document.visibilityState`.** Y la lección de fondo, que vale
+más allá del scroll: **si algo tiene que ocurrir sí o sí, no puede depender de
+una animación.** Un salto llega siempre; la suavidad era lo prescindible.

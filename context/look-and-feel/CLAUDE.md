@@ -65,6 +65,12 @@ en los dos modos; `--accent-2` bajó de `#0e7f9c` a `#0c7189` porque el
 primero daba 4.17 sobre el papel y el género se escribe en tamaño de cuerpo.
 Antes de tocar un color, volver a medirlo.
 
+**El verde se gasta en la acción que decide.** En `/admin`, publicar va en
+verde y guardar en el azul de `--accent-2` (2026-09-13): guardar se repite
+veinte veces mientras se escribe una ficha y no cambia el estado de nada;
+publicar pasa una vez y la pone en el directorio. Dos acciones que hacen cosas
+distintas no pueden verse igual.
+
 **El magenta tiene un solo trabajo: la marca de escena local.** Estaba
 definido desde el 2026-08-28 y no lo usaba nadie.
 

@@ -522,3 +522,53 @@ body::after {
     }
   }
 }
+
+/* --- Las notas de contratapa -------------------------------------------- */
+/*
+ * El único texto del sitio que se escribe con formato, así que es el único
+ * que necesita reglas propias: Tailwind quita los puntos de las listas y los
+ * márgenes de los párrafos, y sin devolvérselos una lista con viñetas se ve
+ * como una pila de líneas sueltas.
+ *
+ * La misma clase viste el editor de `/admin` y el bloque público de la ficha,
+ * para que lo que se escribe se vea como lo que se publica. Dos hojas
+ * distintas serían dos verdades.
+ */
+.notas p {
+  margin-block: 0.75em;
+}
+
+.notas p:first-child {
+  margin-block-start: 0;
+}
+
+.notas p:last-child {
+  margin-block-end: 0;
+}
+
+.notas ul,
+.notas ol {
+  margin-block: 0.75em;
+  padding-inline-start: 1.5em;
+}
+
+.notas ul {
+  list-style: disc;
+}
+
+.notas ol {
+  list-style: decimal;
+}
+
+.notas a {
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* El área de escritura de `/admin`. Vacía no muestra nada, y un campo en
+   blanco sin una sola pista de qué va adentro se lee como roto. */
+.notas-editables:empty::before {
+  content: attr(data-vacio);
+  color: var(--muted);
+}

@@ -82,6 +82,26 @@ duplicado— y crea el que falte.
 - **Quitar del cartel borra el vínculo y nada más.** Es lo que hace reversible
   equivocarse; ni el artista ni el evento se tocan.
 
+### El formulario de artistas
+
+- **Lo que falta se dice en el campo que falta, no arriba de la página.** La
+  base sigue siendo la garantía —`artista_publicado_necesita_evidencia` es una
+  restricción de verdad— pero su mensaje es para quien lee logs. El formulario
+  lo traduce antes de llamar (`lib/admin/validacion.ts`), pinta el aviso debajo
+  del campo y **baja hasta él**: decir qué falta no sirve si el aviso queda
+  fuera de pantalla en una ficha larga.
+- **Guardar vuelve a la lista; publicar lleva a la ficha pública.** Lo que
+  sigue después de publicar es ver cómo quedó, no volver a una lista donde ese
+  artista ya no está.
+- **Guardar va en azul y publicar en verde**, y no es decoración: el verde es
+  el acento de la marca y se gasta en la acción que decide algo. Guardar se
+  repite veinte veces mientras se escribe una ficha.
+- **Las notas de contratapa se escriben con formato** y son el único campo del
+  sitio que lo tiene: son el único texto que no salió de otra parte. Se guarda
+  HTML contra una lista blanca (`lib/texto-rico.ts`), **lo pegado entra como
+  texto plano** —sin la fuente ni el color de donde venga— y las notas
+  escritas antes del editor se siguen pintando como texto plano, sin tocarlas.
+
 **Quién puede escribir lo decide la tabla `admins` y RLS, no el frontend**
 (`20260831020000_admin.sql`). Se hizo con lista y no con "cualquiera
 autenticado" porque el registro público de Supabase Auth se configura en el

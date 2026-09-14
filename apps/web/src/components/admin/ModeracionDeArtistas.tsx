@@ -12,9 +12,14 @@
  * escena" en ninguna parte. Estar en el directorio lo es.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { EditorDeNotas } from "@/components/admin/EditorDeNotas";
 import {
+  Aviso,
+  BORDE_EN_FALTA,
+  BOTON_AZUL,
   BOTON_PRIMARIO,
   BOTON_ROJO,
   BOTON_SECUNDARIO,
@@ -41,6 +46,7 @@ import {
   publicarArtista,
 } from "@/lib/admin/artistas";
 import { slugDeSala } from "@/lib/admin/slug";
+import { type Falta, faltaParaGuardar, faltaParaPublicar } from "@/lib/admin/validacion";
 import { direccionPublica, leerEnlaceDeAudio, miniatura } from "@/lib/enlaces-de-audio";
 
 const PESTAÑAS: [PestañaDeArtista, string][] = [
@@ -185,19 +191,61 @@ function FichaDeArtista({
     evidencia: artista.evidencia,
   });
   const [ocupado, setOcupado] = useState(false);
+  const [falta, setFalta] = useState<Falta | null>(null);
+  const campoDeNombre = useRef<HTMLLabelElement>(null);
+  const campoDeEvidencia = useRef<HTMLLabelElement>(null);
+  const router = useRouter();
 
-  const correr = async (accion: () => Promise<void>, volver = false) => {
+  /**
+   * Lleva el cursor al campo que falta.
+   *
+   * ⚠️ **Decir qué falta no alcanza si el campo no se ve.** La ficha es
+   * larga —notas, foto, tracks— y el aviso quedaba fuera de pantalla, así que
+   * "no se pudo publicar" parecía que la página no hacía nada. Se baja al
+   * campo y se le da el foco, que es lo que convierte el aviso en algo que se
+   * puede atender.
+   */
+  const llevarAlCampo = (cual: Falta["campo"]) => {
+    const marco = cual === "nombre" ? campoDeNombre : campoDeEvidencia;
+    // ⚠️ **Sin `behavior: "smooth"`, y es a propósito.** Un scroll suave es
+    // una animación, y una animación no ocurre donde el navegador no da
+    // frames — una pestaña en segundo plano, o alguien con "reducir
+    // movimiento" puesto. El aviso se quedaba escrito fuera de pantalla, que
+    // es exactamente el problema que esto viene a resolver. Un salto llega
+    // siempre; la suavidad era lo prescindible.
+    marco.current?.scrollIntoView({ block: "center" });
+    marco.current?.querySelector<HTMLElement>("input, textarea")?.focus({ preventScroll: true });
+  };
+
+  const correr = async (accion: () => Promise<void>, despues?: () => void) => {
     setOcupado(true);
     try {
       await accion();
       setError(null);
+      setFalta(null);
       await alCambiar();
-      if (volver) alVolver();
+      despues?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar");
     } finally {
       setOcupado(false);
     }
+  };
+
+  /** Comprueba antes de llamar a la base: el mensaje de la restricción es
+   *  cierto y no se entiende. Ver `lib/admin/validacion.ts`. */
+  const conRevision = (
+    revisar: (f: typeof campos) => Falta | null,
+    accion: () => Promise<void>,
+    despues?: () => void,
+  ) => {
+    const problema = revisar(campos);
+    setFalta(problema);
+    if (problema) {
+      llevarAlCampo(problema.campo);
+      return;
+    }
+    void correr(accion, despues);
   };
 
   return (
@@ -207,13 +255,14 @@ function FichaDeArtista({
       </button>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <label className="sm:col-span-2">
+        <label className="sm:col-span-2" ref={campoDeNombre}>
           <Rotulo>Nombre</Rotulo>
           <input
             value={campos.nombre ?? ""}
             onChange={(e) => setCampos({ ...campos, nombre: e.target.value })}
-            className={CAMPO}
+            className={`${CAMPO} ${falta?.campo === "nombre" ? BORDE_EN_FALTA : ""}`}
           />
+          {falta?.campo === "nombre" && <Aviso>{falta.mensaje}</Aviso>}
         </label>
 
         <label>
@@ -244,18 +293,11 @@ function FichaDeArtista({
           </p>
         </div>
 
-        <label className="sm:col-span-2">
-          <Rotulo>Notas de contratapa</Rotulo>
-          <textarea
-            value={campos.bio ?? ""}
-            onChange={(e) => setCampos({ ...campos, bio: e.target.value || null })}
-            rows={6}
-            className={CAMPO}
-          />
-          <span className="mt-1 block text-xs text-muted">
-            Lo que escribas acá es lo único del sitio que no salió de otra parte.
-          </span>
-        </label>
+        <EditorDeNotas
+          valor={campos.bio ?? null}
+          alCambiar={(html) => setCampos({ ...campos, bio: html })}
+          ayuda="Lo que escribas acá es lo único del sitio que no salió de otra parte."
+        />
 
         <div className="sm:col-span-2">
           <CampoDeImagen
@@ -280,40 +322,56 @@ function FichaDeArtista({
           </span>
         </label>
 
-        <label className="sm:col-span-2">
+        <label className="sm:col-span-2" ref={campoDeEvidencia}>
           <Rotulo>Evidencia</Rotulo>
           <textarea
             value={campos.evidencia ?? ""}
             onChange={(e) => setCampos({ ...campos, evidencia: e.target.value || null })}
             rows={2}
-            className={CAMPO}
+            className={`${CAMPO} ${falta?.campo === "evidencia" ? BORDE_EN_FALTA : ""}`}
           />
-          <span className="mt-1 block text-xs text-muted">{AYUDA_EVIDENCIA}</span>
+          {falta?.campo === "evidencia" ? (
+            <Aviso>{falta.mensaje}</Aviso>
+          ) : (
+            <span className="mt-1 block text-xs text-muted">{AYUDA_EVIDENCIA}</span>
+          )}
         </label>
       </div>
 
       <Tracks artista={artista} setError={setError} alCambiar={alCambiar} />
 
       <BarraDeAcciones>
+        {/* Guardar en azul y publicar en verde: el verde es el acento de la
+            marca y se gasta en la acción que decide algo. Guardar se repite
+            veinte veces mientras se escribe una ficha y no cambia el estado
+            de nada; publicar pasa una vez y la pone en el directorio. */}
         <button
           disabled={ocupado}
-          onClick={() => void correr(() => guardarArtista(artista.id, campos))}
-          className={BOTON_PRIMARIO}
+          onClick={() =>
+            conRevision(faltaParaGuardar, () => guardarArtista(artista.id, campos), alVolver)
+          }
+          className={BOTON_AZUL}
         >
           Guardar
         </button>
         {artista.status !== "publicado" && (
           <button
             disabled={ocupado}
-            onClick={() => void correr(() => publicarArtista(artista.id, campos), true)}
-            className={BOTON_SECUNDARIO}
+            onClick={() =>
+              conRevision(faltaParaPublicar, () => publicarArtista(artista.id, campos), () =>
+                // A su ficha pública: se acaba de publicar y lo que sigue es
+                // ver cómo quedó, no volver a una lista donde ya no está.
+                router.push(`/artista/${artista.slug}`),
+              )
+            }
+            className={BOTON_PRIMARIO}
           >
             Publicar en el directorio
           </button>
         )}
         <button
           disabled={ocupado}
-          onClick={() => void correr(() => descartarArtista(artista.id), true)}
+          onClick={() => void correr(() => descartarArtista(artista.id), alVolver)}
           className={`${BOTON_ROJO} ml-auto`}
         >
           Sacar del directorio

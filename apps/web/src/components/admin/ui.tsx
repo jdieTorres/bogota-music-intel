@@ -21,6 +21,13 @@ export const BOTON =
 export const BOTON_PRIMARIO =
   "rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-background transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-40";
 
+// Azul de la paleta: el `--accent-2`, el del "dato frío". Viste **guardar**,
+// que es la acción que se repite y no cambia el estado de nada — el verde se
+// reserva para publicar, que sí decide algo. Dos acciones que hacen cosas
+// distintas no pueden verse igual.
+export const BOTON_AZUL =
+  "rounded-md bg-accent-2 px-5 py-2.5 text-sm font-semibold text-background transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-40";
+
 export const BOTON_SECUNDARIO =
   "rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-[transform,background-color] duration-150 hover:bg-surface-hover active:scale-[0.97] disabled:opacity-40";
 export const BOTON_TENUE =
@@ -31,6 +38,19 @@ export const BOTON_ROJO =
 // con un cambio de color de borde. El anillo lo pone la regla global de
 // `globals.css`; el borde se queda como refuerzo, que en un campo de texto
 // se agradece también al hacer click.
+/** El borde de un campo al que le falta algo. Va con el aviso debajo, nunca
+ *  solo: un borde rojo sin texto dice que algo está mal y no qué. */
+export const BORDE_EN_FALTA = "border-red-500/70";
+
+/** Lo que falta, dicho debajo del campo que lo necesita. */
+export function Aviso({ children }: { children: React.ReactNode }) {
+  return (
+    <span role="alert" className="mt-1 block text-xs leading-relaxed text-red-400">
+      {children}
+    </span>
+  );
+}
+
 export const CAMPO =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-accent";
 
