@@ -240,19 +240,37 @@ def _ficha(url: str) -> dict | None:
     return None
 
 
+# El tope existe para que un error de la fuente no se vuelva un bucle
+# infinito, no para acotar el catálogo.
+#
+# ⚠️ **Un tope que recorta en silencio es peor que no tenerlo.** Estaba en 20
+# y el 2026-09-13 la fuente contestó `X-WP-TotalPages: 22` sobre 2111
+# productos: dos páginas enteras quedaban fuera de cada corrida sin que nada
+# lo dijera. Por eso ahora avisa al tocarlo, que es lo que lo vuelve un
+# límite revisable en vez de una pérdida callada.
+MAX_PAGINAS = 40
+
+
 def _productos() -> list[dict]:
     """Todo el catálogo, en páginas de 100."""
     todos: list[dict] = []
     pagina = 1
     while True:
-        lote = http.get(PRODUCTOS, params={"per_page": 100, "page": pagina}).json()
+        # El ritmo también acá, y no solo en las fichas: son decenas de
+        # peticiones seguidas contra el mismo servidor. Que las fichas
+        # esperaran y el catálogo no era la misma contradicción que este
+        # archivo ya se había señalado unas líneas más arriba.
+        _esperar_turno()
+        lote = http.json_de(http.get(PRODUCTOS, params={"per_page": 100, "page": pagina}))
         if not lote:
             break
         todos.extend(lote)
         pagina += 1
-        # Un catálogo que crece sin fin sería un bucle infinito por un error de
-        # la fuente, no por su tamaño real.
-        if pagina > 20:
+        if pagina > MAX_PAGINAS:
+            print(
+                f"  [ticketlive] el catálogo pasó de {MAX_PAGINAS} páginas y se cortó ahí. "
+                "Hay productos que no se están mirando: sube el tope."
+            )
             break
     return todos
 
