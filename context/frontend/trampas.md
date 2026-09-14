@@ -47,3 +47,32 @@ completo con calles, cerros, etiquetas y los nueve marcadores.
 La salida es no diagnosticar a ojo: `npm run capturas` levanta Chromium
 headless, que siempre renderiza.
 
+
+### Los metadatos se mezclan en un solo nivel, y el enlace compartido miente (2026-09-13)
+
+Next fusiona los metadatos de layout y página **superficialmente**: los campos
+del primer nivel se pisan uno a uno, pero un objeto anidado como `openGraph` se
+reemplaza entero o se hereda entero. No hay mezcla adentro.
+
+El efecto es que **una página que define `title` pero no `openGraph` hereda el
+`openGraph` del layout completo**, nombre del sitio incluido. La ficha de un
+toque compartida en un chat habría salido titulada "Cartelera de Bogotá" en vez
+de con el nombre del artista — justo la página cuyo enlace se comparte.
+
+Lo que lo vuelve peligroso es que **no se ve**:
+
+- La pestaña del navegador muestra el título correcto, porque ese sí es
+  `title` y ese sí se pisa.
+- El HTML servido es válido, `tsc` está limpio y los tests pasan.
+- La única forma de notarlo es leer las etiquetas `og:` una por una, o pegar el
+  enlace en un chat — y hasta que el sitio no esté desplegado, ni eso.
+
+Por eso `metadatosDePagina` (`src/lib/sitio.ts`) arma el título y el bloque de
+compartir **juntos**, y un test recorre `src/app/**/page.tsx` y falla si una
+página nueva declara metadatos sin pasar por ahí. Comprobado al revés,
+devolviéndole a `/fiestas` su `metadata` a mano: el test falla.
+
+La documentación de Next lo dice en su sección "Merging" con un ejemplo
+idéntico, así que no hizo falta descubrirlo a los golpes — pero sí hubo que ir
+a leerla antes de escribir la primera página, que es lo que `apps/web/AGENTS.md`
+viene pidiendo.

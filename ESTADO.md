@@ -1,9 +1,8 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-09**, recontado contra la base con el MCP al
-cierre de una pasada de salas de Juan: completó todas las coordenadas, bajó
-Teatro Republik por ser discoteca, y esa baja destapó un bug que quedó
-arreglado y con sus datos reparados.
+Última actualización: **2026-09-13**, recontado contra la base con el MCP al
+cierre de una sesión que dejó lista la tarjeta de compartir y arregló la señal
+del cron. También corrigió dos cosas que este archivo venía diciendo mal.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -31,21 +30,25 @@ el siguiente paso.
   la cartelera y la ficha del artista no existen. Es lo más barato de destrabar:
   se hace al pasar por un evento en la cola.
 - **7 de 20 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
-  con vista previa. Es lo único que le falta al mapa: **las 20 ya tienen
-  coordenada** (Juan las completó el 2026-09-09) y ninguna se lista ya como
-  "sin ubicar".
+  con vista previa. Es lo único que le falta al mapa: las 20 ya tienen
+  coordenada y ninguna se lista como "sin ubicar".
 - **2 salas por aprobar**: Ágora Bogotá Centro de Convenciones y Museo de Arte
   Moderno de Bogotá MAMBO. Ninguna tiene eventos vigentes, así que no corre
   prisa.
+- **2 duplicados sugeridos esperando en la cola.** Estaban en 0 el 2026-09-09;
+  los propuso el cron desde entonces. Se resuelven en `/admin`, unificando o
+  descartando la sugerencia.
 - 🔥 **El género: 9 de 52 publicados lo tienen**, con 5 en uso —Rock, Hip
-  Hop/Rap, Popular, Reggaeton, Vallenato—. Eran 7: Pop y Jazz se fueron con los
-  eventos que Juan descartó el 2026-09-09. Desde el 2026-09-08 **ninguna
-  fuente lo escribe**: `generos` es columna propia (`text[]`, varios por evento)
-  y la llena Juan en `/admin`. Ahora además **es la navegación del directorio**:
-  los géneros del filtro salen de los eventos donde tocó cada artista, así que
-  un directorio sin géneros se queda sin su único eje de exploración.
+  Hop/Rap, Popular, Reggaeton, Vallenato—. Desde el 2026-09-08 **ninguna fuente
+  lo escribe**: `generos` es columna propia (`text[]`, varios por evento) y la
+  llena Juan en `/admin`. Ahora además **es la navegación del directorio**: los
+  géneros del filtro salen de los eventos donde tocó cada artista, así que un
+  directorio sin géneros se queda sin su único eje de exploración.
 - **La escena local marcada: 3 de 52.** Mismo caso: desde que se dio de baja
   MusicBrainz nada la calcula. La marca rosa solo sale si Juan la pone.
+- **Tres tipos de Ticketlive sin mapear**: `destacado`, `dix-fm` y `externos`.
+  Sus eventos entran igual —el aviso sale en el log de cada corrida del cron—
+  pero nadie ha decidido a qué `event_type` van.
 - **La fecha de vencimiento del token de Supabase hay que anotarla.** El
   2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
   reemplazó al de solo lectura que vencía el 2026-12-06. Los tokens scoped
@@ -55,6 +58,15 @@ el siguiente paso.
 
 ### Preguntas abiertas — hay que hacérselas a Juan, no resolverlas por cuenta propia
 
+- **¿Un fallo de una sola fuente tiene que pintar la corrida entera de rojo?**
+  Hoy sí: el CLI sale con 1 si cualquiera falló. Desde el 2026-09-13 el rojo al
+  menos dice cuál y por qué, pero sigue siendo el mismo rojo para un hipo de
+  red y para un bloqueo de cuatro días. Distinguirlos pide **recordar las
+  corridas anteriores** —una tabla nueva, migración incluida— y esa decisión no
+  se tomó.
+- **¿`geocode.py` también usa `json_de`?** Tiene el mismo `.json()` pelado
+  contra Nominatim que costó cuatro corridas rojas del lado de los scrapers. Es
+  una línea, pero no es el cron y no se tocó.
 - **¿Entra `impeccable` como skill?** Juan la pidió el 2026-09-09 y no se
   instaló, por dos motivos que convenía que viera antes: su instalador de npm
   baja un **binario precompilado** a `~/.impeccable/bin/` del que dependen sus
@@ -79,85 +91,61 @@ el siguiente paso.
 
 ## 2. Lo que quedó a medias
 
+- 🔥 **Lo que se subió el 2026-09-13 no ha corrido nunca en el cron.** El
+  `Scraper cron` no se dispara con un push —solo por horario o a mano—, así que
+  `json_de` compartido, la anotación del fallo y el "cero eventos es fallo"
+  están en `main` sin haberse ejercitado en CI ni una vez. Se ve en la próxima
+  corrida programada — el cron declara las 14:00 UTC pero GitHub lo retrasa, y
+  las últimas cayeron cerca de las 17:30Z (`context/infraestructura/CLAUDE.md`).
 - **El formulario de tracks de `/admin` no se ha visto renderizado.** `/admin`
   pide sesión, así que `npm run capturas` no llega ahí. Compila, los tipos
   cierran y los tests pasan, pero este proyecto ya tuvo el mapa en negro con el
   CI entero en verde. Sin verificar: agregar un track pegando la dirección,
   **editarlo** (título, año, carátula), quitarlo, y la barra de acciones pegada
-  al pie. Lo público del directorio sí se probó en un navegador visible con los
-  datos reales de Juan.
-- **El módulo del directorio no se ha visto en un teléfono de verdad**, como el
-  resto del sitio. Sí se midió en Chromium a 390 px, con la cola sembrada a
-  mano — el reproductor de YouTube apaisado cabe y los controles bajan a su
-  propia fila —, pero eso no dice nada de un teléfono real ni de Safari.
+  al pie.
 - **`/admin` no se ha visto renderizado desde los cambios del 2026-09-08.**
   Sigue sin verificar el bloque de carga de afiche, los dos campos de fecha, y
   que guardar un evento al que se llegó con `?evento=` devuelva a su ficha
-  pública.
+  pública. Lo único que sí se comprobó el 2026-09-13 es que la página responde
+  y trae su `noindex`.
+- **El módulo del directorio no se ha visto en un teléfono de verdad**, como el
+  resto del sitio. Sí se midió en Chromium a 390 px —el reproductor de YouTube
+  apaisado cabe y los controles bajan a su propia fila—, pero eso no dice nada
+  de un teléfono real ni de Safari.
+- **Las tarjetas de compartir no se han visto como las ve WhatsApp.** Las
+  etiquetas salen correctas en el HTML servido (verificado sobre `next start`
+  el 2026-09-13, con afiche, sin afiche y sin descripción), pero un validador
+  de Open Graph necesita una URL pública. **Se prueba al desplegar y no antes.**
 - **El lector de afiches funciona y deja huecos.** Juan lo probó el 2026-09-08
-  con saldo cargado: lee, y **los campos que el afiche no dice quedan vacíos con
-  su explicación en las notas**. Queda sin ejercitar el caso extremo —un afiche
+  con saldo cargado: lee, y los campos que el afiche no dice quedan vacíos con
+  su explicación en las notas. Queda sin ejercitar el caso extremo —un afiche
   sin año— pero el comportamiento de fondo está comprobado.
-- 🔥 **El `Scraper cron` falló el 2026-09-09 a las 17:33Z**, en el paso "Run
-  event scrapers", sobre `e390fd2`. **Es la primera corrida programada que
-  falla** desde que el pipeline se estabilizó: las tres anteriores (2026-09-09,
-  02:0x) eran disparadas a mano y fueron el episodio del WAF de Latino Power.
-
-  Lo que se sabe: el resto del pipeline siguió —clasificación y cola de
-  moderación pasaron— y **entró una fila cruda** (125 → 126), así que no fue un
-  fallo total. Lo que **no** se sabe: cuál de las siete fuentes falló.
-
-  ⚠️ **No se pudo leer el log.** La API de GitHub devuelve `403 Must have admin
-  rights` para los logs de un job, y `gh` no está instalado en esta máquina —
-  que es exactamente lo que `context/archivo/mcp-de-github.md` dejó anotado que
-  haría falta. **Instalar `gh` es lo que destraba diagnosticar esto.**
-
-  Y no basta con reproducirlo local: el 2026-09-09 los siete scrapers corrieron
-  bien en la máquina de Juan con `--dry-run` y salieron con 0. Es el caso que la
-  regla dura describe — lo que funciona local no dice nada de CI —, pero también
-  su recíproco: **una sola corrida roja tampoco prueba que haya un bloqueo**. Lo
-  del Latino Power fueron tres seguidas y a la cuarta pasó. Hay que mirar la
-  corrida siguiente antes de concluir.
-- - **`latino_power` falló dos corridas seguidas y a la tercera pasó sin tocar
-  nada.** Su API devolvió 200 con un cuerpo que no era JSON —una página de
-  desafío de WAF—, y `.json()` murió con un mensaje mudo. **Era transitorio**,
-  no un bloqueo de IP. El error ahora dice el estado, el `content-type`, el
-  cuerpo y las cabeceras que delatan al WAF, así que si vuelve se diagnostica de
-  un vistazo.
-- **6 eventos del Movistar cuelgan solo de `visitbogota`, que ya no corre.**
-  LosPetitFellas (9 oct), Kris R (23 oct), Aterciopelados (30 oct), Reykon (6
-  nov), Todos Somos Ángeles Rock Fest (8 nov) y Juanes (19 nov). Recuperar
-  `movistar_arena` **no los reenganchó**: el sitio de la sala publica una
-  ventana de un mes y esos seis caen fuera. Se reenganchan solos cuando su
-  fecha entre en la ventana; hasta entonces, si el Movistar mueve una de esas
-  fechas nadie se entera. El detalle en `context/ingesta/fuentes-y-legalidad.md`.
-- **Nunca se ha desplegado a Vercel.** Dejó de ser una espera y pasó a ser el
-  siguiente paso — ver § 4. Hacen falta `NEXT_PUBLIC_SUPABASE_URL`,
-  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `ANTHROPIC_API_KEY` en el proyecto de
-  Vercel. ⚠️ Y hay algo que **solo se prueba desplegado**: el route handler del
+- **10 eventos vigentes cuelgan solo de `visitbogota`, que ya no corre.** ⚠️
+  **Este archivo decía 6 y decía que eran del Movistar; el 2026-09-13 se
+  recontaron y son 10, en tres salas**: 6 del Movistar Arena, 3 del Parque
+  Metropolitano Simón Bolívar (Rock, Hip Hop y Salsa al Parque) y 1 del Coliseo
+  Medplus (La Pestilencia). Los seis del Movistar se reenganchan solos cuando su
+  fecha entre en la ventana de un mes que publica la sala; **los otros cuatro
+  no, porque ni el Simón Bolívar ni el Medplus tienen scraper**. Y el número
+  crece solo: cada vez que una fuente viva deja de listar un evento, su fila
+  cruda se poda y el canónico queda colgando de la congelada.
+- **Nunca se ha desplegado a Vercel.** Es el siguiente paso — ver § 4. Hacen
+  falta cuatro variables: `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY` y, desde el
+  2026-09-13, **`NEXT_PUBLIC_SITIO_URL`** — de ella salen las direcciones
+  absolutas de las tarjetas de compartir, el sitemap y el robots.txt. Sin ella
+  se intenta el dominio que inyecta Vercel, y **eso no está comprobado**.
+  ⚠️ Y hay algo más que **solo se prueba desplegado**: el route handler del
   afiche declara `maxDuration = 60`, el tope del plan Hobby, y ese límite es del
   entorno y no del código.
-- **Al compartir un enlace no sale nada.** No hay `openGraph` ni
-  `metadataBase` en `apps/web/src/app/layout.tsx`, así que un evento pegado en
-  WhatsApp o en una historia sale como texto pelado, sin imagen ni título. ⚠️
-  **Para una plataforma que existe para promover toques, compartir es el caso
-  de uso principal**, y hoy es lo peor resuelto del sitio. El afiche del evento
-  ya está en la base: la imagen de compartir sale de ahí.
-- **`/admin` es indexable.** No declara `robots: { index: false }`, así que el
-  panel de moderación puede terminar en Google. Los datos están protegidos por
-  RLS —no es un agujero— pero no tiene por qué salir en una búsqueda.
-- **No hay `robots.ts` ni `sitemap.ts`.** Con cinco rutas públicas y fichas por
-  evento y por artista, el sitemap deja de ser opcional el día que esto sea
-  público.
-- - **21 publicados sin revisar** (de 52). Tienen `reviewed_at` en null y eso es
+- **20 publicados sin revisar** (de 52). Tienen `reviewed_at` en null y eso es
   correcto: nadie los revisó. El número baja solo a medida que Juan toca cada
   evento por otro motivo.
-- **12 publicados ya pasaron de fecha** y siguen en `publicado`. No se ven —la
-  cartelera filtra por `starts_at >= hoy`— así que no es un bug, y con los 40
-  vigentes cierran los 52. ⚠️ **Contarlos con `starts_at < now()` da 13 y está
-  mal**: un show de hoy que empezó hace dos horas sigue en pantalla, porque el
-  corte es el **inicio del día en Bogotá**, no el instante. El mismo cuidado que
-  pide la regla dura de las horas, aplicado a una consulta de conteo.
+- **20 publicados ya pasaron de fecha** y siguen en `publicado`. No se ven —la
+  cartelera filtra por el inicio del día de hoy en Bogotá— así que no es un bug,
+  y con los 32 vigentes cierran los 52. ⚠️ **Contarlos con `starts_at < now()`
+  da de más**: un show de hoy que empezó hace dos horas sigue en pantalla,
+  porque el corte es el **inicio del día**, no el instante.
 - **Sin verificar, porque no se ve desde fuera del dashboard:** si el proyecto
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
@@ -171,75 +159,65 @@ el siguiente paso.
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-09** contra la base, con el MCP.
+**2026-09-13 a las 19:10 de Bogotá** contra la base, con el MCP.
 
 | | |
 |---|---|
 | Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
-| Filas crudas | **126** — visitbogota 56 *(congeladas)*, royal 15, movistar 13, ticketlive 10, latino 10, lourdes 9, rockal 8, idartes 5 |
+| Filas crudas | **130** — visitbogota 56 *(congeladas)*, movistar 16, royal 15, ticketlive 11, latino 10, lourdes 9, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **111** — 52 publicados, 2 borradores, 57 descartados |
-| En pantalla | **32 toques, 2 fiestas, 6 festivales** = 40 vigentes. La cartelera dice "32 toques en 11 salas" y el mapa "13 salas · 40 eventos": cuentan distinto **a propósito** (`context/frontend/CLAUDE.md`) |
+| Canónicos | **115** — 52 publicados, 6 borradores, 57 descartados |
+| En pantalla | **28 toques, 0 fiestas, 4 festivales** = 32 vigentes. La cartelera dice "28 toques en 10 salas" y el mapa "11 salas · 32 eventos": cuentan distinto **a propósito** (`context/frontend/CLAUDE.md`) |
+| Publicados ya pasados | **20** — 32 + 20 cierran los 52 |
+| Sin revisar | **20 de 52** publicados |
 | Salas | **39 filas** — 20 publicadas, 2 por aprobar, 17 descartadas |
 | Coordenadas | **20 de 20** — ninguna sala publicada queda sin ubicar |
 | Fotos de sala | **13 de 20** |
+| Afiche | **51 de 52** publicados — es la imagen de la tarjeta de compartir |
 | Precio | **19 de 52** publicados |
 | Género | **9 de 52** publicados, 5 géneros en uso, ninguno compuesto |
 | Escena local marcada | **3 de 52** — se marca a mano y nada la calcula |
 | **Directorio** | **1 artista publicado**, 6 tracks (4 de YouTube, 2 de SoundCloud), 3 con carátula |
 | **Carteles vinculados** | **0** — `event_artists` está vacía |
-| Bloqueados | **36** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3 |
-| Duplicados sugeridos | **0** |
-| Tests | **239 backend + 99 frontend**, verdes en local y en CI |
+| Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1 |
+| Duplicados sugeridos | **2** — esperando en `/admin` |
+| Tests | **248 backend + 110 frontend**, verdes en local y en CI (`Tests` #77) |
 
 Cómo leerlas sin equivocarse:
 
 - ⚠️ **El estado de un canónico es `status`, no `published_at`.** Hay
   descartados que conservan la fecha en la que estuvieron publicados, y es
   correcto que la conserven.
-- ⚠️ **"Salas 39" es el total de filas, no lo que se ve.** Hasta el 2026-09-09
-  esta línea decía "24" y contaba solo publicadas más borradores: las 17
-  descartadas existían y no aparecían en ningún lado. Se corrigió acá porque el
-  número que engaña es el que se cita.
-- **Los publicados bajaron de 56 a 52 el 2026-09-09** y no es pérdida de datos:
-  Juan bajó Teatro Republik por ser discoteca y descartó sus tres eventos, más
-  uno suyo. Desde ese día **descartar una sala arrastra sus eventos a la cola**
-  (`context/moderacion/CLAUDE.md`), así que este tipo de salto va a repetirse
-  cada vez que una sala se caiga.
+- ⚠️ **"Salas 39" es el total de filas, no lo que se ve.** Las 17 descartadas
+  existen y no aparecen en ningún lado.
+- **Las fiestas cayeron a 0 y los festivales de 6 a 4** entre el 2026-09-09 y
+  el 2026-09-13, sin que nadie tocara nada: se les pasó la fecha. La cartelera
+  se vacía sola si no entra nada nuevo, y por eso el conteo de "en pantalla" no
+  se puede citar de memoria ni de la semana pasada.
 - ⚠️ **Las 56 filas de visitbogota están congeladas, no vivas.** La fuente salió
   del registry el 2026-09-08; sus filas quedan como registro y no se actualizan.
   Lo mismo vale para `scraped_at`, que es "cuándo se vio por primera vez" y no
   "última corrida": el upsert no lo reescribe.
-- **La escena local marcada bajó de 4 a 3** entre el 2026-09-08 y el
-  2026-09-09, sin que ninguna sesión la tocara: la marca la pone y la quita
-  Juan en `/admin`. No hay nada que revisar; se anota para que el número no
-  parezca un error la próxima vez.
+- **Las filas crudas bajan además de subir.** El cron poda las que su fuente
+  dejó de listar, así que el total no es un acumulado: entre el 2026-09-09 y
+  hoy pasó de 126 a 130 después de haber tocado 131.
 - **Las fiestas y los festivales tienen `is_local = null` y eso es correcto.**
   No hay un artista de cartel a quien preguntarle.
-- **Los tests frontend subieron de 69 a 99** con el directorio: lectura de
-  direcciones de audio, criterio de recomendación, y el caso de fecha que
-  delató un bug real (ver `context/frontend/rockola.md`).
 
 ---
 
 ## 4. El siguiente paso
 
-**El directorio arrancó el 2026-09-09** y con él se cierra el punto 1 del orden
-que Juan fijó ese mismo día. Lo que queda, en el orden que él decidió:
+**Lo que había que resolver antes de desplegar quedó cerrado el 2026-09-13**:
+`openGraph`, `robots.txt`, `sitemap.xml` y el `noindex` de `/admin`. Eran lo
+que "se congela al desplegar y se nota en el primer enlace compartido", y ya no
+bloquean nada.
 
-1. 🎯 **Desplegar a Vercel.** Era el punto 2 y pasa a ser el primero. Se
-   pospuso "mientras el producto cambiara de forma", y esa razón se agotó: el
-   MVP tiene sus tres módulos. **Nada de lo construido lo ha visto nadie más
-   que Juan**, y hay dos cosas que **solo se prueban ahí**: el tope de 60 s del
-   route handler del afiche y el sitio en un teléfono real. Hacen falta
-   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y
-   `ANTHROPIC_API_KEY` en Vercel.
-
-   **Juan decidió el 2026-09-09 cargar artistas y afiches después del
-   despliegue, no antes.** Eso cambia qué bloquea: el contenido deja de ser
-   requisito y pasa a ser lo primero que se hace con el sitio ya en pie. Lo que
-   sí conviene resolver antes es lo que **se congela al desplegar y se nota en
-   el primer enlace compartido**: `openGraph`, `robots` y el sitemap (§ 2).
+1. 🎯 **Desplegar a Vercel.** **Nada de lo construido lo ha visto nadie más que
+   Juan**, y hay cuatro cosas que **solo se prueban ahí**: el tope de 60 s del
+   route handler del afiche, el sitio en un teléfono real, las tarjetas de
+   compartir en un validador de Open Graph, y qué dominio resuelve
+   `NEXT_PUBLIC_SITIO_URL` si no se configura. Las cuatro variables, en § 2.
 
 2. **Más fuentes.** `mitaquilla.com.co` quedó confirmada abierta el 2026-09-08 —
    con el User-Agent correcto, ver `context/ingesta/fuentes-y-legalidad.md`— y
@@ -250,4 +228,6 @@ que Juan fijó ese mismo día. Lo que queda, en el orden que él decidió:
 3. **La pasada de identidad de la Fase 6.** El nombre definitivo y el look &
    feel final. Juan abrió el 2026-09-09 la vía de trabajar diseño en Figma con
    su MCP (plan gratis, servidor remoto): queda montada para esa pasada, sin
-   usar todavía.
+   usar todavía. ⚠️ **Arrastra una deuda desde el 2026-09-13**: la tarjeta de
+   compartir del sitio entero no lleva imagen porque tendría que llevar la
+   marca, y la marca todavía no existe.

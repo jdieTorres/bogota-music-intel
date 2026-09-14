@@ -85,6 +85,36 @@ contratapa de LP. La bandeja que suena es `components/rockola/Tornamesa.tsx`.
   solo mientras suena — atada al estado, esa rotación es un indicador; suelta,
   es decoración. Nada de mueble, madera ni neón.
 
+## Compartir un enlace
+
+Lo que se ve al pegar una dirección del sitio en un chat. Para una plataforma
+que existe para promover toques **es el caso de uso principal**, no un detalle
+de SEO.
+
+Todo sale de `src/lib/sitio.ts`: la URL pública, el nombre del sitio y
+`metadatosDePagina`, que arma a la vez el título de la pestaña y el bloque de
+compartir.
+
+- ⚠️ **Ninguna página escribe su `openGraph` a mano, y no es estilo.** Next
+  mezcla los metadatos en un solo nivel, así que una página que se lo salte
+  comparte con el título del sitio en vez del suyo, **sin que se note mirando**
+  (`context/frontend/trampas.md`). Un test recorre las páginas y falla si una
+  nueva no usa el helper.
+- **La imagen es el afiche o la foto del artista, y sin ellos no hay imagen.**
+  Una de relleno afirmaría que el toque tiene afiche. No pasa por `next/image`,
+  así que su host **no** necesita estar en `remotePatterns`: la descarga el
+  chat de quien recibe el enlace, no nuestro servidor.
+- **El sitio entero no tiene imagen de compartir**, porque tendría que llevar
+  la marca y el nombre definitivo todavía no existe
+  (`context/look-and-feel/CLAUDE.md`).
+- **`/admin` se mantiene fuera de Google con `noindex`, no con el
+  `robots.txt`.** Lo que sirve es que la página lo diga, y para leerlo el
+  buscador tiene que poder entrar: bloquearla haría lo contrario de lo que se
+  busca.
+- **El sitemap solo lista lo que hoy está en cartelera**, y se poda solo porque
+  sale de las mismas consultas que la arman. **Sin `lastModified`**: la base no
+  guarda cuándo se editó cada ficha, y `starts_at` es la fecha del show.
+
 ## El precio se escribe en lucas
 
 240.000 se muestra como **`$240 lks`**, que es como se habla de plata acá. La

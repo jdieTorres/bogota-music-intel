@@ -28,6 +28,12 @@ el motivo verificado de cada uno.
   reenganchan solos cuando su fecha entre en la ventana. El horizonte es una
   propiedad de la fuente tan medible como su cobertura, y no se nota hasta que
   se pierde.
+- ⚠️ **Y el agujero que deja una fuente dada de baja se agranda solo.** Cada
+  vez que una fuente viva deja de listar un evento, `_prune_missing_events`
+  poda su fila cruda y el canónico queda colgando de la congelada. Los seis de
+  arriba eran seis el 2026-09-08 y son más hoy, en salas que ni siquiera tienen
+  scraper (la cifra viva, en `ESTADO.md`). **Una fuente que se apaga no deja un
+  daño fijo: deja uno que crece**, y por eso se recuenta en vez de citarse.
 - **La categoría que publica una fuente no siempre coincide con su propia
   ficha**, y cuál de las dos señales sirve **se mide fuente por fuente, no se
   hereda**. En Idartes manda la ruta de la ficha (la etiqueta del listado se
@@ -145,6 +151,21 @@ primera versión del clasificador espaciaba desde el bucle, dejaba escapar dos
 peticiones pegadas al arrancar y MusicBrainz devolvía 503 tumbando la corrida.
 Hoy la regla vive en **Nominatim** (1 req/s, User-Agent identificable), que es
 la única API externa que le queda al pipeline.
+
+**Un 200 no garantiza JSON, y el cuerpo se lee en `scrapers/http.py`.** La
+función es `json_de`, y las fuentes que llaman APIs la usan todas: cuando
+llega algo que no es JSON, el error dice el estado, el `content-type`, las
+cabeceras que delatan al WAF y cómo empieza el cuerpo. ⚠️ **Ahí y no dentro de
+un scraper**: nació en `latino_power.py` el 2026-09-08 y tenerla en una sola
+fuente costó cuatro corridas rojas del cron, porque `ticketlive` seguía
+muriendo con un `Expecting value: line 1 column 1` que no nombra ni la fuente.
+Quien sabe que un 200 puede no ser JSON es la capa que habla HTTP.
+
+**Los desafíos de WAF desde CI son intermitentes, no bloqueos.** Los pone la
+IP del runner y cambian de corrida en corrida, así que **una sola corrida roja
+no prueba un bloqueo** —ni una verde lo contrario—: la conclusión sale de
+varias. Las seis corridas que lo midieron, en
+`context/ingesta/fuentes-y-legalidad.md`.
 
 ⚠️ **La clasificación ya no sale a la red** (2026-09-08). Con MusicBrainz se
 fue todo lo que colgaba de él: los reintentos, el corte tras tres fallas

@@ -51,6 +51,14 @@ y era el que se venía mirando. Sin token:
 `curl -s "https://api.github.com/repos/jdieTorres/bogota-music-intel/actions/runs?per_page=20"`
 y agrupar por `name`. (`gh` no está instalado en esta máquina.)
 
+⚠️ **Las corridas y sus pasos se leen sin token, pero el log de un job no.**
+`/actions/runs/<id>/jobs` dice qué paso falló; `/actions/jobs/<id>/logs`
+responde **403 `Must have admin rights`** aunque el repo sea público. El
+contenido del log se lee **abriendo la corrida en el navegador de Juan**, que
+tiene sesión de GitHub: la dirección del job con el ancla `#step:N:1` abre
+directamente el paso N desplegado. Así se diagnosticó el 2026-09-13 la racha
+de cuatro corridas rojas del cron, sin instalar nada.
+
 ⚠️ **El cron declara `0 14 * * *` (9:00 en Bogotá) y GitHub retrasa los
 `schedule` bastante** — ha corrido a las 23:35Z. No es un error de
 configuración, pero **no cuentes con la hora**.

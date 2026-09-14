@@ -149,10 +149,22 @@ No negociables. Cada una se pagó con un error, y varias con dos.
 - **Una señal que sirve para filtrar suele servir mejor para clasificar.**
   Antes de sacar una regla que dejó de hacer falta, preguntarse si el dato que
   usaba sirve un paso más adelante.
-- **Una lista que hay que mantener a mano necesita algo que avise cuando le
-  falta una entrada.** Cuando se elige una lista blanca sobre un comodín, el
-  costo no es escribirla: es **enterarse tarde de que le falta algo**, y eso
-  se paga una vez con un chequeo automático.
+- **Una lista o un tope que se mantienen a mano necesitan algo que avise
+  cuando se quedan cortos.** Cuando se elige una lista blanca sobre un
+  comodín, el costo no es escribirla: es **enterarse tarde de que le falta
+  algo**, y eso se paga una vez con un chequeo automático. Vale igual para un
+  número puesto a ojo: el tope de páginas del catálogo de Ticketlive estaba en
+  20, la fuente creció a 22, y dos páginas enteras quedaban fuera de cada
+  corrida sin que nada lo dijera. **Un límite que recorta en silencio es peor
+  que no tener límite.**
+- **Un fallo que se ve igual que un éxito no se detecta nunca.** Una fuente
+  cuyo parser deja de encontrar no lanza ningún error: devuelve una lista
+  vacía, se guardan cero eventos y la corrida sale en verde mientras la
+  cartelera se vacía sola. Por eso traer cero cuenta como fallo. El reverso
+  también es cierto: **una señal que sirve para todo no señala nada** — el
+  cron estuvo cuatro días en rojo con el mismo "exit code 1" para un hipo de
+  red y para un bloqueo, y leerlo costaba tanto que nadie lo leyó. Lo que
+  avisa tiene que decir **qué** pasó, no solo que pasó algo.
 - **Lo curado exige `evidencia`, y hay tests que lo verifican.** La
   nacionalidad, la coordenada o la grafía tiene que venir de una fuente
   consultable, **nunca de memoria ni de criterio propio**.

@@ -258,3 +258,35 @@ Lo que se agregó no es la línea que faltaba sino el aviso: `moderacion_cli` co
 
 Generaliza: cuando se elige una lista blanca sobre un comodín, el costo real no es escribirla, es **enterarse tarde de que le falta una entrada**. Eso se paga una sola vez con un chequeo automático.
 
+
+## Los desafíos de WAF desde CI son intermitentes (medido 2026-09-09 → 2026-09-13)
+
+Cinco corridas del `Scraper cron`, leídas una por una en el navegador:
+
+| Corrida | Fecha | Qué falló |
+|---|---|---|
+| 22 | 2026-09-09 | `ticketlive` — `JSONDecodeError` mudo |
+| 23 | 2026-09-10 | `ticketlive` — igual |
+| 24 | 2026-09-11 | `latino_power` — desafío de Cloudflare (`cf-ray … -MIA`); `lourdes` — `Network is unreachable` |
+| 25 | 2026-09-12 | `ticketlive` mudo; `rockal_live` — **504 de Supabase al guardar**, no de la fuente |
+| 26 | 2026-09-13 17:15Z | las siete, verde |
+| 27 | 2026-09-13 00:01Z (a mano) | `latino_power` — Cloudflare otra vez (`cf-ray … -DFW`); `ticketlive` mudo |
+
+Lo que se concluye, y lo que no:
+
+- **Ninguno fue un bloqueo permanente.** Las mismas fuentes que fallan pasan a
+  la corrida siguiente sin que cambie nada de nuestro lado, y desde la máquina
+  de Juan las dos APIs contestan JSON limpio con el User-Agent del pipeline.
+  Es la IP del runner la que se come el desafío, y cambia de corrida en corrida
+  (Miami, Dallas).
+- **Una corrida roja no prueba un bloqueo, y una verde no prueba lo
+  contrario.** Es la misma lección del episodio de Latino Power del 2026-09-09
+  —tres rojas seguidas y a la cuarta pasó— y la de MusicBrainz del 2026-08-30,
+  al que se le atribuyó un defecto por una sola corrida rara.
+- **No todo lo que falla en el paso de scraping es de la fuente.** El 504 de
+  `rockal_live` lo devolvió Supabase al escribir, con la forma de un `APIError`
+  de PostgREST. Leer el mensaje completo es lo que lo distingue.
+
+El diagnóstico de cuál fuente cayó y por qué vive ahora en `scrapers/http.py`
+(`json_de`), y el resumen de la corrida nombra la fuente sin abrir el log
+(`scrape_cli._anotar`).
