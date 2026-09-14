@@ -8,14 +8,16 @@ import {
 } from "@/components/directorio/ListaDelDirectorio";
 import type { TrackEnCola } from "@/components/rockola/Rockola";
 import { type Directorio, getDirectorio } from "@/lib/artists";
+import { metadatosDePagina } from "@/lib/sitio";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "Directorio de la escena",
-  description:
+export const metadata: Metadata = metadatosDePagina({
+  titulo: "Directorio de la escena",
+  descripcion:
     "Quién hace música en Bogotá, con lo que se puede escuchar de cada uno. Se llena a mano, artista por artista.",
-};
+  ruta: "/directorio",
+});
 
 export default async function Page() {
   let directorio: Directorio;

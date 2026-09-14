@@ -9,14 +9,16 @@ import {
   getFiestasSinFecha,
   nombreDelVenue,
 } from "@/lib/events";
+import { metadatosDePagina } from "@/lib/sitio";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "Fiestas",
-  description:
+export const metadata: Metadata = metadatosDePagina({
+  titulo: "Fiestas",
+  descripcion:
     "Las noches y ciclos de las salas de Bogotá: la escena local que no se anuncia con un artista de cartel.",
-};
+  ruta: "/fiestas",
+});
 
 export default async function Page() {
   let crudos: Evento[];

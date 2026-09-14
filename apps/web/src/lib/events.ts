@@ -1,4 +1,9 @@
-import { SOLO_CONCIERTOS, SOLO_FESTIVALES, SOLO_FIESTAS } from "@/lib/editorial";
+import {
+  EN_CARTELERA,
+  SOLO_CONCIERTOS,
+  SOLO_FESTIVALES,
+  SOLO_FIESTAS,
+} from "@/lib/editorial";
 import { formatearPrecio, type PrecioEvento } from "@/lib/precio";
 import { supabase } from "@/lib/supabase";
 
@@ -164,6 +169,15 @@ export const getFiestasProximas = () => proximos(SOLO_FIESTAS);
 export const getFiestasSinFecha = () => sinFecha(SOLO_FIESTAS);
 export const getFestivalesProximos = () => proximos(SOLO_FESTIVALES);
 export const getFestivalesSinFecha = () => sinFecha(SOLO_FESTIVALES);
+
+/** Todo lo que hoy tiene ficha enlazada desde alguna pestaña, sin separar por
+ *  categoría. Lo usa el sitemap, que no tiene pestañas: lo que le importa es
+ *  qué direcciones existen hoy. Mismo filtro que el mapa, por el mismo motivo
+ *  —una fiesta es tan escena como un concierto—, y misma pareja de consultas
+ *  que las pestañas, para que el corte por día de Bogotá se razone en un solo
+ *  sitio. */
+export const getEnCartelera = () => proximos(EN_CARTELERA);
+export const getEnCarteleraSinFecha = () => sinFecha(EN_CARTELERA);
 
 export async function getEvento(id: string): Promise<Evento | null> {
   const { data, error } = await supabase

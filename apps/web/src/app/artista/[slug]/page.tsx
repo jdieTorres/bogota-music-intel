@@ -8,6 +8,7 @@ import type { TrackEnCola } from "@/components/rockola/Rockola";
 import { type Artista, type ToqueDelArtista, getDirectorio } from "@/lib/artists";
 import { recomendar } from "@/lib/directorio";
 import { fechaLarga, siguePorVenir } from "@/lib/fechas";
+import { metadatosDePagina } from "@/lib/sitio";
 
 export const revalidate = 1800;
 
@@ -19,10 +20,15 @@ export async function generateMetadata(
     const { artistas } = await getDirectorio();
     const artista = artistas.find((a) => a.slug === slug);
     if (!artista) return { title: "Artista no encontrado" };
-    return {
-      title: artista.nombre,
-      description: artista.bio ?? `${artista.nombre} en el directorio de la escena de Bogotá.`,
-    };
+    return metadatosDePagina({
+      titulo: artista.nombre,
+      descripcion:
+        artista.bio ?? `${artista.nombre} en el directorio de la escena de Bogotá.`,
+      ruta: `/artista/${artista.slug}`,
+      imagen: artista.fotoUrl
+        ? { url: artista.fotoUrl, alt: `Foto de ${artista.nombre}` }
+        : null,
+    });
   } catch {
     return { title: "Artista" };
   }

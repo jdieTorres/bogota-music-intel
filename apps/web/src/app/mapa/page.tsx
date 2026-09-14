@@ -3,15 +3,17 @@ import Link from "next/link";
 
 import { EncabezadoDePagina } from "@/components/EncabezadoDePagina";
 import { MapaEscena } from "@/components/MapaEscena";
+import { metadatosDePagina } from "@/lib/sitio";
 import { type EscenaEnMapa, getEscena } from "@/lib/venues";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "Mapa de la escena",
-  description:
+export const metadata: Metadata = metadatosDePagina({
+  titulo: "Mapa de la escena",
+  descripcion:
     "Dónde está sonando Bogotá: las salas con programación activa, ubicadas en el mapa.",
-};
+  ruta: "/mapa",
+});
 
 export default async function Page() {
   let escena: EscenaEnMapa;

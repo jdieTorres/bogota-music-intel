@@ -10,9 +10,21 @@ import { IconEnlaceExterno, IconNota, IconoDeTipo } from "@/components/icons";
 import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
 import { primerEnlace } from "@/lib/enlaces";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
+import { metadatosDePagina } from "@/lib/sitio";
 
 export const revalidate = 1800;
 
+const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+
+/**
+ * La ficha del evento es el enlace que de verdad se comparte —se pega en un
+ * grupo de WhatsApp o en una historia—, así que es la página donde la
+ * tarjeta de compartir tiene que estar bien.
+ *
+ * **La imagen es el afiche, el mismo que ya está en la base**, y no hay
+ * reemplazo cuando falta: una imagen de relleno haría creer que el toque
+ * tiene afiche.
+ */
 export async function generateMetadata(
   props: PageProps<"/evento/[id]">,
 ): Promise<Metadata> {
@@ -21,10 +33,24 @@ export async function generateMetadata(
   if (!evento) return { title: "Evento no encontrado" };
 
   const titulo = evento.title;
-  return {
-    title: titulo,
-    description: evento.description ?? `${titulo} en ${nombreDelVenue(evento)}, Bogotá.`,
-  };
+  const venue = nombreDelVenue(evento);
+  // Sin fecha no se escribe ninguna: la tarjeta dice dónde y ya. Lo mismo que
+  // hace la ficha, que muestra el hueco en vez de inventar un día.
+  //
+  // La mayúscula inicial va acá y no con CSS como en la ficha: esto es texto
+  // plano dentro de una etiqueta, y lo pinta el chat de quien lo recibe.
+  const dondeYCuando = evento.starts_at
+    ? `${conMayuscula(fechaLarga(evento.starts_at))} · ${venue}`
+    : `${venue}, Bogotá`;
+
+  return metadatosDePagina({
+    titulo,
+    descripcion: evento.description ?? dondeYCuando,
+    ruta: `/evento/${evento.id}`,
+    imagen: evento.image_url
+      ? { url: evento.image_url, alt: `Afiche de ${titulo}` }
+      : null,
+  });
 }
 
 export default async function Page(props: PageProps<"/evento/[id]">) {

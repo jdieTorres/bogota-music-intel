@@ -9,14 +9,16 @@ import {
   getFestivalesSinFecha,
   nombreDelVenue,
 } from "@/lib/events";
+import { metadatosDePagina } from "@/lib/sitio";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "Festivales",
-  description:
+export const metadata: Metadata = metadatosDePagina({
+  titulo: "Festivales",
+  descripcion:
     "Los festivales de Bogotá: varios días y decenas de artistas, sin uno solo de cartel.",
-};
+  ruta: "/festivales",
+});
 
 export default async function Page() {
   let proximos: Evento[];

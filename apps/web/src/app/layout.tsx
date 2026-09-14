@@ -7,6 +7,7 @@ import { BrandMark } from "@/components/icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProveedorDeRockola } from "@/components/rockola/Rockola";
 import { Tornamesa } from "@/components/rockola/Tornamesa";
+import { DESCRIPCION_DEL_SITIO, NOMBRE_DEL_SITIO, SITIO_URL } from "@/lib/sitio";
 
 const workSans = Work_Sans({
   variable: "--font-work-sans",
@@ -33,13 +34,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Lo que se ve al pegar un enlace del sitio en un chat, que para una
+// plataforma que existe para promover toques es el caso de uso principal.
+//
+// Lo de acá es el piso: cada página lo pisa con lo suyo llamando a
+// `metadatosDePagina`, y el porqué de que eso tenga que pasar sí o sí —los
+// metadatos se mezclan en un solo nivel— está en `src/lib/sitio.ts`.
+//
+// **No hay imagen por defecto, y es deliberado.** La tarjeta del sitio
+// entero tendría que llevar la marca, y el nombre definitivo todavía no
+// existe: hoy saldría un dibujo con un nombre que va a cambiar. Los enlaces
+// que de verdad se comparten —un evento, un artista— sí llevan imagen, que
+// es el afiche o la foto, y eso es un dato real y no una pieza de identidad.
 export const metadata: Metadata = {
+  metadataBase: SITIO_URL,
   title: {
-    default: "Cartelera de Bogotá",
-    template: "%s · Cartelera de Bogotá",
+    default: NOMBRE_DEL_SITIO,
+    template: `%s · ${NOMBRE_DEL_SITIO}`,
   },
-  description:
-    "Los toques de la escena bogotana en un solo lugar, recogidos directamente de las carteleras de cada sala.",
+  description: DESCRIPCION_DEL_SITIO,
+  openGraph: {
+    type: "website",
+    siteName: NOMBRE_DEL_SITIO,
+    locale: "es_CO",
+    url: "/",
+    title: NOMBRE_DEL_SITIO,
+    description: DESCRIPCION_DEL_SITIO,
+  },
+  // Va solo acá y en ninguna página: es el formato de la tarjeta, igual en
+  // todo el sitio. Título, texto e imagen los toma de `openGraph`, así que
+  // repetirlo por página solo abriría dos copias que se desfasan.
+  twitter: { card: "summary_large_image" },
 };
 
 // Fija `data-theme` antes de que el navegador pinte, para que el modo
