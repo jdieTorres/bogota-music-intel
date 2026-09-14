@@ -311,9 +311,10 @@ Lo que hay que tener claro antes de tocarlo:
   conseguir la cookie de paso, disfrazar el User-Agent o salir por otra IP son
   todos la misma cosa, y es la que la regla dura prohíbe. Que el dueño nos
   permita entrar no convierte en legítimo pasarle por encima a su portero.
-- **Las salidas que sí existen son dos**: pedirle acceso a Ticketlive —que para
-  un proyecto de periodismo musical es además una conversación que conviene
-  tener— o dejar de pedírselo desde CI.
+- **Las únicas palancas legítimas son dos**, y ninguna se ha usado: pedirle
+  acceso a la fuente, o dejar de pedirle desde CI. Se anotan para que el que
+  llegue acá buscando una tercera sepa que no la hay, no como algo pendiente
+  de hacer: la decisión tomada es dejar la fuente como está.
 - **No es permanente**: falló en las corridas 22, 23, 25, 27 y 28, y entró
   entero en la 24 y la 26. Depende de qué IP le tocó al runner.
 

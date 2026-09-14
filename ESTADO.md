@@ -49,14 +49,6 @@ el siguiente paso.
 - **Tres tipos de Ticketlive sin mapear**: `destacado`, `dix-fm` y `externos`.
   Sus eventos entran igual —el aviso sale en el log de cada corrida del cron—
   pero nadie ha decidido a qué `event_type` van.
-- 🔥 **A Ticketlive lo frena el anti-bots de su hosting (SiteGround) en más de
-  la mitad de las corridas**, con un CAPTCHA dirigido a la IP del runner. **Su
-  `robots.txt` nos permite esa ruta**, así que no es el dueño quien nos cierra
-  la puerta, y **aun así no se evade**. Las dos salidas son de Juan: escribirle
-  a Ticketlive para pedir acceso —conversación que a un proyecto de periodismo
-  musical le sirve de todos modos— o sacarlo del cron y tratarlo como fuente
-  manual. Mientras tanto la fuente entra en las corridas que no la desafían, y
-  el log dice quién la frenó (`context/ingesta/fuentes-y-legalidad.md`).
 - **La fecha de vencimiento del token de Supabase hay que anotarla.** El
   2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
   reemplazó al de solo lectura que vencía el 2026-12-06. Los tokens scoped
@@ -127,6 +119,12 @@ el siguiente paso.
   con saldo cargado: lee, y los campos que el afiche no dice quedan vacíos con
   su explicación en las notas. Queda sin ejercitar el caso extremo —un afiche
   sin año— pero el comportamiento de fondo está comprobado.
+- **Ticketlive entra en 3 de cada 8 corridas, y así se queda.** El anti-bots de
+  su hosting (SiteGround) le pone un CAPTCHA a la IP del runner en las demás.
+  No se evade —regla dura— y el log ya dice quién lo frenó, así que la fuente
+  sigue en el cron aportando lo que alcanza. **No hay nada que decidir acá**:
+  si alguna vez se quiere cambiar, las únicas palancas legítimas están en
+  `context/ingesta/fuentes-y-legalidad.md`.
 - **10 eventos vigentes cuelgan solo de `visitbogota`, que ya no corre.** ⚠️
   **Este archivo decía 6 y decía que eran del Movistar; el 2026-09-13 se
   recontaron y son 10, en tres salas**: 6 del Movistar Arena, 3 del Parque
