@@ -23,12 +23,16 @@ el siguiente paso.
   existe para dar a conocer la escena con un solo artista no da a conocer
   nada**, y esa parte no la puede hacer nadie más: ninguna base global sabe
   quiénes son. Se cargan en `/admin` → Artistas.
-- **Nadie ha vinculado un cartel todavía**: `event_artists` está en 0. La tabla
-  existe y el formulario también, pero hasta que un evento publicado tenga sus
+- **Nadie ha vinculado un cartel todavía**: `event_artists` está en 0. ⚠️ Este
+  archivo decía que "la tabla existe y el formulario también" y **eso era
+  falso**: hasta el 2026-09-13 no había ninguna interfaz que escribiera esa
+  tabla —solo una función muerta en el lib de admin cuyo comentario prometía
+  justamente eso—, así que el 0 no era desidia, era que no se podía. Desde hoy
+  sí: se arma desde la ficha del toque, en el bloque de admin
+  (`context/moderacion/CLAUDE.md`). Hasta que un evento publicado tenga sus
   artistas, **dos de las tres señales de recomendación no tienen de dónde
   salir** ("compartieron cartel" y "también ha tocado en"), y los enlaces entre
-  la cartelera y la ficha del artista no existen. Es lo más barato de destrabar:
-  se hace al pasar por un evento en la cola.
+  la cartelera y la ficha del artista no existen.
 - **7 de 20 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
   con vista previa. Es lo único que le falta al mapa: las 20 ya tienen
   coordenada y ninguna se lista como "sin ubicar".
