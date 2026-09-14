@@ -64,6 +64,14 @@ contratapa de LP. La bandeja que suena es `components/rockola/Tornamesa.tsx`.
 - ⚠️ **El reproductor vive en el layout raíz, no en una página.** Es lo que hace
   que la música siga sonando al recorrer el mapa y la cartelera. Montado dentro
   de una página, cambiar de ruta corta la canción.
+- ⚠️ **Pero la cola no se guarda en ningún lado.** Vive en memoria: recorrer el
+  sitio la conserva —el proveedor no se vuelve a montar—, y recargar o cerrar
+  se la lleva, como apagar una rockola de bar. Se intentaron las dos formas de
+  guardarla y las dos estaban mal: en `localStorage` la cola era del sitio
+  entero y aparecía en cada pestaña nueva; en `sessionStorage` el alcance era
+  correcto pero la bandeja resucitaba sola tras un F5. **El tema sí se guarda**,
+  y ese contraste es la regla: *una preferencia es del lector; una sesión de
+  escucha es de acá y de ahora.*
 - **El reproductor de YouTube se ve, y no es una decisión de diseño.** Sus
   políticas exigen 200 px de lado como mínimo y prohíben taparlo con nada,
   atribución incluida. Los controles propios van **al lado**, que sí está

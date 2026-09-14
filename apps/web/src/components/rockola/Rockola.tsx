@@ -52,8 +52,6 @@ type ControlesDeLaRockola = EstadoDeLaRockola & {
 
 const Contexto = createContext<ControlesDeLaRockola | null>(null);
 
-const CLAVE = "bmi-rockola";
-
 export function useRockola(): ControlesDeLaRockola {
   const contexto = useContext(Contexto);
   if (!contexto) throw new Error("La rockola se usa dentro de su proveedor");
@@ -68,46 +66,23 @@ export function ProveedorDeRockola({ children }: { children: React.ReactNode }) 
     acuse: null,
   });
 
-  // Al volver, la cola se recupera **en pausa**. Sin un gesto no hay sonido
-  // —el navegador tampoco lo permitiría— y una página que arranca sonando
-  // sola es una sorpresa desagradable, no una comodidad.
+  // ⚠️ **La cola no se guarda en ningún lado, y es una decisión.** Vive en
+  // memoria y nada más: recargar la ventana se lleva la música, igual que
+  // apagar una rockola de bar. Recorrer el sitio sí la conserva, porque el
+  // proveedor vive en el layout raíz y la navegación del App Router no lo
+  // vuelve a montar — que es para lo que está ahí.
   //
-  // ⚠️ Va en un efecto y no en el estado inicial **a propósito**, aunque la
-  // regla de abajo prefiera lo contrario. El servidor no tiene
-  // `localStorage`: si el primer render del navegador ya trajera la cola, la
-  // bandeja existiría en el cliente y no en el HTML servido, y eso es un
-  // desajuste de hidratación. Leer después de montar es la única forma de que
-  // las dos partes coincidan. Corre una sola vez, así que el render de más
-  // que la regla quiere evitar es exactamente uno.
-  useEffect(() => {
-    try {
-      const guardado = window.localStorage.getItem(CLAVE);
-      if (!guardado) return;
-      const { cola, indice } = JSON.parse(guardado) as { cola: TrackEnCola[]; indice: number };
-      if (Array.isArray(cola) && cola.length) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- ver el comentario de arriba
-        setEstado({ cola, indice: Math.min(indice, cola.length - 1), sonando: false, acuse: null });
-      }
-    } catch {
-      // Un `localStorage` roto o lleno no puede tumbar la página: se arranca
-      // sin cola, que es exactamente lo que pasa la primera vez.
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (estado.cola.length) {
-        window.localStorage.setItem(
-          CLAVE,
-          JSON.stringify({ cola: estado.cola, indice: estado.indice }),
-        );
-      } else {
-        window.localStorage.removeItem(CLAVE);
-      }
-    } catch {
-      // Igual que arriba: guardar es una comodidad, no un requisito.
-    }
-  }, [estado.cola, estado.indice]);
+  // Llegó a guardarse, y las dos formas estaban mal. En `localStorage`
+  // —hasta el 2026-09-13— la cola era del sitio entero: abrir una segunda
+  // pestaña hacía aparecer la bandeja ahí también, con la música de la
+  // primera y en pausa. En `sessionStorage` el alcance era el correcto, pero
+  // seguía resucitando al recargar, y una bandeja que vuelve sola después de
+  // un F5 es la misma aparición en versión chica. Lo que el lector espera de
+  // algo que suena es que deje de sonar cuando cierra o recarga.
+  //
+  // El contraste que ordena esto: **el tema sí se guarda** (`ThemeToggle`).
+  // Una preferencia es del lector y lo sigue a todas partes; una sesión de
+  // escucha es de acá y de ahora.
 
   // El acuse se borra solo. Es un mensaje de "ya te oí", no un estado.
   useEffect(() => {
