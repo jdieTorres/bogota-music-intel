@@ -18,7 +18,10 @@ DESAFIO_DE_WAF = (
 
 
 def _respuesta(cuerpo: str, tipo: str, **cabeceras: str) -> httpx.Response:
-    return httpx.Response(200, content=cuerpo, headers={"content-type": tipo, **cabeceras})
+    # Los guiones bajos de los kwargs son los guiones de las cabeceras
+    # (`cf_ray` es `cf-ray`), que es como se llaman de verdad.
+    reales = {nombre.replace("_", "-"): valor for nombre, valor in cabeceras.items()}
+    return httpx.Response(200, content=cuerpo, headers={"content-type": tipo, **reales})
 
 
 def test_el_json_de_verdad_pasa_derecho():
@@ -40,6 +43,44 @@ def test_un_200_que_no_es_json_dice_qué_llegó():
     assert "text/html" in mensaje
     assert "cloudflare" in mensaje
     assert "DOCTYPE" in mensaje
+
+
+# Lo que devolvió Ticketlive desde el runner de GitHub el 2026-09-13 (corrida
+# 28), recortado: un 202 con una redirección al captcha de SiteGround, con la
+# IP del runner en la clave.
+DESAFIO_DE_SITEGROUND = (
+    '<html><head><link rel="icon" href="data:;">'
+    '<meta http-equiv="refresh" content="0;/.well-known/sgcaptcha/'
+    '?r=%2Fwp-json%2Fwc%2Fstore%2Fv1%2Fproducts&y=ipr:20.119.102.66:17893">'
+)
+
+
+def test_un_portero_conocido_se_nombra_y_se_dice_que_no_se_evade():
+    # Un desafío anti-bots y un parser roto son dos problemas distintos: el
+    # primero no se arregla con código, y confundirlos hace que alguien le
+    # busque la vuelta a un bloqueo.
+    with pytest.raises(RuntimeError) as fallo:
+        json_de(_respuesta(DESAFIO_DE_SITEGROUND, "text/html"))
+
+    mensaje = str(fallo.value)
+    assert "SiteGround" in mensaje
+    assert "NO se evade" in mensaje
+
+
+def test_cloudflare_se_reconoce_por_la_cabecera():
+    with pytest.raises(RuntimeError) as fallo:
+        json_de(_respuesta("<html>nada</html>", "text/html", cf_mitigated="challenge"))
+
+    assert "Cloudflare" in str(fallo.value)
+
+
+def test_un_cuerpo_raro_sin_portero_no_inventa_uno():
+    # Si no se reconoce, no se nombra: decir "te bloquearon" cuando lo que
+    # pasó fue otra cosa manda a buscar el problema al lado equivocado.
+    with pytest.raises(RuntimeError) as fallo:
+        json_de(_respuesta("<html>error interno</html>", "text/html"))
+
+    assert "anti-bots" not in str(fallo.value)
 
 
 def test_no_se_lleva_el_cuerpo_entero_al_log():

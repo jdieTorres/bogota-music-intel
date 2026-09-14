@@ -29,6 +29,33 @@ _CABECERAS_QUE_DELATAN = (
     "x-powered-by",
 )
 
+# Los porteros que este proyecto ya se encontró, y cómo se firman en el cuerpo
+# de la respuesta.
+#
+# ⚠️ **No están acá para esquivarlos.** La regla es no evadir bloqueos
+# anti-bots, y reconocerlos no la relaja: están para que el log diga "te frenó
+# un portero" en vez de "la respuesta no era JSON", que son dos problemas
+# distintos y tienen salidas distintas. Uno se arregla con código; el otro se
+# arregla pidiendo acceso, o no pidiéndole a esa fuente desde acá.
+_PORTEROS = (
+    ("SiteGround", "sgcaptcha"),
+    ("Cloudflare", "cf_chl"),
+    ("Cloudflare", "just a moment"),
+    ("Sucuri", "sucuri_cloudproxy"),
+    ("Imunify360", "imunify360"),
+)
+
+
+def _portero(response: httpx.Response, cuerpo: str) -> str | None:
+    """Quién frenó la petición, si se reconoce."""
+    if "cf-mitigated" in {k.lower() for k in response.headers}:
+        return "Cloudflare"
+    minusculas = cuerpo.lower()
+    for nombre, firma in _PORTEROS:
+        if firma in minusculas:
+            return nombre
+    return None
+
 
 def json_de(response: httpx.Response) -> dict | list:
     """El cuerpo como JSON, o un error que diga qué llegó en su lugar.
@@ -54,13 +81,25 @@ def json_de(response: httpx.Response) -> dict | list:
         return response.json()
     except ValueError as exc:
         tipo = response.headers.get("content-type", "?")
-        inicio = response.text[:200].replace("\n", " ").strip()
+        cuerpo = response.text[:2000]
+        inicio = cuerpo[:200].replace("\n", " ").strip()
         pistas = {
             k: v
             for k, v in response.headers.items()
             if k.lower() in _CABECERAS_QUE_DELATAN
         }
+        quien = _portero(response, cuerpo)
+        # El diagnóstico primero: si hubo portero, lo demás es su envoltorio.
+        # Y se dice qué hacer, porque el reflejo ante un bloqueo es buscarle la
+        # vuelta y acá eso no se hace.
+        encabezado = (
+            f"la frenó el anti-bots de {quien}. La fuente no está rota y esto "
+            "NO se evade: se pide acceso o se deja de pedir desde CI. "
+            if quien
+            else ""
+        )
         raise RuntimeError(
-            f"la API respondió {response.status_code} con content-type «{tipo}», "
-            f"que no es JSON. Cabeceras: {pistas}. Empieza así: {inicio!r}"
+            f"{encabezado}La API respondió {response.status_code} con "
+            f"content-type «{tipo}», que no es JSON. Cabeceras: {pistas}. "
+            f"Empieza así: {inicio!r}"
         ) from exc

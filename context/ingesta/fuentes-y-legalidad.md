@@ -287,6 +287,41 @@ Lo que se concluye, y lo que no:
   `rockal_live` lo devolvió Supabase al escribir, con la forma de un `APIError`
   de PostgREST. Leer el mensaje completo es lo que lo distingue.
 
+### Quién frena a quién, con nombre (2026-09-13, corrida 28)
+
+Con el diagnóstico ya compartido, la corrida 28 dijo por fin qué le llega a
+Ticketlive desde CI:
+
+```
+202, content-type text/html, server nginx
+<meta http-equiv="refresh" content="0;/.well-known/sgcaptcha/?r=…&y=ipr:20.119.102.66:…">
+```
+
+Es el **anti-bots de SiteGround**, el hosting de Ticketlive, mandando a un
+CAPTCHA. La clave `ipr:` lleva la IP del runner (un rango de Azure), así que el
+desafío es **a la IP**, no a la ruta ni al User-Agent.
+
+Lo que hay que tener claro antes de tocarlo:
+
+- **El `robots.txt` de Ticketlive nos permite esa ruta.** Su bloque de Yoast
+  trae un `Disallow:` vacío —permitir todo— y `/wp-json/` no está vedado. La
+  política declarada del sitio nos deja entrar; quien frena es el portero del
+  hosting.
+- **Y aun así no se evade.** Resolver el captcha, seguir el `refresh` para
+  conseguir la cookie de paso, disfrazar el User-Agent o salir por otra IP son
+  todos la misma cosa, y es la que la regla dura prohíbe. Que el dueño nos
+  permita entrar no convierte en legítimo pasarle por encima a su portero.
+- **Las salidas que sí existen son dos**: pedirle acceso a Ticketlive —que para
+  un proyecto de periodismo musical es además una conversación que conviene
+  tener— o dejar de pedírselo desde CI.
+- **No es permanente**: falló en las corridas 22, 23, 25, 27 y 28, y entró
+  entero en la 24 y la 26. Depende de qué IP le tocó al runner.
+
+`json_de` reconoce las firmas de SiteGround, Cloudflare, Sucuri e Imunify360 y
+lo dice en el error, con el "no se evade" incluido. **Reconocerlos no es
+esquivarlos**: es que el log distinga un portero de un parser roto, que se
+arreglan de maneras opuestas.
+
 El diagnóstico de cuál fuente cayó y por qué vive ahora en `scrapers/http.py`
 (`json_de`), y el resumen de la corrida nombra la fuente sin abrir el log
 (`scrape_cli._anotar`).

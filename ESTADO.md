@@ -49,6 +49,14 @@ el siguiente paso.
 - **Tres tipos de Ticketlive sin mapear**: `destacado`, `dix-fm` y `externos`.
   Sus eventos entran igual —el aviso sale en el log de cada corrida del cron—
   pero nadie ha decidido a qué `event_type` van.
+- 🔥 **A Ticketlive lo frena el anti-bots de su hosting (SiteGround) en más de
+  la mitad de las corridas**, con un CAPTCHA dirigido a la IP del runner. **Su
+  `robots.txt` nos permite esa ruta**, así que no es el dueño quien nos cierra
+  la puerta, y **aun así no se evade**. Las dos salidas son de Juan: escribirle
+  a Ticketlive para pedir acceso —conversación que a un proyecto de periodismo
+  musical le sirve de todos modos— o sacarlo del cron y tratarlo como fuente
+  manual. Mientras tanto la fuente entra en las corridas que no la desafían, y
+  el log dice quién la frenó (`context/ingesta/fuentes-y-legalidad.md`).
 - **La fecha de vencimiento del token de Supabase hay que anotarla.** El
   2026-09-08 Juan generó uno nuevo con escritura en Database y Migrations, y
   reemplazó al de solo lectura que vencía el 2026-12-06. Los tokens scoped
@@ -91,12 +99,11 @@ el siguiente paso.
 
 ## 2. Lo que quedó a medias
 
-- 🔥 **Lo que se subió el 2026-09-13 no ha corrido nunca en el cron.** El
-  `Scraper cron` no se dispara con un push —solo por horario o a mano—, así que
-  `json_de` compartido, la anotación del fallo y el "cero eventos es fallo"
-  están en `main` sin haberse ejercitado en CI ni una vez. Se ve en la próxima
-  corrida programada — el cron declara las 14:00 UTC pero GitHub lo retrasa, y
-  las últimas cayeron cerca de las 17:30Z (`context/infraestructura/CLAUDE.md`).
+- ✅ **Lo del 2026-09-13 ya corrió en CI y funcionó** (corrida 28, disparada a
+  mano por Juan): la anotación salió en el resumen con el nombre de la fuente y
+  el motivo, y `json_de` contó qué le llegaba a Ticketlive. Lo único de esa
+  tanda que **sigue sin ejercitarse** es el "cero eventos es fallo": hasta hoy
+  ninguna fuente ha devuelto una lista vacía.
 - **El formulario de tracks de `/admin` no se ha visto renderizado.** `/admin`
   pide sesión, así que `npm run capturas` no llega ahí. Compila, los tipos
   cierran y los tests pasan, pero este proyecto ya tuvo el mapa en negro con el
