@@ -139,6 +139,12 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   valor es conocer la escena de esta ciudad, escribir como alguien de otro
   país delata que el texto no lo escribió quien dice escribirlo. La señal más
   fácil de detectar es el acento en la última sílaba de un imperativo.
+  ⚠️ **El ustedeo sí es de acá, y no es una excepción a corregir.** "Píllelo
+  en" —el encabezado de los toques en la ficha del artista, pedido por Juan el
+  2026-09-13— está en usted, no en tú, y es como se habla en esta ciudad. Lo
+  que la regla persigue es el voseo rioplatense, no el usted bogotano: entre
+  tú y usted manda el oído de Juan, y **lo que ya está escrito así no se
+  "arregla" a tuteo.**
 - **En pantalla no van nombres de archivo nuestros.** Al lector no le dicen
   nada y le piden entender cómo está hecho el sistema. La nota para quien
   mantiene el código va en el código. Vale para estados vacíos y mensajes de

@@ -185,8 +185,15 @@ function Cabecera({
 /**
  * Dónde toca y dónde tocó.
  *
- * Es el cruce con la cartelera y con el mapa: el dato que ni AOTY ni RYM
- * pueden tener, porque sale de la programación de esta ciudad.
+ * ⚠️ **Lo que ya pasó no se lista.** La ficha del artista habla de lo que
+ * viene: un toque de hace tres meses con su fecha y su enlace compite con el
+ * que todavía se puede ver. Lo pasado sobrevive en una sola línea —las salas,
+ * sin fecha ni enlace—, que es lo que dice que el artista tiene historia en la
+ * ciudad sin mandar a nadie a una página que ya no sirve.
+ *
+ * El corte es el **inicio del día en Bogotá** (`siguePorVenir`), no el
+ * instante: un show que empezó hace dos horas sigue siendo de hoy, igual que
+ * en la cartelera.
  */
 function Agenda({
   proximos,
@@ -202,7 +209,7 @@ function Agenda({
       {proximos.length > 0 && (
         <>
           <h2 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-muted">
-            Toca
+            Píllelo en
           </h2>
           <ul className="-mx-3 mt-3">
             {proximos.map((toque) => (
