@@ -131,20 +131,19 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   cualquier cosa que dibuje, mirar `document.visibilityState` — o mejor,
   usar `npm run capturas`, que corre sobre Chromium headless y siempre
   renderiza (`context/look-and-feel/capturas.md`).
-- **El español es de Bogotá, nunca rioplatense.** Ni en pantalla, ni en los
-  comentarios, ni en las respuestas de la sesión. Nada de "pegá", "subí",
-  "revisá", "mirá", "decime", ni "vos/tenés/podés". **Se tutea** —"sube el
-  afiche", "revisa antes de guardar"—; lo que separa el tuteo del voseo es la
-  sílaba tónica: "sube" y no "subí". No es un gusto: en una plataforma cuyo
-  valor es conocer la escena de esta ciudad, escribir como alguien de otro
-  país delata que el texto no lo escribió quien dice escribirlo. La señal más
-  fácil de detectar es el acento en la última sílaba de un imperativo.
-  ⚠️ **El ustedeo sí es de acá, y no es una excepción a corregir.** "Píllelo
-  en" —el encabezado de los toques en la ficha del artista, pedido por Juan el
-  2026-09-13— está en usted, no en tú, y es como se habla en esta ciudad. Lo
-  que la regla persigue es el voseo rioplatense, no el usted bogotano: entre
-  tú y usted manda el oído de Juan, y **lo que ya está escrito así no se
-  "arregla" a tuteo.**
+- **El español es de Bogotá, nunca rioplatense.** Nada de "pegá", "subí",
+  "revisá", "mirá", "decime", ni "vos/tenés/podés", en ningún lado. La señal
+  más fácil de detectar es el acento en la última sílaba de un imperativo:
+  "sube" y no "subí". No es un gusto: en una plataforma cuyo valor es conocer
+  la escena de esta ciudad, escribir como alguien de otro país delata que el
+  texto no lo escribió quien dice escribirlo.
+- **En el chat con Juan se tutea; en pantalla cabe el ustedeo bogotano**
+  (aclarado por él el 2026-09-13). "Píllelo en" es el ustedeo coloquial de
+  acá —el de "venga", "hágale"—, que suena cercano y no tiene nada que ver con
+  el usted de formulario que Juan ya había descartado el 2026-09-08 por
+  distante. **Lo escrito así no se "corrige" a tuteo.** Lo demás de la interfaz
+  sigue en tuteo y no hay ninguna conversión pendiente: **la voz de los textos
+  la afina Juan**, no una barrida automática.
 - **En pantalla no van nombres de archivo nuestros.** Al lector no le dicen
   nada y le piden entender cómo está hecho el sistema. La nota para quien
   mantiene el código va en el código. Vale para estados vacíos y mensajes de
