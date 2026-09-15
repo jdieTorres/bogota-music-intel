@@ -13,6 +13,9 @@ export type CamposDelAfiche = {
   titulo: string | null;
   artistas: string[];
   fecha_local: string | null;
+  /** "MM-DD" cuando el afiche no imprime el año. El formulario le pone el
+   *  año que corresponde y lo deja anotado. */
+  dia_y_mes: string | null;
   hora_local: string | null;
   sala_nombre: string | null;
   precio_texto: string | null;

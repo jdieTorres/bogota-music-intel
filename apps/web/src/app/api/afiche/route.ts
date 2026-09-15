@@ -41,8 +41,15 @@ const Afiche = z.object({
     .string()
     .nullable()
     .describe(
-      "La fecha en formato AAAA-MM-DD, hora de Bogotá. **Si el afiche no imprime el año, devuelve null**: " +
-        "no lo deduzcas del año en curso ni de la temporada.",
+      "La fecha en formato AAAA-MM-DD, hora de Bogotá, **solo si el afiche imprime el año**. " +
+        "Si no lo imprime, este campo va en null y el día y el mes van en `dia_y_mes`.",
+    ),
+  dia_y_mes: z
+    .string()
+    .nullable()
+    .describe(
+      "El día y el mes en formato MM-DD, **solo cuando el afiche no imprime el año**. " +
+        "No deduzcas el año: de eso se encarga el formulario, que sabe en qué fecha se está cargando.",
     ),
   hora_local: z
     .string()
@@ -74,15 +81,16 @@ que un valor verosímil pero falso — quien revisa puede completar un hueco, pe
 no puede adivinar que un dato plausible está mal.
 
 En concreto:
-- Si no hay año impreso, \`fecha_local\` va en null aunque el día y el mes sí estén.
-  Anota en \`notas\` lo que sí decía ("dice 12 de septiembre, sin año").
+- Si no hay año impreso, \`fecha_local\` va en null y el día y el mes van en
+  \`dia_y_mes\` ("09-12"). **No deduzcas el año tú**: el formulario lo completa,
+  porque sabe en qué fecha se está cargando el afiche y tú no.
 - Si no hay hora, \`hora_local\` va en null. No supongas que un toque es de noche.
 - Las fechas y horas son de Bogotá, tal como están impresas. No conviertas a UTC
   ni sumes ni restes nada.
 - El precio va literal en \`precio_texto\`. No lo pases a número ni resuelvas
   cuál de dos precios es "el" precio.
 - Si el afiche está borroso o cortado y no puedes leer un campo con seguridad,
-  es null y lo decís en \`notas\`.`;
+  es null y lo dices en \`notas\`.`;
 
 /** Campos mínimos del cuerpo. La imagen llega como URL ya subida al bucket. */
 type Cuerpo = { imagenUrl?: string; texto?: string };
