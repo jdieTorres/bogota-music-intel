@@ -68,7 +68,11 @@ export function ThemeToggle() {
       type="button"
       onClick={alternar}
       aria-label={modo === "oscuro" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className="rounded-full border border-border p-1.5 text-muted transition-colors hover:border-accent/60 hover:text-foreground"
+      // El círculo mide 30px y así se queda: lo que crece es el área de
+      // toque, con un pseudo-elemento invisible que lo lleva a 46. Un
+      // objetivo de 30px en el masthead es de los que más se fallan con el
+      // pulgar, y agrandar el botón de verdad desbalancearía la barra.
+      className="relative rounded-full border border-border p-1.5 text-muted transition-colors after:absolute after:-inset-2 after:content-[''] hover:border-accent/60 hover:text-foreground"
     >
       {modo === "oscuro" ? (
         <IconSun className="h-4 w-4" />

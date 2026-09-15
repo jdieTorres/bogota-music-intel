@@ -126,7 +126,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               móvil. Cede la navegación, que baja entera a su propia línea, y
               la marca se queda como está. En escritorio no cambia nada. */}
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
-            <Link href="/" className="group flex items-center gap-2.5">
+            <Link href="/" className="group -my-2 flex items-center gap-2.5 py-2">
               <BrandMark className="h-7 w-7 shrink-0" />
               <span className="flex items-baseline gap-2">
                 <span className="font-display text-base font-bold tracking-tight sm:text-lg">
@@ -140,24 +140,28 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </span>
             </Link>
             <nav className="flex w-full items-center justify-end gap-5 text-sm sm:w-auto">
+              {/* `-my-3 py-3` crece el área de toque sin mover el texto:
+                  estos enlaces medían 20px de alto contra los 44 que pide
+                  un objetivo táctil, y el masthead es lo que más se toca
+                  desde el teléfono. */}
               {/* En móvil no se muestra: va al mismo sitio que el logo, y dos
                   enlaces a la portada en una barra de 390px obligaban al
                   nombre de marca a partirse en dos líneas. */}
               <Link
                 href="/"
-                className="hidden text-muted transition-colors hover:text-foreground sm:inline"
+                className="hidden -my-3 py-3 text-muted transition-colors hover:text-foreground sm:inline-block"
               >
                 Cartelera
               </Link>
               <Link
                 href="/directorio"
-                className="text-muted transition-colors hover:text-foreground"
+                className="-my-3 inline-block py-3 text-muted transition-colors hover:text-foreground"
               >
                 Directorio
               </Link>
               <Link
                 href="/mapa"
-                className="text-muted transition-colors hover:text-foreground"
+                className="-my-3 inline-block py-3 text-muted transition-colors hover:text-foreground"
               >
                 Mapa
               </Link>
@@ -179,7 +183,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               Proyecto personal ·{" "}
               <a
                 href="https://github.com/jdieTorres/bogota-music-intel"
-                className="underline underline-offset-4 transition-colors hover:text-foreground"
+                className="-my-3 inline-block py-3 underline underline-offset-4 transition-colors hover:text-foreground"
                 target="_blank"
                 rel="noreferrer"
               >

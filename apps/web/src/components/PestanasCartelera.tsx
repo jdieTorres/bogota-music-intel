@@ -68,8 +68,12 @@ export function PestanasCartelera({
               key={id}
               href={href}
               aria-current={esActiva ? "page" : undefined}
+              // `-mt-3 pt-3` sube el área de toque sin mover nada: la fila
+              // medía 34px de alto contra los 44 de un objetivo táctil, y el
+              // padding no puede ir abajo porque ahí está el subrayado de la
+              // activa, pegado al filete de la barra.
               className={
-                "font-display text-lg font-semibold tracking-tight transition-colors " +
+                "-mt-3 block pt-3 font-display text-lg font-semibold tracking-tight transition-colors " +
                 (esActiva
                   ? "text-foreground"
                   : "text-muted hover:text-foreground")

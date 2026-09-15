@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { ChipBoleta } from "@/components/ChipBoleta";
 import { IconNota, IconoDeTipo } from "@/components/icons";
+import { TituloDeEvento } from "@/components/TituloDeEvento";
+import { EN_LA_CARTELERA } from "@/lib/encabezado";
 import { type Evento, nombreDelVenue } from "@/lib/events";
 import { horaDeEvento } from "@/lib/fechas";
 
@@ -81,7 +83,13 @@ export function EventoCard({ evento }: { evento: Evento }) {
               tipo={evento.event_type}
               className="mt-0.5 h-[18px] w-[18px] shrink-0 opacity-80"
             />
-            <span className="text-pretty">{evento.title}</span>
+            {/* Sin `fichas`: la fila entera ya es un enlace al evento, y un
+                enlace dentro de otro no se puede hacer. Los nombres llevan a
+                su ficha desde la página del toque, que es donde hay espacio
+                para elegir a dónde ir. */}
+            <span className="text-pretty">
+              <TituloDeEvento evento={evento} tope={EN_LA_CARTELERA} />
+            </span>
           </h3>
 
           <p className="truncate text-sm text-muted">

@@ -15,7 +15,7 @@ import { esHoy, piezasDeDia } from "@/lib/fechas";
  * Es la estructura de una cartelera impresa, y es lo que separa esto de una
  * lista de resultados.
  */
-function RielDeFecha({ dia }: { dia: string }) {
+function RielDeFecha({ dia, idTitulo }: { dia: string; idTitulo: string }) {
   const { diaSemana, numero, mes } = piezasDeDia(dia);
   const hoy = esHoy(dia);
 
@@ -24,7 +24,14 @@ function RielDeFecha({ dia }: { dia: string }) {
     // recorren sus toques y se suelta al llegar al siguiente. En móvil no
     // hay columna, así que se muestra en línea arriba de la lista.
     <div className="md:sticky md:top-24 md:self-start">
-      <div className="flex items-baseline gap-2 md:block">
+      {/* Es un `h2` y no un `div` desde el 2026-09-15, y no se ve distinto:
+          Tailwind ya deja los encabezados sin tamaño ni margen propios.
+          El riel era la idea más propia de esta cartelera y **no existía en
+          el árbol de encabezados** — la portada iba de un `h1` a veintiocho
+          `h3` seguidos, así que para un lector de pantalla la agrupación por
+          día simplemente no estaba. Lo que se barre con la vista tiene que
+          poder barrerse también con el teclado. */}
+      <h2 id={idTitulo} className="flex items-baseline gap-2 md:block">
         <span className="font-display text-4xl font-bold leading-none tracking-tight md:text-5xl">
           {numero}
         </span>
@@ -38,16 +45,24 @@ function RielDeFecha({ dia }: { dia: string }) {
             hoy
           </span>
         )}
-      </div>
+      </h2>
     </div>
   );
 }
 
 /** Un día: su riel de fecha y sus toques. */
 function DiaDeCartelera({ dia, eventos }: { dia: string; eventos: Evento[] }) {
+  // Una `section` sin nombre accesible no se anuncia como región, así que el
+  // `aria-labelledby` es lo que convierte el día en algo por donde saltar. El
+  // `id` sirve además de ancla: `/#dia-2026-10-17` lleva a ese día.
+  const idTitulo = `dia-${dia}`;
+
   return (
-    <section className="grid gap-3 border-t border-border pt-6 md:grid-cols-[7rem_1fr] md:gap-8">
-      <RielDeFecha dia={dia} />
+    <section
+      aria-labelledby={idTitulo}
+      className="grid gap-3 border-t border-border pt-6 md:grid-cols-[7rem_1fr] md:gap-8"
+    >
+      <RielDeFecha dia={dia} idTitulo={idTitulo} />
       <ul>
         {/* Dentro del día, los toques locales van primero. En la pestaña de
             fiestas no cambia nada: ninguna afirma un origen, porque no hay un

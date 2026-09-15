@@ -101,7 +101,7 @@ export default async function Page(props: PageProps<"/artista/[slug]">) {
           <h2 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-muted">
             Suenan cerca
           </h2>
-          <ul className="-mx-3 mt-3">
+          <ul className="mt-3">
             {recomendaciones.map((r) => (
               <li key={r.slug} className="border-t border-border first:border-t-0">
                 <Link
@@ -211,7 +211,7 @@ function Agenda({
           <h2 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-muted">
             Píllelo en
           </h2>
-          <ul className="-mx-3 mt-3">
+          <ul className="mt-3">
             {proximos.map((toque) => (
               <li key={toque.eventoId} className="border-t border-border first:border-t-0">
                 <Link
