@@ -4,9 +4,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ChipBoleta } from "@/components/ChipBoleta";
+import { CartelDelToque } from "@/components/CartelDelToque";
 import { ControlesDeAdmin } from "@/components/ControlesDeAdmin";
 import { IconEnlaceExterno, IconNota, IconoDeTipo } from "@/components/icons";
+import { TituloDeEvento } from "@/components/TituloDeEvento";
 
+import { getCartelPublicado } from "@/lib/artists";
+import { encabezadoEnTexto } from "@/lib/encabezado";
+import { pestanaDelEvento } from "@/lib/editorial";
 import { type Evento, getEvento, nombreDelVenue } from "@/lib/events";
 import { primerEnlace } from "@/lib/enlaces";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
@@ -32,7 +37,10 @@ export async function generateMetadata(
   const evento = await getEvento(id);
   if (!evento) return { title: "Evento no encontrado" };
 
-  const titulo = evento.title;
+  // El mismo encabezado que muestra la página, no `title`: si no, un cartel
+  // de varias bandas llegaría a WhatsApp con el "&" encadenado que la web ya
+  // no muestra.
+  const titulo = encabezadoEnTexto(evento);
   const venue = nombreDelVenue(evento);
   // Sin fecha no se escribe ninguna: la tarjeta dice dónde y ya. Lo mismo que
   // hace la ficha, que muestra el hueco en vez de inventar un día.
@@ -65,15 +73,21 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
   // publicación de la sala, o la cartelera de la que se recogió.
   const masInfo =
     primerEnlace(evento.evidence) ?? evento.events?.[0]?.source_url ?? null;
-  const titulo = evento.title;
+  // Quién tocó, confirmado a mano. Es lo único que puede enlazar a una ficha
+  // del directorio: los nombres que leyó la fuente van sin enlace, porque
+  // coincidir de nombre no prueba que sea el mismo artista.
+  const cartel = await getCartelPublicado(evento.id);
+  const vuelta = pestanaDelEvento(evento.event_type);
 
   return (
     <article className="mx-auto max-w-5xl px-5 pb-16 pt-8">
+      {/* Vuelve a la pestaña donde vive el evento, no siempre a `/`: quien
+          llegó desde /fiestas terminaba en otra lista. */}
       <Link
-        href="/"
-        className="text-sm text-muted transition-colors hover:text-foreground"
+        href={vuelta.href}
+        className="-my-3 inline-block py-3 text-sm text-muted transition-colors hover:text-foreground"
       >
-        ← Volver a la cartelera
+        ← Volver a {vuelta.etiqueta}
       </Link>
 
       {/* Dos columnas y no una pila: el afiche a lo ancho de la página dejaba
@@ -81,41 +95,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
           empujaba todos los datos abajo del pliegue. Al lado, el afiche se ve
           entero y la ficha se lee de una. En móvil se apila. */}
       <div className="mt-6 grid gap-8 md:grid-cols-[minmax(0,22rem)_1fr] md:gap-12">
-        <div className="md:sticky md:top-8 md:self-start">
-          {evento.image_url ? (
-            // Sin fondo: los afiches llegan en proporciones distintas de
-            // cada fuente, y una caja clara detrás de uno vertical se ve como
-            // un recuadro roto en vez de como un afiche.
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm">
-              <Image
-                src={evento.image_url}
-                alt=""
-                fill
-                sizes="(max-width: 768px) 100vw, 352px"
-                className="object-contain"
-                priority
-              />
-            </div>
-          ) : (
-            <div className="flex aspect-[4/5] w-full items-center justify-center rounded-sm bg-surface text-muted">
-              <IconNota className="h-12 w-12" />
-            </div>
-          )}
-
-          {evento.ticket_url && (
-            <a
-              href={evento.ticket_url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-accent px-5 py-3 font-medium text-background transition-opacity hover:opacity-90"
-            >
-              Ver boletería ↗
-            </a>
-          )}
-        </div>
-
-        <div className="min-w-0">
-          <header>
+        <header className="min-w-0 md:col-start-2 md:row-start-1">
             {/* La marca de local no puede desaparecer al abrir el evento: es
                 la señal que ordena toda la cartelera, y si solo vive en la
                 fila parece un adorno del listado en vez de un dato del
@@ -140,7 +120,9 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
                 conNombre
                 className="mt-1 h-7 w-7 shrink-0 sm:mt-1.5 sm:h-8 sm:w-8"
               />
-              <span className="text-balance">{titulo}</span>
+              <span className="text-balance">
+                <TituloDeEvento evento={evento} />
+              </span>
             </h1>
             <p className="mt-3 text-lg text-muted">
               {venue}
@@ -151,9 +133,58 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
                 </span>
               ))}
             </p>
-          </header>
+        </header>
 
-          <dl className="mt-8 border-t border-border">
+        {/* En escritorio cada bloque se coloca por celda, así que el orden
+            del DOM queda libre para el móvil. Antes la columna del afiche
+            iba primera y en 390px eso ponía el botón verde de boletería
+            **antes del nombre del evento**: se ofrecía la acción de salir a
+            comprar antes de dar el dato con el que se decide, en la página
+            que más se comparte por WhatsApp. */}
+        <div className="md:sticky md:top-8 md:col-start-1 md:row-span-2 md:row-start-1 md:self-start">
+          {evento.image_url ? (
+            // Sin fondo: los afiches llegan en proporciones distintas de
+            // cada fuente, y una caja clara detrás de uno vertical se ve como
+            // un recuadro roto en vez de como un afiche.
+            /* Sin caja de proporción fija desde el 2026-09-15. `object-contain`
+               dentro de un `aspect-[4/5]` es correcto —recortar por el centro se
+               come el nombre de la banda— pero la mayoría de los afiches que
+               publican las salas son apaisados, así que la caja dejaba unos
+               200px de vacío entre el afiche y el botón de boletería. Acá la
+               imagen pone su propia altura: `width` y `height` solo fijan la
+               proporción con la que se reserva el espacio antes de cargar. */
+            <Image
+              src={evento.image_url}
+              alt=""
+              width={704}
+              height={880}
+              sizes="(max-width: 768px) 100vw, 352px"
+              className="h-auto w-full rounded-sm"
+              priority
+            />
+          ) : (
+            <div className="flex aspect-[4/5] w-full items-center justify-center rounded-sm bg-surface text-muted">
+              <IconNota className="h-12 w-12" />
+            </div>
+          )}
+
+          {evento.ticket_url && (
+            <a
+              href={evento.ticket_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-accent px-5 py-3 font-medium text-background transition-opacity hover:opacity-90"
+            >
+              Ver boletería ↗
+            </a>
+          )}
+        </div>
+
+
+        <div className="min-w-0 md:col-start-2 md:row-start-2">
+          {/* `md:mt-0` porque en escritorio la separación ya la da el gap
+              del grid, que antes no existía entre estos dos bloques. */}
+          <dl className="mt-8 border-t border-border md:mt-0">
             <Dato etiqueta="Fecha">
               {evento.starts_at ? (
                 <span className="inline-block first-letter:uppercase">
@@ -175,6 +206,10 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
             </Dato>
           </dl>
 
+          {/* Antes de la descripción: quién toca es lo que se busca primero,
+              y el texto de la sala suele ser largo. */}
+          <CartelDelToque cartel={cartel} tipo={evento.event_type} masInfo={masInfo} />
+
           {evento.description && (
             <p className="mt-8 max-w-prose text-pretty leading-relaxed text-muted">
               {evento.description}
@@ -191,7 +226,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
               href={masInfo}
               target="_blank"
               rel="noreferrer"
-              className="mt-8 inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-sm transition-colors hover:border-accent hover:text-accent"
+              className="mt-8 inline-flex items-center gap-2 rounded-sm border border-border px-4 py-3 text-sm transition-colors hover:border-accent hover:text-accent"
             >
               Más info
               <IconEnlaceExterno className="h-4 w-4" />
@@ -202,7 +237,9 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
 
       <Procedencia evento={evento} />
 
-      <ControlesDeAdmin eventoId={evento.id} titulo={titulo} />
+      {/* El título crudo y no el encabezado compuesto: acá se edita `title`,
+          que es la columna, no lo que la pantalla arma con la lista. */}
+      <ControlesDeAdmin eventoId={evento.id} titulo={evento.title} />
     </article>
   );
 }

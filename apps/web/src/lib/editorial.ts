@@ -33,6 +33,11 @@
  * deja ningún rastro visible para nadie.
  */
 
+// `import type` y no un import normal: `events.ts` importa de este
+// archivo, y un import de valor cerraría el ciclo. El tipo se borra al
+// compilar, así que en tiempo de ejecución no hay dependencia.
+import type { TipoEvento } from "@/lib/events";
+
 /** Conciertos: un artista de cartel, más lo que aún no se clasificó. */
 export const SOLO_CONCIERTOS = "event_type.is.null,event_type.eq.music";
 
@@ -69,4 +74,26 @@ export function priorizarLocales<T extends ConOrigen>(eventos: T[]): T[] {
   return [...eventos].sort(
     (a, b) => Number(a.is_local === false) - Number(b.is_local === false),
   );
+}
+
+/**
+ * De qué pestaña salió un evento, para poder devolver al lector a ella.
+ *
+ * El enlace de volver de la ficha mandaba siempre a `/`, así que a quien
+ * llegaba desde `/fiestas` o `/festivales` lo dejaba en otra lista. Sale del
+ * tipo del evento y no del historial del navegador a propósito: la ficha es
+ * lo que se pega en un grupo de WhatsApp, y quien llega por ahí no tiene
+ * historial del cual volver — pero sí merece saber dónde vive ese evento.
+ */
+export function pestanaDelEvento(tipo: TipoEvento): {
+  href: string;
+  etiqueta: string;
+} {
+  if (tipo === "fiesta") return { href: "/fiestas", etiqueta: "las fiestas" };
+  if (tipo === "festival") {
+    return { href: "/festivales", etiqueta: "los festivales" };
+  }
+  // `music` y `null` comparten destino: un evento sin clasificar se muestra
+  // en la cartelera de toques, así que ahí es donde el lector lo vio.
+  return { href: "/", etiqueta: "la cartelera" };
 }
