@@ -18,7 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   BOTON,
   BOTON_PRIMARIO,
-  BOTON_ROJO,
+  BOTON_PELIGRO,
   BOTON_TENUE,
   BarraDeAcciones,
   CAMPO,
@@ -348,7 +348,7 @@ function FichaDeSala({
           Teatro Republik. La lista va completa y no un conteo: decidir si una
           sala se baja depende de *cuáles* eventos se lleva por delante. */}
       {porBajar !== null && (
-        <div className="mt-5 rounded-md border border-red-500/40 bg-background p-4">
+        <div className="mt-5 rounded-md border border-danger/40 bg-background p-4">
           {porBajar.length === 0 ? (
             <p className="text-sm">
               No tiene eventos en cartelera ni en la cola. Se puede bajar sin más.
@@ -384,7 +384,7 @@ function FichaDeSala({
                   await descartarSala(sala.id);
                 })
               }
-              className={BOTON_ROJO}
+              className={BOTON_PELIGRO}
             >
               {porBajar.length > 0
                 ? `Bajar la sala y sus ${porBajar.length} ${

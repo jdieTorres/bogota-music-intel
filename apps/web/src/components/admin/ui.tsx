@@ -32,20 +32,20 @@ export const BOTON_SECUNDARIO =
   "rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-[transform,background-color] duration-150 hover:bg-surface-hover active:scale-[0.97] disabled:opacity-40";
 export const BOTON_TENUE =
   "rounded-md border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:text-foreground";
-export const BOTON_ROJO =
-  "rounded-md border border-red-500/40 px-3 py-1.5 text-xs text-red-400 transition-colors hover:text-red-300";
+export const BOTON_PELIGRO =
+  "rounded-md border border-danger/40 px-3 py-1.5 text-xs text-danger transition-colors hover:border-danger";
 // Sin `outline-none`: apagaba el anillo del navegador y lo reemplazaba solo
 // con un cambio de color de borde. El anillo lo pone la regla global de
 // `globals.css`; el borde se queda como refuerzo, que en un campo de texto
 // se agradece también al hacer click.
 /** El borde de un campo al que le falta algo. Va con el aviso debajo, nunca
  *  solo: un borde rojo sin texto dice que algo está mal y no qué. */
-export const BORDE_EN_FALTA = "border-red-500/70";
+export const BORDE_EN_FALTA = "border-danger/70";
 
 /** Lo que falta, dicho debajo del campo que lo necesita. */
 export function Aviso({ children }: { children: React.ReactNode }) {
   return (
-    <span role="alert" className="mt-1 block text-xs leading-relaxed text-red-400">
+    <span role="alert" className="mt-1 block text-xs leading-relaxed text-danger">
       {children}
     </span>
   );
@@ -144,7 +144,7 @@ export function CampoDeImagen({
       />
       {ayuda && <p className="mt-1 text-xs text-muted">{ayuda}</p>}
       {!esHttps && (
-        <p className="mt-1 text-xs text-red-400">
+        <p className="mt-1 text-xs text-danger">
           Tiene que empezar en https:// — una imagen por http la bloquea el navegador.
         </p>
       )}
@@ -164,7 +164,7 @@ export function CampoDeImagen({
               e.currentTarget.nextElementSibling?.setAttribute("hidden", "");
             }}
           />
-          <p hidden className="text-xs text-red-400">
+          <p hidden className="text-xs text-danger">
             Esa URL no carga. Probala abriéndola sola en una pestaña: si ahí se ve,
             el sitio no permite mostrarla desde otro lado y hace falta otra.
           </p>
@@ -297,7 +297,7 @@ export function CampoDeGeneros({
               key={genero}
               type="button"
               onClick={() => alCambiar(valor.filter((g) => g !== genero))}
-              className="rounded-full border border-border px-2.5 py-1 text-xs text-accent-2 transition-colors hover:border-red-500/40 hover:text-red-400"
+              className="rounded-full border border-border px-2.5 py-1 text-xs text-accent-2 transition-colors hover:border-danger/40 hover:text-danger"
               title="Quitar"
             >
               {genero} ×
@@ -338,6 +338,93 @@ export function CampoDeGeneros({
       <span className="mt-1 block text-xs leading-relaxed text-muted">
         Salen como chips al lado del título. Se pueden poner varios; uno nuevo
         queda guardado y se sugiere en los eventos siguientes.
+      </span>
+    </label>
+  );
+}
+
+/**
+ * Quiénes tocan, como lista y no como frase.
+ *
+ * Mismo patrón que `CampoDeGeneros` —chips, Enter o coma agrega, ✕ quita—
+ * porque es el mismo gesto y aprender dos no tiene sentido. Lo que cambia es
+ * de dónde salen las sugerencias: el directorio, para que el nombre se
+ * escriba igual que en la ficha del artista y el cartel se pueda armar
+ * después de un clic.
+ *
+ * ⚠️ **Esto es texto, no el cartel.** Escribir acá no crea ninguna ficha ni
+ * vincula a nadie: eso se hace en la ficha del toque, donde se está mirando
+ * el afiche. Acá se anota lo que dice el anuncio.
+ */
+export function CampoDeArtistas({
+  valor,
+  alCambiar,
+  sugerencias,
+}: {
+  valor: string[];
+  alCambiar: (valor: string[]) => void;
+  /** Los nombres del directorio, para escribirlos igual. */
+  sugerencias: string[];
+}) {
+  const [escribiendo, setEscribiendo] = useState("");
+
+  function agregar(bruto: string) {
+    const nombre = bruto.trim();
+    const yaEsta = valor.some((a) => a.toLowerCase() === nombre.toLowerCase());
+    if (nombre && !yaEsta) alCambiar([...valor, nombre]);
+    setEscribiendo("");
+  }
+
+  return (
+    <label className="sm:col-span-2">
+      <Rotulo>Quiénes tocan (opcional)</Rotulo>
+
+      {valor.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {valor.map((artista) => (
+            <button
+              key={artista}
+              type="button"
+              onClick={() => alCambiar(valor.filter((a) => a !== artista))}
+              className="rounded-full border border-border px-2.5 py-1 text-xs transition-colors hover:border-danger/40 hover:text-danger"
+              title="Quitar"
+            >
+              {artista} ×
+            </button>
+          ))}
+        </div>
+      )}
+
+      <input
+        value={escribiendo}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (sugerencias.includes(v)) agregar(v);
+          else setEscribiendo(v);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === ",") {
+            // Sin esto, Enter enviaría el formulario entero.
+            e.preventDefault();
+            agregar(escribiendo);
+          }
+        }}
+        onBlur={() => agregar(escribiendo)}
+        list="artistas-del-directorio"
+        placeholder="Una banda por cada Enter, en el orden del afiche"
+        className={CAMPO}
+      />
+      <datalist id="artistas-del-directorio">
+        {sugerencias
+          .filter((a) => !valor.includes(a))
+          .map((a) => (
+            <option key={a} value={a} />
+          ))}
+      </datalist>
+
+      <span className="mt-1 block text-xs leading-relaxed text-muted">
+        Con dos o más, la cartelera muestra la lista en vez del título. Con uno
+        solo no cambia nada, pero queda anotado.
       </span>
     </label>
   );

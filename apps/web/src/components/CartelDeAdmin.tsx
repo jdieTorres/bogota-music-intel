@@ -173,7 +173,7 @@ export function CartelDeAdmin({ eventoId }: { eventoId: string }) {
         </ul>
       )}
 
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
 
       {cartel.some((a) => a.status === "borrador") && (
         <p className="mt-3 text-xs leading-relaxed text-muted">

@@ -20,6 +20,7 @@ import {
   BOTON,
   BOTON_TENUE,
   CAMPO,
+  CampoDeArtistas,
   CampoDeFechaYHora,
   CampoDeGeneros,
   Rotulo,
@@ -31,7 +32,9 @@ import { leerAfiche, subirAfiche } from "@/lib/admin/carga-de-afiche";
 import { crearEvento } from "@/lib/admin/eventos";
 import type { PrecioEvento } from "@/lib/precio";
 import type { TipoEvento } from "@/lib/events";
+import { getArtistasParaVincular } from "@/lib/admin/artistas";
 import { getSalasPublicadas } from "@/lib/admin/salas";
+import { encabezadoEnTexto } from "@/lib/encabezado";
 
 export function FormularioDeEvento({
   setError,
@@ -52,6 +55,9 @@ export function FormularioDeEvento({
   });
   const [boleteria, setBoleteria] = useState("");
   const [generos, setGeneros] = useState<string[]>([]);
+  const [artistas, setArtistas] = useState<string[]>([]);
+  const [gira, setGira] = useState("");
+  const [delDirectorio, setDelDirectorio] = useState<string[]>([]);
   // "" es la opción "todavía no sé", que se guarda como null. Se separa
   // del union porque un <select> no puede tener valor null.
   const [tipo, setTipo] = useState<Exclude<TipoEvento, null> | "">("music");
@@ -68,6 +74,14 @@ export function FormularioDeEvento({
       .then(setSalas)
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, [setError]);
+
+  // Los nombres del directorio, para escribir el del cartel igual que el de
+  // la ficha. Sin ellos el campo sigue sirviendo: se escribe a mano.
+  useEffect(() => {
+    getArtistasParaVincular()
+      .then((todos) => setDelDirectorio(todos.map((a) => a.nombre)))
+      .catch(() => setDelDirectorio([]));
+  }, []);
 
   const listo = titulo.trim() && sala && evidencia.trim().length >= 10;
 
@@ -97,13 +111,16 @@ export function FormularioDeEvento({
       // El género que leyó el afiche entra como uno más, sin pisar los que
       // ya estén escritos.
       if (c.genero && !generos.includes(c.genero)) setGeneros([...generos, c.genero]);
+      // El modelo devuelve los artistas en el orden en que aparecen impresos,
+      // que es la mejor señal que hay del cartel. Hasta el 2026-09-15 esto se
+      // volcaba a las notas como "Cartel: X & Y" para volver a teclearlo.
+      if (artistas.length === 0 && c.artistas.length > 0) setArtistas(c.artistas);
       // El precio no se autocompleta: son tres columnas que hay que leer
       // juntas para no afirmar de más, y el afiche solo da texto suelto.
       // Se muestra crudo abajo para que se transcriba a mano.
       setNotas(
         [
           c.precio_texto && `Precio impreso: ${c.precio_texto}`,
-          c.artistas.length > 1 && `Cartel: ${c.artistas.join(" & ")}`,
           c.sala_nombre &&
             !encontrada &&
             `El afiche dice «${c.sala_nombre}», que no está entre las salas cargadas.`,
@@ -146,6 +163,8 @@ export function FormularioDeEvento({
         ...precio,
         ticket_url: boleteria.trim() || null,
         generos,
+        artistas,
+        gira: gira.trim() || null,
         event_type: tipo || null,
         is_local: local === "" ? null : local === "true",
         image_url: afiche,
@@ -305,7 +324,8 @@ export function FormularioDeEvento({
           {/* No pasa por el normalizador: lo escribes tú, ya en la
               forma en que quieres que salga. Normalizarlo encima sería pisarte. */}
           <span className="mt-1 block text-xs text-muted">
-            Se publica tal cual lo escribas. Varios artistas van con &ldquo;&amp;&rdquo;.
+            Se publica tal cual lo escribas. Si abajo anotas dos o más artistas,
+            la cartelera muestra esa lista y no esto.
           </span>
         </label>
 
@@ -343,6 +363,43 @@ export function FormularioDeEvento({
             className={CAMPO}
           />
         </label>
+
+        <CampoDeArtistas
+          valor={artistas}
+          alCambiar={setArtistas}
+          sugerencias={delDirectorio}
+        />
+
+        {artistas.length >= 2 && (
+          <label className="sm:col-span-2">
+            <Rotulo>Gira o ciclo (opcional)</Rotulo>
+            <input
+              value={gira}
+              onChange={(e) => setGira(e.target.value)}
+              placeholder="Ronroco Tour"
+              className={CAMPO}
+            />
+          </label>
+        )}
+
+        {/* Lo que se va a publicar, armado con lo que hay escrito.
+            **El título deja de ser lo que se muestra en cuanto hay dos
+            artistas**, y sin esto no habría forma de notarlo desde acá: la
+            regla de que "el título guardado es el título publicado" se
+            decidió el 2026-08-31 porque el admin veía una cosa y el visitante
+            otra, y esta línea es lo que la mantiene cierta. */}
+        {artistas.length >= 2 && (
+          <p className="sm:col-span-2 -mt-1 text-xs text-muted">
+            En la cartelera se verá:{" "}
+            <span className="text-foreground">
+              {encabezadoEnTexto({
+                title: titulo.trim(),
+                artistas,
+                gira: gira.trim() || null,
+              })}
+            </span>
+          </p>
+        )}
 
         <CampoDeGeneros valor={generos} alCambiar={setGeneros} />
 

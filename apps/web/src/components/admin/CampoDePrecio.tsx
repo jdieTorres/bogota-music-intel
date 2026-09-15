@@ -128,7 +128,7 @@ export function CampoDePrecio({
       </p>
 
       {rangoInvertido && (
-        <p className="mt-1 text-xs text-red-400">
+        <p className="mt-1 text-xs text-danger">
           El techo no puede ser menor que el piso.
         </p>
       )}

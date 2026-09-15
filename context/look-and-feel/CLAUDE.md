@@ -59,11 +59,20 @@ gritar cuando aparece.
 | `--accent` (marca) | `#12760f` | `#4ae63a` |
 | `--accent-2` (dato frío) | `#0c7189` | `#4fd4ef` |
 | `--accent-3` (escena local) | `#c2185b` | `#ff5fb0` |
+| `--danger` (error y borrado) | `#b3261e` | `#ff8a80` |
 
 **Los valores están medidos, no elegidos a ojo.** Toda la paleta pasa WCAG AA
 en los dos modos; `--accent-2` bajó de `#0e7f9c` a `#0c7189` porque el
 primero daba 4.17 sobre el papel y el género se escribe en tamaño de cuerpo.
 Antes de tocar un color, volver a medirlo.
+
+⚠️ **Y un color que no está en esta tabla es un color que nadie midió.** El
+rojo de error y de borrado vivió como clase cruda de Tailwind hasta el
+2026-09-15, fuera de la tabla y por lo tanto fuera de la medición:
+`text-red-400` daba **2.60** sobre el papel y `text-red-300`, **1.73**. El
+aviso de "qué falta" del formulario aparecía en el campo correcto y no se
+leía. Es token desde entonces, y el botón que borra lleva `--background`
+encima igual que el de boletería con el verde.
 
 **El verde se gasta en la acción que decide.** En `/admin`, publicar va en
 verde y guardar en el azul de `--accent-2` (2026-09-13): guardar se repite

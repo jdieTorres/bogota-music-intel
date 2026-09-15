@@ -78,7 +78,7 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
           </a>
           <button
             onClick={() => setConfirmando(true)}
-            className="rounded-md border border-red-500/40 px-3 py-1.5 text-xs text-red-400 transition-colors hover:text-red-300"
+            className="rounded-md border border-danger/40 px-3 py-1.5 text-xs text-danger transition-colors hover:border-danger"
           >
             Borrar evento
           </button>
@@ -106,12 +106,12 @@ export function ControlesDeAdmin({ eventoId, titulo }: { eventoId: string; titul
             placeholder="Por qué se borra (queda registrado)"
             className="mt-3 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-accent"
           />
-          {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+          {error && <p className="mt-2 text-sm text-danger">{error}</p>}
           <div className="mt-3 flex gap-2">
             <button
               disabled={ocupado || motivo.trim().length < 5}
               onClick={borrarlo}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
             >
               {ocupado ? "Borrando…" : "Borrar definitivamente"}
             </button>

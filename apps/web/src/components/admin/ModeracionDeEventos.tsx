@@ -15,9 +15,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   BOTON,
-  BOTON_ROJO,
+  BOTON_PELIGRO,
   BOTON_TENUE,
   CAMPO,
+  CampoDeArtistas,
   CampoDeGeneros,
   CampoDeFechaYHora,
   Etiqueta,
@@ -43,6 +44,8 @@ import {
   salaEnLaCola,
   unificarDuplicado,
 } from "@/lib/admin/eventos";
+import { getArtistasParaVincular } from "@/lib/admin/artistas";
+import { encabezadoEnTexto } from "@/lib/encabezado";
 
 export function ModeracionDeEventos({
   setError,
@@ -254,6 +257,8 @@ function Ficha({
     price_min: evento.price_min,
     price_max: evento.price_max,
     generos: evento.generos,
+    artistas: evento.artistas,
+    gira: evento.gira,
     ticket_url: evento.ticket_url,
     event_type: evento.event_type,
     is_local: evento.is_local,
@@ -262,6 +267,7 @@ function Ficha({
   // Las salas aprobadas, para poder reasignar. Se piden acá y no en la lista
   // porque solo hacen falta con una ficha abierta.
   const [salas, setSalas] = useState<{ id: string; name: string }[]>([]);
+  const [delDirectorio, setDelDirectorio] = useState<string[]>([]);
   const [ocupado, setOcupado] = useState(false);
   const [borrando, setBorrando] = useState(false);
 
@@ -269,6 +275,11 @@ function Ficha({
     // Si falla, el resto de la ficha sigue sirviendo: lo único que se pierde
     // es poder cambiar la sala, y eso no puede tumbar la pantalla entera.
     void getSalasPublicadas().then(setSalas).catch(() => {});
+    // Los nombres del directorio, para escribir el del cartel igual que el
+    // de la ficha. Sin ellos el campo se escribe a mano y ya.
+    void getArtistasParaVincular()
+      .then((todos) => setDelDirectorio(todos.map((a) => a.nombre)))
+      .catch(() => {});
   }, []);
 
   const cambio = evento.change_detail;
@@ -373,6 +384,41 @@ function Ficha({
           alCambiar={(g) => editar({ generos: g })}
         />
 
+        {/* Acá es donde de verdad llega la lista: la prellena la ingesta con
+            lo que leyó del título de la sala, y esta es la pantalla donde se
+            corrige antes de publicar. */}
+        <CampoDeArtistas
+          valor={campos.artistas ?? []}
+          alCambiar={(a) => editar({ artistas: a })}
+          sugerencias={delDirectorio}
+        />
+
+        {(campos.artistas ?? []).length >= 2 && (
+          <>
+            <label className="sm:col-span-2">
+              <Rotulo>Gira o ciclo (opcional)</Rotulo>
+              <input
+                value={campos.gira ?? ""}
+                onChange={(e) => editar({ gira: e.target.value || null })}
+                className={CAMPO}
+              />
+            </label>
+
+            {/* Con dos artistas el título deja de ser lo que se muestra, y
+                esta línea es lo único que lo hace evidente desde acá. */}
+            <p className="sm:col-span-2 -mt-1 text-xs text-muted">
+              En la cartelera se verá:{" "}
+              <span className="text-foreground">
+                {encabezadoEnTexto({
+                  title: campos.title ?? "",
+                  artistas: campos.artistas ?? [],
+                  gira: campos.gira ?? null,
+                })}
+              </span>
+            </p>
+          </>
+        )}
+
         {/* Reasignar la sala. Aparece siempre, pero es la razón de que
             descartar una sala no deje a sus eventos en un callejón sin
             salida: vuelven a la cola sin sala y acá se les da otra. */}
@@ -391,7 +437,7 @@ function Ficha({
             ))}
           </select>
           {evento.sala_descartada && (
-            <span className="mt-1 block text-xs text-red-400">
+            <span className="mt-1 block text-xs text-danger">
               Su sala se descartó, así que volvió a la cola. Dale una nueva o
               descártalo.
             </span>
@@ -502,7 +548,7 @@ function Ficha({
         <button
           disabled={ocupado}
           onClick={() => setBorrando(true)}
-          className={`${BOTON_ROJO} ${evento.status === "descartado" ? "ml-auto" : ""}`}
+          className={`${BOTON_PELIGRO} ${evento.status === "descartado" ? "ml-auto" : ""}`}
         >
           Borrar
         </button>
@@ -542,7 +588,7 @@ function ConfirmarBorrado({
   const fuentes = evento.events.length;
 
   return (
-    <div className="mt-4 rounded-md border border-red-500/40 bg-background p-4">
+    <div className="mt-4 rounded-md border border-danger/40 bg-background p-4">
       <p className="text-sm font-medium">Borrar «{evento.title}» para siempre</p>
       <p className="mt-2 text-xs leading-relaxed text-muted">
         Esto no es lo mismo que quitarlo de la cartelera. Se borra el evento y{" "}
@@ -567,7 +613,7 @@ function ConfirmarBorrado({
         <button
           disabled={ocupado || motivo.trim().length < 5}
           onClick={() => alConfirmar(motivo.trim())}
-          className={`${BOTON} bg-red-600 text-white disabled:opacity-40`}
+          className={`${BOTON} bg-danger text-background disabled:opacity-40`}
           title={motivo.trim().length < 5 ? "Escribe el motivo primero" : undefined}
         >
           Borrar definitivamente
@@ -619,7 +665,7 @@ function PosibleDuplicado({
       </p>
 
       {fallo ? (
-        <p className="mt-2 text-xs text-red-400">
+        <p className="mt-2 text-xs text-danger">
           No se pudo cargar el otro evento. Mejor no unificar a ciegas.
         </p>
       ) : otro ? (

@@ -35,6 +35,18 @@
   --accent-2: #0c7189;
   --accent-3: #c2185b; /* magenta: la marca de escena local, y nada más */
 
+  /* Peligro: el error de un formulario, el borde de una zona destructiva y
+     el botón que borra. Es token desde el 2026-09-15 y antes eran clases
+     crudas de Tailwind — y ahí está el punto: **nadie mide lo que no está en
+     esta tabla**. `text-red-400` daba 2.60 sobre el papel y `text-red-300`
+     1.73, así que el aviso de "qué falta" del formulario aparecía en el
+     campo correcto y no se leía. Este da 5.88 sobre el papel y 6.33 sobre
+     surface.
+
+     El botón sólido lleva `--background` encima, igual que el de boletería
+     con el verde: 5.88 en claro y 8.46 en oscuro. */
+  --danger: #b3261e;
+
   /* Tono del mapa: el mapa (`/mapa`) es MapLibre con el estilo `liberty`,
      que es claro y no cambia con el toggle — esa decisión es del 2026-08-27
      y sigue en pie. Por eso este token NO se sobreescribe en
@@ -68,6 +80,9 @@
   --accent: #4ae63a;
   --accent-2: #4fd4ef;
   --accent-3: #ff5fb0;
+  /* 8.46 sobre el fondo y 7.75 sobre surface. Sube de tono como el resto de
+     los acentos en oscuro: el rojo oscuro de claro daría 4.05 acá. */
+  --danger: #ff8a80;
   --grano-opacidad: 0.06;
 }
 
@@ -81,6 +96,7 @@
   --color-accent: var(--accent);
   --color-accent-2: var(--accent-2);
   --color-accent-3: var(--accent-3);
+  --color-danger: var(--danger);
 
   /* Bricolage Grotesque reemplaza a Fredoka en los titulares. Fredoka es
      una geométrica redondeada de ascendentes cortas: daba lo "cercano" del

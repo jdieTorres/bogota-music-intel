@@ -21,7 +21,7 @@ import {
   BORDE_EN_FALTA,
   BOTON_AZUL,
   BOTON_PRIMARIO,
-  BOTON_ROJO,
+  BOTON_PELIGRO,
   BOTON_SECUNDARIO,
   BOTON_TENUE,
   CAMPO,
@@ -372,7 +372,7 @@ function FichaDeArtista({
         <button
           disabled={ocupado}
           onClick={() => void correr(() => descartarArtista(artista.id), alVolver)}
-          className={`${BOTON_ROJO} ml-auto`}
+          className={`${BOTON_PELIGRO} ml-auto`}
         >
           Sacar del directorio
         </button>
@@ -476,7 +476,7 @@ function Tracks({
             className={CAMPO}
           />
           {lectura && !lectura.reconocido && (
-            <span className="mt-1 block text-xs text-red-400">{lectura.motivo}</span>
+            <span className="mt-1 block text-xs text-danger">{lectura.motivo}</span>
           )}
           {enlace && (
             <span className="mt-1 block text-xs text-muted">
@@ -647,7 +647,7 @@ function RenglonDeTrack({
       <button
         disabled={ocupado}
         onClick={() => void correr(() => borrarTrack(track.id))}
-        className={BOTON_ROJO}
+        className={BOTON_PELIGRO}
       >
         Quitar
       </button>

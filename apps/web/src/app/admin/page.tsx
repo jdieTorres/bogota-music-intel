@@ -131,7 +131,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {error && <p className="mt-6 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-6 text-sm text-danger">{error}</p>}
 
       {seccion === "salas" ? (
         <ModeracionDeSalas setError={setError} />
@@ -200,7 +200,7 @@ function Ingreso() {
           required
           className={CAMPO}
         />
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <button type="submit" disabled={entrando} className={`${BOTON} bg-accent text-background`}>
           {entrando ? "Entrando…" : "Entrar"}
         </button>
