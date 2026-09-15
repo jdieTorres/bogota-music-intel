@@ -8,6 +8,7 @@ from bogota_music_intel.titulos import (
     normalizar_titulo,
     partir_artista_y_gira,
     partir_artistas,
+    partir_titulo,
     titulo_caso,
 )
 from bogota_music_intel.titulos_curados import GRAFIAS, TITULOS
@@ -327,3 +328,74 @@ class TestSeparadorColgando:
             concierto("Gustavo Santaolalla llega a Bogotá con el Ronroco Tour", JEG)
             == "Gustavo Santaolalla | Ronroco Tour"
         )
+
+
+class TestTituloPartido:
+    """Las piezas del título dejan de botarse (2026-09-15).
+
+    `normalizar_titulo` siempre calculó la lista de artistas y la gira para
+    poder armar el texto; `partir_titulo` es la misma función devolviendo las
+    tres cosas. El texto tiene que salir idéntico —eso lo cubren los tests de
+    arriba, que siguen llamando a `normalizar_titulo`— y acá se verifica lo
+    que antes se perdía.
+    """
+
+    def test_devuelve_los_artistas_del_cartel_por_separado(self):
+        partido = partir_titulo("Mukangu/Atake Mapale/ Los Yoryis", "music", LATINO)
+        # La tilde de "Mapalé" la pone la lista de grafías curadas, y la
+        # lista la hereda: los nombres salen ya escritos como se escriben.
+        assert partido.artistas == ("Mukangu", "Atake Mapalé", "Los Yoryis")
+        assert partido.gira is None
+        # El texto sigue siendo el de siempre: esto es aditivo.
+        assert partido.titulo == "Mukangu & Atake Mapalé & Los Yoryis"
+
+    def test_separa_la_gira_del_cartel(self):
+        partido = partir_titulo("Gustavo Santaolalla llega a Bogotá con el Ronroco Tour", "music", JEG)
+        assert partido.artistas == ("Gustavo Santaolalla",)
+        assert partido.gira == "Ronroco Tour"
+
+    def test_un_solo_artista_tambien_entra_a_la_lista(self):
+        # Con un nombre la pantalla muestra `title` igual, pero la lista sirve
+        # para armar el cartel de un clic, que es de donde sale el directorio.
+        partido = partir_titulo("AKRIILA EN BOGOTÁ", "music", ROCKAL)
+        assert partido.artistas == ("Akriila",)
+
+    def test_el_ampersand_curado_no_parte_a_nadie(self):
+        """⚠️ El contraejemplo que decide el diseño entero.
+
+        "Carlos Vives & La Provincia" está curado como **un** artista, con
+        evidencia: ese "&" no separa dos actos, nombra a un artista con su
+        banda. Por eso la lista no se puede recuperar partiendo el título
+        publicado por " & " al mostrarlo, y por eso existe esta columna.
+
+        Si este test se cae, alguien reintrodujo el atajo.
+        """
+        partido = partir_titulo("Carlos Vives & La Provincia Tour Al Sol", "music", MOVISTAR)
+        assert partido.artistas == ("Carlos Vives & La Provincia",)
+        assert partido.titulo == "Carlos Vives & La Provincia | Tour al Sol"
+
+    def test_una_fiesta_no_tiene_artistas_de_cartel(self):
+        partido = partir_titulo("Poder Femenino Noches Bomm.", "fiesta", LATINO)
+        assert partido.artistas == ()
+        assert partido.gira is None
+
+    def test_un_festival_tampoco(self):
+        """Y no es un hueco: quiénes de la escena tocan en un festival es un
+        juicio editorial que se anota en el cartel, no algo que un separador
+        de texto pueda sacar del nombre del festival."""
+        partido = partir_titulo("Rock al Parque 2026", "festival", None)
+        assert partido.artistas == ()
+        assert partido.titulo == "Rock al Parque 2026"
+
+    def test_partir_el_titulo_publicado_por_ampersand_da_mal(self):
+        """El mismo caso, comprobado al revés: con el atajo puesto.
+
+        Un test que solo afirma lo correcto no impide que alguien vuelva a
+        "recuperar la lista partiendo el título por &, que total el & lo
+        ponemos nosotros". Así que acá se hace exactamente eso y se deja ver
+        que inventa un artista que no existe.
+        """
+        partido = partir_titulo("Carlos Vives & La Provincia Tour Al Sol", "music", MOVISTAR)
+        atajo = partido.titulo.split(" | ")[0].split(" & ")
+        assert atajo == ["Carlos Vives", "La Provincia"]  # dos, y son uno
+        assert partido.artistas == ("Carlos Vives & La Provincia",)

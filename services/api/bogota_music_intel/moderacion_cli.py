@@ -55,7 +55,7 @@ CAMPOS_CRUDOS = (
 CAMPOS_SALAS = "id,name"
 CAMPOS_CANONICOS = (
     "id,status,origin,venue_id,title,starts_at,source_snapshot,change_detected_at,"
-    "event_type,is_local,suggested_duplicate_of"
+    "event_type,is_local,suggested_duplicate_of,artistas"
 )
 
 
@@ -349,6 +349,60 @@ def _normalizar_titulos(client, crudos, canonicos, salas, guardar: bool) -> int:
     return puestos_al_dia
 
 
+def _rellenar_artistas(client, crudos, canonicos, salas, guardar: bool) -> int:
+    """Paso único: llena `artistas` y `gira` de los canónicos que ya existían.
+
+    Las columnas nacieron vacías el 2026-09-15 y desde entonces las llena
+    `borrador_desde` en cada borrador nuevo. Esto es para los que ya estaban.
+
+    ⚠️ **Solo donde el título publicado es exactamente el que produce el
+    normalizador desde el crudo.** Si difiere, alguien lo editó a mano —o la
+    fuente lo movió después— y la lista calculada desde el crudo podría no
+    corresponder a lo que está publicado. Ahí se salta y la columna queda
+    vacía, para que la llene una persona en el formulario. Es la regla de
+    siempre: un hueco honesto vale más que una lista verosímil y falsa.
+
+    Y por eso **no hace falta mirar `reviewed_at`**: comparar los títulos ya
+    distingue lo que alguien tocó de lo que nadie tocó, que es lo que
+    `reviewed_at` no sabe responder.
+
+    No toca `title` ni `source_snapshot`: escribe solo columnas que están
+    vacías, así que correrlo dos veces no cambia nada.
+    """
+    por_canonico = _por_canonico(crudos)
+
+    rellenados = 0
+    saltados = 0
+    for canonico in canonicos:
+        if canonico.get("artistas"):
+            continue
+
+        fuentes = _ordenados(por_canonico.get(canonico["id"], []))
+        if not fuentes:
+            continue
+
+        propuesto = borrador_desde(fuentes, salas)
+        if propuesto["title"] != canonico["title"]:
+            saltados += 1
+            print(f"  se salta, el título no es el calculado:  {canonico['title']}")
+            continue
+
+        artistas = propuesto.get("artistas") or []
+        if not artistas:
+            continue
+
+        print(f"  {canonico['title']}  ->  {artistas}")
+        if guardar:
+            client.table("canonical_events").update(
+                {"artistas": artistas, "gira": propuesto.get("gira")}
+            ).eq("id", canonico["id"]).execute()
+        rellenados += 1
+
+    if saltados:
+        print(f"\n{saltados} sin tocar: su título no sale del normalizador.")
+    return rellenados
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="No guarda, solo reporta")
@@ -356,6 +410,11 @@ def main() -> int:
         "--normalizar-titulos",
         action="store_true",
         help="Paso único: normaliza los títulos que se guardaron crudos",
+    )
+    parser.add_argument(
+        "--rellenar-artistas",
+        action="store_true",
+        help="Paso único: llena artistas y gira de los canónicos que ya existían",
     )
     parser.add_argument(
         "--backfill",
@@ -386,6 +445,9 @@ def main() -> int:
     if args.normalizar_titulos:
         puestos = _normalizar_titulos(client, crudos, canonicos, salas, guardar)
         print(f"\n{puestos} títulos puestos al día.")
+    elif args.rellenar_artistas:
+        rellenados = _rellenar_artistas(client, crudos, canonicos, salas, guardar)
+        print(f"\n{rellenados} canónicos con su lista de artistas.")
     elif args.backfill:
         if canonicos:
             print(

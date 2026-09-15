@@ -53,6 +53,17 @@ export type EventoEnCola = {
   category: string | null;
   /** Los géneros del toque, escritos a mano. Varios por evento. */
   generos: string[];
+  /**
+   * Quiénes tocan, según el anuncio. Lo prellena la ingesta o el lector de
+   * afiches, y se corrige acá.
+   *
+   * ⚠️ **No es el cartel del directorio.** Eso son fichas y se arma en la
+   * ficha del toque (`event_artists`). Esta lista es texto: lo que decía el
+   * anuncio, que es lo que la cartelera muestra cuando hay varias bandas.
+   */
+  artistas: string[];
+  /** Lo que va detrás del artista en el encabezado: la gira o el ciclo. */
+  gira: string | null;
   ticket_url: string | null;
   image_url: string | null;
   event_type: TipoEvento;
@@ -84,7 +95,7 @@ export type EventoEnCola = {
 
 const CAMPOS = `
   id, status, origin, title, starts_at, description, price_text, venue_id,
-  price_kind, price_min, price_max, category, generos,
+  price_kind, price_min, price_max, category, generos, artistas, gira,
   ticket_url, image_url, event_type, is_local, evidence, source_snapshot,
   change_detail, change_detected_at, suggested_duplicate_of,
   venues ( slug, name, status ),
@@ -106,6 +117,8 @@ export type Correccion = Partial<
     | "price_min"
     | "price_max"
     | "generos"
+    | "artistas"
+    | "gira"
     | "ticket_url"
     | "event_type"
     | "is_local"
@@ -345,6 +358,11 @@ export type EventoNuevo = {
    *  Compartir campo hacía que la cartelera mostrara la taxonomía de la
    *  cartelera de origen como si fuera el género del toque. */
   generos?: string[];
+  /** Quiénes tocan, según el anuncio. Con dos o más, es lo que la
+   *  cartelera muestra como encabezado en vez del título. */
+  artistas?: string[];
+  /** La gira o el ciclo, si el encabezado lleva uno. */
+  gira?: string | null;
   event_type: TipoEvento;
   is_local: boolean | null;
   /** El afiche. En un evento cargado a mano es el que subió el admin al

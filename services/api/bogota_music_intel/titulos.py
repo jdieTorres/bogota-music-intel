@@ -28,6 +28,7 @@ se les escape lo corrige el admin antes de publicar.
 """
 import re
 import unicodedata
+from dataclasses import dataclass
 
 from bogota_music_intel.titulos_curados import GRAFIAS, TITULOS
 
@@ -379,8 +380,44 @@ def _unir(artistas: list[str], gira: str | None) -> str:
     return f"{cartel} | {gira}" if gira else cartel
 
 
+@dataclass(frozen=True)
+class TituloPartido:
+    """Las tres cosas que sabe el normalizador, sin aplanar.
+
+    Hasta el 2026-09-15 esta función calculaba las tres y devolvía solo
+    `titulo`: los nombres sueltos se pegaban con " & " y se botaban un
+    renglón después de tenerlos en la mano. El "&" encadenado se lee mal con
+    tres nombres, pero el problema de fondo es que **una frase no enlaza con
+    nada**: mientras los artistas vivan pegados dentro del título, el
+    directorio no puede saber que ahí hay tres.
+
+    ⚠️ `artistas` es **lo que dijo la fuente, no el cartel**. Quién tocó de
+    verdad lo confirma una persona en `event_artists`. Por eso en pantalla
+    esta lista va sin enlazar y el cartel manda sobre ella en cuanto exista.
+
+    Va vacía en fiestas y festivales, y es correcto: ahí no hay artista de
+    cartel a quien separar del título, y la selección de quiénes de la escena
+    tocan en un festival es un juicio editorial que ninguna regla de texto
+    puede hacer.
+    """
+
+    titulo: str
+    artistas: tuple[str, ...]
+    gira: str | None
+
+
 def normalizar_titulo(crudo: str, event_type: str | None = None, sala: str | None = None) -> str:
     """El título tal como se va a publicar.
+
+    Envoltorio de `partir_titulo` para quien solo quiere el texto.
+    """
+    return partir_titulo(crudo, event_type, sala).titulo
+
+
+def partir_titulo(
+    crudo: str, event_type: str | None = None, sala: str | None = None
+) -> TituloPartido:
+    """El título tal como se va a publicar, y las piezas de las que sale.
 
     `sala` es el nombre de la sala del evento, si se conoce: sirve para poder
     quitar el "en <sala>" que varias fuentes le pegan al título. Sin él se
@@ -390,7 +427,15 @@ def normalizar_titulo(crudo: str, event_type: str | None = None, sala: str | Non
 
     curado = _TITULOS_POR_CLAVE.get(clave_de_titulo(limpio))
     if curado:
-        return _unir(list(curado.artistas), curado.gira)
+        # ⚠️ La lista curada manda también acá, y es lo que impide el error
+        # que mataría a este cambio: "Carlos Vives & La Provincia" está
+        # curado como **un** artista, con evidencia, porque ese "&" no separa
+        # a nadie. Partir por "&" al mostrar lo rompería.
+        return TituloPartido(
+            titulo=_unir(list(curado.artistas), curado.gira),
+            artistas=curado.artistas,
+            gira=curado.gira,
+        )
 
     grita = es_grito(limpio)
     # Fiesta y festival comparten exactamente lo que le importa a esta
@@ -410,7 +455,11 @@ def normalizar_titulo(crudo: str, event_type: str | None = None, sala: str | Non
     # nombre del ciclo o del festival es todo el título. Solo se le quita el
     # ruido de sala.
     if sin_cartel:
-        return titulo_caso(_quitar_punto_final(f"{cuerpo} {cola}".strip()), grita)
+        return TituloPartido(
+            titulo=titulo_caso(_quitar_punto_final(f"{cuerpo} {cola}".strip()), grita),
+            artistas=(),
+            gira=None,
+        )
 
     anuncio = _PRESENTA.match(cuerpo)
     if anuncio:
@@ -423,4 +472,11 @@ def normalizar_titulo(crudo: str, event_type: str | None = None, sala: str | Non
         for a in partir_artistas(artista, anuncio is not None)
     ]
     gira_final = gira or (cola or None)
-    return _unir(artistas, titulo_caso(_quitar_punto_final(gira_final), grita) if gira_final else None)
+    gira_formateada = (
+        titulo_caso(_quitar_punto_final(gira_final), grita) if gira_final else None
+    )
+    return TituloPartido(
+        titulo=_unir(artistas, gira_formateada),
+        artistas=tuple(artistas),
+        gira=gira_formateada,
+    )

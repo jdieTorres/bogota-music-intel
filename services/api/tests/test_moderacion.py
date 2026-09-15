@@ -193,3 +193,37 @@ class TestCamposQueSePiden:
         pedidos = {c.strip() for c in CAMPOS_CRUDOS.split(",")}
         faltan = set(CAMPOS_VIGILADOS) - pedidos
         assert not faltan, f"CAMPOS_CRUDOS no pide: {sorted(faltan)}"
+
+
+class TestArtistasDelBorrador:
+    """El borrador se queda con la lista, no solo con el título (2026-09-15)."""
+
+    def test_guarda_los_artistas_y_la_gira_aparte(self):
+        borrador = borrador_desde(
+            [crudo(title="Mukangu/Atake Mapale/ Los Yoryis")],
+            {SALA: "Latino Power Chapinero"},
+        )
+        assert borrador["title"] == "Mukangu & Atake Mapalé & Los Yoryis"
+        assert borrador["artistas"] == ["Mukangu", "Atake Mapalé", "Los Yoryis"]
+        assert borrador["gira"] is None
+
+    def test_un_solo_artista_tambien_queda_en_la_lista(self):
+        borrador = borrador_desde([crudo()], {SALA: "Royal Center"})
+        assert borrador["artistas"] == ["Akriila"]
+
+    def test_la_lista_no_entra_al_snapshot(self):
+        """⚠️ `artistas` sale de `title`, que ya se vigila.
+
+        Vigilarla además mandaría el mismo cambio de la fuente a la cola dos
+        veces, con dos etiquetas distintas para un solo hecho.
+        """
+        borrador = borrador_desde(
+            [crudo(title="Mukangu/Atake Mapale/ Los Yoryis")],
+            {SALA: "Latino Power Chapinero"},
+        )
+        assert "artistas" not in borrador["source_snapshot"]
+        assert "gira" not in borrador["source_snapshot"]
+
+    def test_una_fiesta_no_trae_artistas(self):
+        borrador = borrador_desde([crudo(title="Noches Bomm", event_type="fiesta")])
+        assert borrador["artistas"] == []

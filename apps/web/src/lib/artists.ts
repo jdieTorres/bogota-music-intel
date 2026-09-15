@@ -250,3 +250,37 @@ export async function getDirectorio(): Promise<Directorio> {
     senales: new Map(senales.map((s) => [s.slug, s])),
   };
 }
+
+/** Un artista del cartel confirmado, para enlazarlo desde la ficha del toque. */
+export type EnElCartelPublico = { nombre: string; slug: string };
+
+/**
+ * Quién tocó en un evento, confirmado por una persona.
+ *
+ * ⚠️ **No es lo mismo que `canonical_events.artistas`.** Esa columna son los
+ * nombres que leyó la fuente o el afiche, y sirve para escribir el
+ * encabezado; esta son las fichas del directorio que alguien vinculó a mano,
+ * y es lo único que puede enlazar a una página de artista.
+ *
+ * Devuelve vacío mientras nadie haya armado el cartel, que hoy es casi
+ * siempre: el encabezado se pinta igual, solo que sin enlaces.
+ */
+export async function getCartelPublicado(
+  eventoId: string,
+): Promise<EnElCartelPublico[]> {
+  const { data, error } = await supabase
+    .from("event_artists")
+    .select(`orden, artists ( nombre, slug, status )`)
+    .eq("canonical_event_id", eventoId)
+    .order("orden");
+
+  // Un cartel que no carga no puede tumbar la ficha del toque: sin él la
+  // página se lee igual, solo que los nombres no enlazan.
+  if (error) return [];
+
+  type Fila = { artists: { nombre: string; slug: string; status: string } | null };
+  return ((data ?? []) as unknown as Fila[])
+    .map((fila) => fila.artists)
+    .filter((a): a is NonNullable<typeof a> => Boolean(a) && a!.status === PUBLICADO)
+    .map(({ nombre, slug }) => ({ nombre, slug }));
+}

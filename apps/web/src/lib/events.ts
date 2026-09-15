@@ -64,6 +64,20 @@ export type Evento = {
    * si el crudo no está acá, ningún componente puede equivocarse con él.
    */
   generos: string[];
+  /**
+   * Los artistas del cartel tal como los leyó la fuente o el afiche, en el
+   * orden en que venían.
+   *
+   * ⚠️ **Es una sugerencia, no el cartel.** Quién tocó de verdad lo confirma
+   * una persona en `event_artists`, y eso son fichas del directorio. Por eso
+   * estos nombres se pintan como texto y sin enlazar: afirman lo que decía el
+   * anuncio, no que exista un artista con ese nombre.
+   *
+   * Vacía en fiestas y festivales, donde no hay artista de cartel.
+   */
+  artistas: string[];
+  /** Lo que venía detrás del artista en el título: la gira o el ciclo. */
+  gira: string | null;
   event_type: TipoEvento;
   /** null = no se pudo resolver el origen del artista. Distinto de false,
    *  que es un internacional confirmado. */
@@ -83,7 +97,7 @@ export type Evento = {
 
 const CAMPOS = `
   id, title, starts_at, ends_at, date_precision, description,
-  price_kind, price_min, price_max, generos, ticket_url, image_url,
+  price_kind, price_min, price_max, generos, artistas, gira, ticket_url, image_url,
   event_type, is_local, origin, evidence, reviewed_at,
   venues ( slug, name, city ),
   events ( source, source_url )

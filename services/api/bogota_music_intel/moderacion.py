@@ -23,7 +23,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from bogota_music_intel.deduplicacion import mas_completo
-from bogota_music_intel.titulos import normalizar_titulo
+from bogota_music_intel.titulos import partir_titulo
 
 # Los campos crudos que se vigilan: si la sala mueve alguno después de que
 # el admin aprobó, el evento vuelve a la cola.
@@ -136,12 +136,25 @@ def borrador_desde(crudos: list[dict], salas: dict[str, str] | None = None) -> d
                     borrador[campo] = otro[campo]
                     break
 
+    # El normalizador calcula la lista de artistas y la gira para armar el
+    # título; acá se guardan las tres, no solo el texto. La lista es lo que
+    # deja que la pantalla tipografíe un cartel de varias bandas como lista y
+    # no como una frase con "&", y lo que hace que armar el cartel de verdad
+    # —el de `event_artists`, con fichas— sea un clic y no volver a teclear
+    # los nombres.
+    #
+    # ⚠️ **Es una sugerencia de la fuente, no el cartel.** No entra a
+    # `CAMPOS_VIGILADOS` a propósito: sale de `title`, que ya se vigila, y
+    # duplicar la vigilancia mandaría el mismo cambio a la cola dos veces.
     if borrador.get("title"):
-        borrador["title"] = normalizar_titulo(
+        partido = partir_titulo(
             borrador["title"],
             borrador.get("event_type"),
             (salas or {}).get(borrador.get("venue_id") or ""),
         )
+        borrador["title"] = partido.titulo
+        borrador["artistas"] = list(partido.artistas)
+        borrador["gira"] = partido.gira
 
     # Lo que el clasificador ya reconoció como "no es música" no pasa por la
     # cola: nace descartado. Pedido de Juan el 2026-09-01, después de borrar
