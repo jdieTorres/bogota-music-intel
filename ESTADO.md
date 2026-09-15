@@ -23,16 +23,25 @@ el 2026-09-09: primero se pule y se despliega, y el contenido se carga sobre el
 sitio ya en pie. Siguen siendo lo que le falta al producto — no lo que bloquea
 el siguiente paso.
 
-- 🔴 **El cron falla 5 de cada 6 días desde el 2026-09-09**, y eso es peor de
-  lo que este archivo venía diciendo. Contado el 2026-09-15 sobre las corridas
-  **agendadas** (`event=schedule`, las de `workflow_dispatch` no cuentan): 14
-  verdes de 19 en total, pero **de las últimas seis solo pasó la del 13**. Del
-  3 al 8 estaban todas en verde; el deterioro empieza el 9.
+- 🟠 **El cron sale en rojo 5 de cada 6 días desde el 2026-09-09, y es solo
+  Ticketlive.** Juan leyó el log el 2026-09-15 y dice exactamente esto:
 
-  El paso que cae es `Run event scrapers`. Desde `892b3c5` el rojo dice qué
-  fuente cayó y por qué, y ese mensaje está en el log — que la API pública no
-  deja leer sin token, así que **hay que abrirlo con sesión**:
-  `github.com/jdieTorres/bogota-music-intel/actions/runs/34884325706`.
+  > `[ticketlive] FALLÓ: RuntimeError: la frenó el anti-bots de SiteGround.` La
+  > respuesta fue un **202 con `content-type: text/html`** y un refresco a
+  > `/.well-known/sgcaptcha/`.
+
+  ⚠️ **Las otras seis fuentes corren y guardan.** El `except` de `scrape_cli`
+  está **dentro** del bucle —"una fuente rota no debe tumbar a las demás"— y
+  solo al final devuelve 1 si hubo algún error. Así que **la cartelera no se
+  está vaciando**: el rojo es de una fuente, no de la corrida.
+
+  Contado sobre las corridas agendadas (`event=schedule`; las de
+  `workflow_dispatch` no cuentan): 14 verdes de 19, todas verdes del 3 al 8, y
+  de las últimas seis solo pasó la del 13. Lo que empeoró el 9 fue **la suerte
+  de Ticketlive con la IP del runner**, no el pipeline.
+
+  Lo que esto deja decidido y lo que deja abierto está abajo, en la pregunta
+  del rojo: es la que ahora tiene una consecuencia medida.
 
   ⚠️ **Y la hora programada no es la hora real.** El workflow dice `0 14 * * *`
   —las 9:00 de Bogotá— pero GitHub lo dispara con retraso: las últimas doce
@@ -84,12 +93,18 @@ el siguiente paso.
 
 ### Preguntas abiertas — hay que hacérselas a Juan, no resolverlas por cuenta propia
 
-- **¿Un fallo de una sola fuente tiene que pintar la corrida entera de rojo?**
-  Hoy sí: el CLI sale con 1 si cualquiera falló. Desde el 2026-09-13 el rojo al
-  menos dice cuál y por qué, pero sigue siendo el mismo rojo para un hipo de
-  red y para un bloqueo de cuatro días. Distinguirlos pide **recordar las
-  corridas anteriores** —una tabla nueva, migración incluida— y esa decisión no
-  se tomó.
+- 🔥 **¿Un fallo de una sola fuente tiene que pintar la corrida entera de
+  rojo?** Hoy sí: el CLI sale con 1 si cualquiera falló. **Y el 2026-09-15 esa
+  pregunta dejó de ser teórica**: el cron lleva seis días saliendo en rojo por
+  Ticketlive mientras las otras seis fuentes guardan sin problema, así que el
+  rojo dejó de significar "hay que mirar esto" y pasó a significar "Ticketlive
+  otra vez". Es la regla dura de que **una señal que sirve para todo no señala
+  nada**, y ya está pasando.
+
+  Distinguir un bloqueo conocido de un fallo nuevo pide **recordar las corridas
+  anteriores** —una tabla nueva, migración incluida—. La salida barata, si se
+  quiere una: que Ticketlive no sume a `had_errors` cuando el motivo es el
+  portero, y que su bloqueo se reporte aparte. Esa decisión es de Juan.
 - **¿`geocode.py` también usa `json_de`?** Tiene el mismo `.json()` pelado
   contra Nominatim que costó cuatro corridas rojas del lado de los scrapers. Es
   una línea, pero no es el cron y no se tocó.
@@ -133,12 +148,14 @@ el siguiente paso.
 
 ## 2. Lo que quedó a medias
 
-- **Dos rutas del cron no se han estrenado en CI, por falta de ocasión.** El
-  mensaje que nombra al portero anti-bots y el "cero eventos es fallo": el
-  primero necesita que alguien nos desafíe con el código nuevo puesto —la
-  corrida 29 pasó entera—, y el segundo, que una fuente devuelva una lista
-  vacía, que nunca ha ocurrido. Lo demás de esa tanda sí corrió: la anotación
-  con la fuente y el motivo salió en la corrida 28.
+- **Queda una ruta del cron sin estrenar: "traer cero eventos es fallo".**
+  Necesita que una fuente devuelva una lista vacía, y nunca ha ocurrido.
+
+  **La otra ya se estrenó**, y bien: el mensaje que nombra al portero anti-bots
+  salió en el log del 2026-09-14 con todo lo que tenía que decir —qué fuente,
+  qué la frenó, el código 202, el `content-type` que no era JSON y el principio
+  del cuerpo—. `json_de` hizo su trabajo: el error dice **qué** pasó y no solo
+  que pasó algo.
 - **Hay un paso de relleno escrito y sin correr, y no corre prisa.** `python -m
   bogota_music_intel.moderacion_cli --rellenar-artistas [--dry-run]` recalcula
   `artistas` y `gira` de los canónicos que ya existían. Rellena solo donde el
@@ -194,12 +211,18 @@ el siguiente paso.
   con saldo cargado: lee, y los campos que el afiche no dice quedan vacíos con
   su explicación en las notas. Queda sin ejercitar el caso extremo —un afiche
   sin año— pero el comportamiento de fondo está comprobado.
-- **Ticketlive entra en 3 de cada 8 corridas, y así se queda.** El anti-bots de
-  su hosting (SiteGround) le pone un CAPTCHA a la IP del runner en las demás.
-  No se evade —regla dura— y el log ya dice quién lo frenó, así que la fuente
-  sigue en el cron aportando lo que alcanza. **No hay nada que decidir acá**:
-  si alguna vez se quiere cambiar, las únicas palancas legítimas están en
-  `context/ingesta/fuentes-y-legalidad.md`.
+- **Ticketlive entra cada vez menos: de 3 de cada 8 corridas pasó a 1 de cada
+  6.** El anti-bots de su hosting (SiteGround) le pone un CAPTCHA a la IP del
+  runner —202 con `text/html` y un refresco a `/.well-known/sgcaptcha/`— y desde
+  el 2026-09-09 casi siempre. No se evade —regla dura— y el log dice quién lo
+  frenó, así que la fuente sigue en el cron aportando lo que alcanza; sus
+  últimas filas nuevas son del 2026-09-11.
+
+  **Sobre la fuente no hay nada que decidir**: si alguna vez se quiere cambiar,
+  las únicas palancas legítimas están en
+  `context/ingesta/fuentes-y-legalidad.md`. Lo que sí hay que decidir es si su
+  bloqueo debe seguir pintando de rojo la corrida entera — está arriba, en las
+  preguntas abiertas.
 - **10 eventos vigentes cuelgan solo de `visitbogota`, que ya no corre.** ⚠️
   **Este archivo decía 6 y decía que eran del Movistar; el 2026-09-13 se
   recontaron y son 10, en tres salas**: 6 del Movistar Arena, 3 del Parque
@@ -303,12 +326,6 @@ Cómo leerlas sin equivocarse:
 `openGraph`, `robots.txt`, `sitemap.xml` y el `noindex` de `/admin`. Eran lo
 que "se congela al desplegar y se nota en el primer enlace compartido", y ya no
 bloquean nada.
-
-⚠️ **Y desde el 2026-09-15 hay algo que compite con el orden de abajo:** el
-cron falla 5 de cada 6 días desde el 9 (§ 1). Mientras no corra, la cartelera
-**se vacía sola** —los eventos pasan de fecha y no entra nada nuevo— así que
-desplegar un sitio que se está vaciando es desplegar un problema. Leer ese log
-cuesta un minuto con sesión y decide si esto es la primera tarea o la última.
 
 1. 🎯 **Desplegar a Vercel.** **Nada de lo construido lo ha visto nadie más que
    Juan**, y hay cuatro cosas que **solo se prueban ahí**: el tope de 60 s del
