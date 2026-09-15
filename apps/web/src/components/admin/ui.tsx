@@ -355,6 +355,11 @@ export function CampoDeGeneros({
  * ⚠️ **Esto es texto, no el cartel.** Escribir acá no crea ninguna ficha ni
  * vincula a nadie: eso se hace en la ficha del toque, donde se está mirando
  * el afiche. Acá se anota lo que dice el anuncio.
+ *
+ * **No es opcional desde el 2026-09-15**: al quitarse el campo de título, este
+ * pasó a ser el nombre del toque, y un toque sin nadie que toque no existe. En
+ * fiestas y festivales el campo ni siquiera aparece — ahí no hay artista de
+ * cartel y el nombre del ciclo se escribe aparte.
  */
 export function CampoDeArtistas({
   valor,
@@ -377,7 +382,7 @@ export function CampoDeArtistas({
 
   return (
     <label className="sm:col-span-2">
-      <Rotulo>Quiénes tocan (opcional)</Rotulo>
+      <Rotulo>Artista/s</Rotulo>
 
       {valor.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
@@ -423,8 +428,8 @@ export function CampoDeArtistas({
       </datalist>
 
       <span className="mt-1 block text-xs leading-relaxed text-muted">
-        Con dos o más, la cartelera muestra la lista en vez del título. Con uno
-        solo no cambia nada, pero queda anotado.
+        Hace falta al menos uno: es el nombre del toque. Con dos o más, la
+        cartelera los muestra como lista.
       </span>
     </label>
   );

@@ -45,7 +45,11 @@ import {
   unificarDuplicado,
 } from "@/lib/admin/eventos";
 import { getArtistasParaVincular } from "@/lib/admin/artistas";
-import { encabezadoEnTexto } from "@/lib/encabezado";
+import {
+  desestructurarTitulo,
+  encabezadoEnTexto,
+  tituloDesde,
+} from "@/lib/encabezado";
 
 export function ModeracionDeEventos({
   setError,
@@ -257,8 +261,14 @@ function Ficha({
     price_min: evento.price_min,
     price_max: evento.price_max,
     generos: evento.generos,
-    artistas: evento.artistas,
-    gira: evento.gira,
+    // Los canónicos anteriores al 2026-09-15 tienen la columna vacía y todo su
+    // contenido dentro de `title`, así que acá se parte para poder editarlo por
+    // los dos campos. Lo que trae el cron desde entonces ya viene partido y no
+    // se toca. Ver `desestructurarTitulo`: el " & " no es una inversa perfecta
+    // y por eso esto solo se hace en un formulario que alguien mira.
+    ...(evento.artistas.length === 0 && evento.title
+      ? desestructurarTitulo(evento.title)
+      : { artistas: evento.artistas, gira: evento.gira }),
     ticket_url: evento.ticket_url,
     event_type: evento.event_type,
     is_local: evento.is_local,
@@ -281,6 +291,49 @@ function Ficha({
       .then((todos) => setDelDirectorio(todos.map((a) => a.nombre)))
       .catch(() => {});
   }, []);
+
+  // Del tipo **escrito en el formulario**, no del que traía el evento: si se
+  // reclasifica un toque como fiesta, los campos cambian en el momento.
+  const sinCartel = campos.event_type === "fiesta" || campos.event_type === "festival";
+
+  /**
+   * Lo que se manda a guardar, con el título ya compuesto.
+   *
+   * En un toque el título **se arma** desde la lista y la gira: si se guardara
+   * el `title` viejo mientras los dos campos cambian, quedarían diciendo cosas
+   * distintas y la cartelera mostraría una y la tarjeta de compartir otra.
+   *
+   * ⚠️ En una fiesta o un festival pasa lo contrario y hay que limpiar: el
+   * título es el nombre del ciclo, y una lista de artistas colgando de ahí
+   * **haría que la cartelera mostrara esa lista en vez del nombre** en cuanto
+   * tuviera dos nombres. Se vacía al reclasificar, que es lo mismo que hace la
+   * ingesta con una fiesta desde el principio.
+   */
+  const paraGuardar = (): Correccion =>
+    sinCartel
+      ? { ...campos, artistas: [], gira: null }
+      : {
+          ...campos,
+          title: tituloDesde(campos.artistas ?? [], campos.gira ?? null),
+        };
+
+  /**
+   * Si hay con qué nombrar el evento.
+   *
+   * ⚠️ **Antes bastaba con que `title` no estuviera vacío, y desde que el
+   * título se compone eso dejó de alcanzar**: en un toque el `title` que hay en
+   * `campos` es el viejo, y el que se va a guardar sale de la lista. Sin
+   * artistas, `tituloDesde` devuelve cadena vacía y el evento se guardaría sin
+   * nombre — un fallo que se vería igual que un éxito hasta que alguien abriera
+   * la cartelera.
+   */
+  const nombreListo = sinCartel
+    ? Boolean((campos.title ?? "").trim())
+    : (campos.artistas ?? []).length > 0;
+
+  const avisoDeNombre = sinCartel
+    ? "Hace falta el nombre del ciclo"
+    : "Hace falta al menos un artista: es el nombre del toque";
 
   const cambio = evento.change_detail;
   const editar = (parcial: Correccion) => setCampos((c) => ({ ...c, ...parcial }));
@@ -357,14 +410,48 @@ function Ficha({
       )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <label className="sm:col-span-2">
-          <Rotulo>Título</Rotulo>
-          <input
-            value={campos.title ?? ""}
-            onChange={(e) => editar({ title: e.target.value })}
-            className={CAMPO}
-          />
-        </label>
+        {/* ⚠️ **Fiesta y festival conservan un campo de nombre; un toque no.**
+            No es una excepción caprichosa: en los dos primeros no hay artista
+            de cartel —es la misma razón por la que su `is_local` va en null y
+            por la que la ingesta les deja la lista vacía—, así que el título
+            *es* el nombre del ciclo y no se puede armar con nadie. En un toque
+            el nombre sale de quién toca, que es lo que se escribe abajo. */}
+        {sinCartel ? (
+          <label className="sm:col-span-2">
+            <Rotulo>Nombre del ciclo</Rotulo>
+            <input
+              value={campos.title ?? ""}
+              onChange={(e) => editar({ title: e.target.value })}
+              className={CAMPO}
+            />
+          </label>
+        ) : (
+          <>
+            <CampoDeArtistas
+              valor={campos.artistas ?? []}
+              alCambiar={(a) => editar({ artistas: a })}
+              sugerencias={delDirectorio}
+            />
+            <label className="sm:col-span-2">
+              <Rotulo>Gira o ciclo (opcional)</Rotulo>
+              <input
+                value={campos.gira ?? ""}
+                onChange={(e) => editar({ gira: e.target.value || null })}
+                className={CAMPO}
+              />
+            </label>
+            <p className="sm:col-span-2 -mt-1 text-xs text-muted">
+              En la cartelera se verá:{" "}
+              <span className="text-foreground">
+                {encabezadoEnTexto({
+                  title: tituloDesde(campos.artistas ?? [], campos.gira ?? null),
+                  artistas: campos.artistas ?? [],
+                  gira: campos.gira ?? null,
+                })}
+              </span>
+            </p>
+          </>
+        )}
         <CampoDeFechaYHora
           {...aCamposDeFecha(campos.starts_at ?? null)}
           alCambiar={({ fecha, hora }) =>
@@ -383,41 +470,6 @@ function Ficha({
           valor={campos.generos ?? []}
           alCambiar={(g) => editar({ generos: g })}
         />
-
-        {/* Acá es donde de verdad llega la lista: la prellena la ingesta con
-            lo que leyó del título de la sala, y esta es la pantalla donde se
-            corrige antes de publicar. */}
-        <CampoDeArtistas
-          valor={campos.artistas ?? []}
-          alCambiar={(a) => editar({ artistas: a })}
-          sugerencias={delDirectorio}
-        />
-
-        {(campos.artistas ?? []).length >= 2 && (
-          <>
-            <label className="sm:col-span-2">
-              <Rotulo>Gira o ciclo (opcional)</Rotulo>
-              <input
-                value={campos.gira ?? ""}
-                onChange={(e) => editar({ gira: e.target.value || null })}
-                className={CAMPO}
-              />
-            </label>
-
-            {/* Con dos artistas el título deja de ser lo que se muestra, y
-                esta línea es lo único que lo hace evidente desde acá. */}
-            <p className="sm:col-span-2 -mt-1 text-xs text-muted">
-              En la cartelera se verá:{" "}
-              <span className="text-foreground">
-                {encabezadoEnTexto({
-                  title: campos.title ?? "",
-                  artistas: campos.artistas ?? [],
-                  gira: campos.gira ?? null,
-                })}
-              </span>
-            </p>
-          </>
-        )}
 
         {/* Reasignar la sala. Aparece siempre, pero es la razón de que
             descartar una sala no deje a sus eventos en un callejón sin
@@ -509,26 +561,28 @@ function Ficha({
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
         {evento.status === "publicado" ? (
           <button
-            disabled={ocupado}
-            onClick={() => accion(() => guardar(evento.id, campos), true)}
-            className={`${BOTON} bg-accent text-background`}
+            disabled={ocupado || !nombreListo}
+            onClick={() => accion(() => guardar(evento.id, paraGuardar()), true)}
+            className={`${BOTON} bg-accent text-background disabled:opacity-40`}
+            title={!nombreListo ? avisoDeNombre : undefined}
           >
             Guardar cambios
           </button>
         ) : (
           <>
             <button
-              disabled={ocupado || !campos.title}
-              onClick={() => accion(() => publicar(evento.id, campos), true)}
+              disabled={ocupado || !nombreListo}
+              onClick={() => accion(() => publicar(evento.id, paraGuardar()), true)}
               className={`${BOTON} bg-accent text-background disabled:opacity-40`}
-              title={!campos.title ? "Sin título no se puede publicar" : undefined}
+              title={!nombreListo ? avisoDeNombre : undefined}
             >
               Publicar
             </button>
             <button
-              disabled={ocupado}
-              onClick={() => accion(() => guardar(evento.id, campos))}
-              className={BOTON_TENUE}
+              disabled={ocupado || !nombreListo}
+              onClick={() => accion(() => guardar(evento.id, paraGuardar()))}
+              className={`${BOTON_TENUE} disabled:opacity-40`}
+              title={!nombreListo ? avisoDeNombre : undefined}
             >
               Guardar sin publicar
             </button>

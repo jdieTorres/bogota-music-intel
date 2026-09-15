@@ -34,7 +34,7 @@ import type { PrecioEvento } from "@/lib/precio";
 import type { TipoEvento } from "@/lib/events";
 import { getArtistasParaVincular } from "@/lib/admin/artistas";
 import { crearSalaEnBorrador, getSalasPublicadas } from "@/lib/admin/salas";
-import { encabezadoEnTexto } from "@/lib/encabezado";
+import { encabezadoEnTexto, tituloDesde } from "@/lib/encabezado";
 
 /** El valor del selector que significa "la escribo yo". No puede chocar con
  *  ningún id de sala, que son uuid. */
@@ -48,7 +48,6 @@ export function FormularioDeEvento({
   alCrear: () => void;
 }) {
   const [salas, setSalas] = useState<{ id: string; name: string }[]>([]);
-  const [titulo, setTitulo] = useState("");
   const [sala, setSala] = useState("");
   const [salaNueva, setSalaNueva] = useState("");
   const [fecha, setFecha] = useState("");
@@ -62,6 +61,7 @@ export function FormularioDeEvento({
   const [generos, setGeneros] = useState<string[]>([]);
   const [artistas, setArtistas] = useState<string[]>([]);
   const [gira, setGira] = useState("");
+  const [nombreDelCiclo, setNombreDelCiclo] = useState("");
   const [delDirectorio, setDelDirectorio] = useState<string[]>([]);
   // "" es la opción "todavía no sé", que se guarda como null. Se separa
   // del union porque un <select> no puede tener valor null.
@@ -88,10 +88,25 @@ export function FormularioDeEvento({
       .catch(() => setDelDirectorio([]));
   }, []);
 
+  // Del tipo escrito acá, no del que traiga nada: cambiarlo cambia los campos
+  // en el momento.
+  const sinCartel = tipo === "fiesta" || tipo === "festival";
+
   // Con la sala escrita a mano, lo que hace falta es el nombre y no el id:
   // el id todavía no existe cuando se aprieta el botón.
   const salaLista = sala === SALA_NUEVA ? salaNueva.trim().length > 0 : Boolean(sala);
-  const listo = titulo.trim() && salaLista && evidencia.trim().length >= 10;
+  const nombreListo = sinCartel
+    ? nombreDelCiclo.trim().length > 0
+    : artistas.length > 0;
+  const listo = nombreListo && salaLista && evidencia.trim().length >= 10;
+
+  const queFalta = "Falta " + [
+    !nombreListo && (sinCartel ? "el nombre del ciclo" : "el artista"),
+    !salaLista && "la sala",
+    evidencia.trim().length < 10 && "la evidencia",
+  ]
+    .filter((x): x is string => Boolean(x))
+    .join(", ");
 
   /**
    * Corre una lectura y vuelca lo leído en los campos vacíos.
@@ -108,7 +123,6 @@ export function FormularioDeEvento({
     setError(null);
     try {
       const c = await pedir();
-      if (!titulo && c.titulo) setTitulo(c.titulo);
       // Cada mitad entra por su cuenta: un afiche que anuncia el día y no la
       // hora llena la fecha y deja la hora vacía, que es el hueco honesto.
       // El año inferido entra igual que el resto: solo si el campo está vacío.
@@ -128,7 +142,12 @@ export function FormularioDeEvento({
       // El modelo devuelve los artistas en el orden en que aparecen impresos,
       // que es la mejor señal que hay del cartel. Hasta el 2026-09-15 esto se
       // volcaba a las notas como "Cartel: X & Y" para volver a teclearlo.
-      if (artistas.length === 0 && c.artistas.length > 0) setArtistas(c.artistas);
+      if (artistas.length === 0) {
+        // Si el modelo no separó el cartel pero sí leyó un título, ese texto en
+        // un flyer casi siempre es el nombre de quien toca.
+        if (c.artistas.length > 0) setArtistas(c.artistas);
+        else if (c.titulo) setArtistas([c.titulo]);
+      }
       // El precio no se autocompleta: son tres columnas que hay que leer
       // juntas para no afirmar de más, y el afiche solo da texto suelto.
       // Se muestra crudo abajo para que se transcriba a mano.
@@ -183,14 +202,16 @@ export function FormularioDeEvento({
         sala === SALA_NUEVA ? (await crearSalaEnBorrador(salaNueva)).id : sala;
 
       await crearEvento({
-        title: titulo.trim(),
+        // Una fiesta no se nombra por quién toca, y su lista va vacía como
+        // la deja la ingesta.
+        title: sinCartel ? nombreDelCiclo.trim() : tituloDesde(artistas, gira),
+        artistas: sinCartel ? [] : artistas,
+        gira: sinCartel ? null : gira.trim() || null,
         venue_id: venueId,
         starts_at: desdeCamposDeFecha(fecha, hora),
         ...precio,
         ticket_url: boleteria.trim() || null,
         generos,
-        artistas,
-        gira: gira.trim() || null,
         event_type: tipo || null,
         is_local: local === "" ? null : local === "true",
         image_url: afiche,
@@ -339,21 +360,67 @@ export function FormularioDeEvento({
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <label className="sm:col-span-2">
-          <Rotulo>Título</Rotulo>
-          <input
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            placeholder="Artista | Gira"
-            className={CAMPO}
-          />
-          {/* No pasa por el normalizador: lo escribes tú, ya en la
-              forma en que quieres que salga. Normalizarlo encima sería pisarte. */}
-          <span className="mt-1 block text-xs text-muted">
-            Se publica tal cual lo escribas. Si abajo anotas dos o más artistas,
-            la cartelera muestra esa lista y no esto.
-          </span>
-        </label>
+        {/* ⚠️ **Fiesta y festival piden un nombre; un toque, quién toca.**
+            En los dos primeros no hay artista de cartel —la misma razón por la
+            que su `is_local` va en null— así que el título *es* el nombre del
+            ciclo. En un toque el nombre sale de la lista, que por eso va
+            primero: desde el 2026-09-15 este formulario no pide un título
+            aparte, porque se escribía a mano y después se volvían a escribir
+            los mismos nombres abajo. */}
+        {sinCartel ? (
+          <label className="sm:col-span-2">
+            <Rotulo>Nombre del ciclo</Rotulo>
+            <input
+              value={nombreDelCiclo}
+              onChange={(e) => setNombreDelCiclo(e.target.value)}
+              placeholder="Noches Bomm"
+              className={CAMPO}
+            />
+            <span className="mt-1 block text-xs text-muted">
+              Se publica tal cual: una fiesta o un festival no se nombra por
+              quién toca.
+            </span>
+          </label>
+        ) : (
+          <>
+            <CampoDeArtistas
+              valor={artistas}
+              alCambiar={setArtistas}
+              sugerencias={delDirectorio}
+            />
+
+            <label className="sm:col-span-2">
+              <Rotulo>Gira o ciclo (opcional)</Rotulo>
+              <input
+                value={gira}
+                onChange={(e) => setGira(e.target.value)}
+                placeholder="Ronroco Tour"
+                className={CAMPO}
+              />
+              <span className="mt-1 block text-xs text-muted">
+                Va detrás del artista. Vacía, en la cartelera sale solo el nombre.
+              </span>
+            </label>
+
+            {/* Lo que se va a publicar, armado con lo que hay escrito. No es
+                adorno: al no haber campo de título, esta línea es lo único que
+                muestra el resultado antes de guardarlo — y la regla de que "el
+                título guardado es el título publicado" se decidió el 2026-08-31
+                justamente porque el admin veía una cosa y el visitante otra. */}
+            {artistas.length > 0 && (
+              <p className="sm:col-span-2 -mt-1 text-xs text-muted">
+                En la cartelera se verá:{" "}
+                <span className="text-foreground">
+                  {encabezadoEnTexto({
+                    title: tituloDesde(artistas, gira),
+                    artistas,
+                    gira: gira.trim() || null,
+                  })}
+                </span>
+              </p>
+            )}
+          </>
+        )}
 
         {/* La sala que no está en la lista se escribe acá mismo y nace en
             borrador. Antes decía "creala en la pestaña Salas", que obligaba a
@@ -413,43 +480,6 @@ export function FormularioDeEvento({
           />
         </label>
 
-        <CampoDeArtistas
-          valor={artistas}
-          alCambiar={setArtistas}
-          sugerencias={delDirectorio}
-        />
-
-        {artistas.length >= 2 && (
-          <label className="sm:col-span-2">
-            <Rotulo>Gira o ciclo (opcional)</Rotulo>
-            <input
-              value={gira}
-              onChange={(e) => setGira(e.target.value)}
-              placeholder="Ronroco Tour"
-              className={CAMPO}
-            />
-          </label>
-        )}
-
-        {/* Lo que se va a publicar, armado con lo que hay escrito.
-            **El título deja de ser lo que se muestra en cuanto hay dos
-            artistas**, y sin esto no habría forma de notarlo desde acá: la
-            regla de que "el título guardado es el título publicado" se
-            decidió el 2026-08-31 porque el admin veía una cosa y el visitante
-            otra, y esta línea es lo que la mantiene cierta. */}
-        {artistas.length >= 2 && (
-          <p className="sm:col-span-2 -mt-1 text-xs text-muted">
-            En la cartelera se verá:{" "}
-            <span className="text-foreground">
-              {encabezadoEnTexto({
-                title: titulo.trim(),
-                artistas,
-                gira: gira.trim() || null,
-              })}
-            </span>
-          </p>
-        )}
-
         <CampoDeGeneros valor={generos} alCambiar={setGeneros} />
 
         <label>
@@ -496,7 +526,10 @@ export function FormularioDeEvento({
         disabled={ocupado || !listo}
         onClick={crear}
         className={`${BOTON} mt-5 bg-accent text-background disabled:opacity-40`}
-        title={!listo ? "Faltan el título, la sala o la evidencia" : undefined}
+        // Nombra el campo que de verdad falta. Decía "el título" hasta el
+        // 2026-09-15, y ese campo ya no existe: el aviso mandaba a buscar algo
+        // que no está en la pantalla.
+        title={!listo ? queFalta : undefined}
       >
         {ocupado ? "Creando…" : "Crear borrador"}
       </button>
