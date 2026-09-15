@@ -66,7 +66,7 @@ export default async function Page() {
         // Antes este bloque decía el comando de nuestro CLI de geocodificación.
         // Al lector no le dice nada y le pide entender cómo está hecho el
         // sistema; la nota para quien mantiene el código va en el código.
-        <div className="rounded-xl border border-dashed border-border px-6 py-16 text-center">
+        <div className="rounded-sm border border-dashed border-border px-6 py-16 text-center">
           <p className="font-medium">Todavía no hay salas ubicadas</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted">
             Las salas se ubican una por una, y ninguna de las que tienen
@@ -99,7 +99,7 @@ export default async function Page() {
       <p className="mt-10 border-t border-border pt-5 text-xs text-muted">
         <Link
           href="/"
-          className="underline underline-offset-4 transition-colors hover:text-foreground"
+          className="-my-3 inline-block py-3 underline underline-offset-4 transition-colors hover:text-foreground"
         >
           Ver la cartelera completa
         </Link>

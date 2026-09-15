@@ -56,7 +56,10 @@ const ATRIBUCION =
   '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>';
 
 function fechaCorta(iso: string | null): string {
-  if (!iso) return "Fecha por confirmar";
+  // "Sin fecha" y no "Fecha por confirmar": lo segundo suena a que el dato
+  // viene en camino, y casi nunca es así — la fuente no la publicó y punto.
+  // Era la última superviviente de esa frase en todo el sitio.
+  if (!iso) return "Sin fecha";
   return new Intl.DateTimeFormat("es-CO", {
     timeZone: "America/Bogota",
     day: "numeric",
@@ -70,9 +73,9 @@ function fechaCorta(iso: string | null): string {
  * flotante compite por espacio en pantallas chicas, y acá se pidió
  * explícitamente el panel debajo del mapa.
  */
-function PanelSala({ sala }: { sala: SalaEnMapa }) {
+function PanelSala({ sala, alCerrar }: { sala: SalaEnMapa; alCerrar: () => void }) {
   return (
-    <div className="mt-4 overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="mt-4 overflow-hidden rounded-sm border border-border bg-surface">
       <div className="relative aspect-[16/9] w-full bg-background sm:aspect-[21/9]">
         {sala.photo_url ? (
           // ⚠️ `unoptimized` es obligatorio acá, no una optimización de más.
@@ -105,9 +108,25 @@ function PanelSala({ sala }: { sala: SalaEnMapa }) {
       </div>
 
       <div className="p-4 sm:p-5">
-        <h2 className="font-display text-xl font-semibold tracking-tight">
-          {sala.name}
-        </h2>
+        {/* Hasta el 2026-09-15 el panel no tenía salida: `salaSeleccionada`
+            nunca volvía a `null`, así que una vez abierto se quedaba abierto.
+            Dice "Cerrar" y no lleva un aspa: el set de íconos es propio y
+            dibujar uno nuevo pide mirar antes sus medidas compartidas, y un
+            glifo de texto haciendo de ícono es justo lo que la iconografía de
+            este sitio no usa. De paso, la palabra da un área de toque que un
+            aspa de 16px no daría. */}
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="font-display text-xl font-semibold tracking-tight">
+            {sala.name}
+          </h2>
+          <button
+            type="button"
+            onClick={alCerrar}
+            className="-mr-2 -mt-1 shrink-0 rounded-sm px-3 py-2 text-sm text-muted transition-colors hover:text-foreground"
+          >
+            Cerrar
+          </button>
+        </div>
         {sala.address && <p className="mt-1 text-sm text-muted">{sala.address}</p>}
 
         <ul className="mt-4 space-y-1 border-t border-border pt-4">
@@ -115,7 +134,7 @@ function PanelSala({ sala }: { sala: SalaEnMapa }) {
             <li key={evento.id}>
               <Link
                 href={`/evento/${evento.id}`}
-                className="flex items-baseline gap-3 rounded-md px-2 py-1.5 -mx-2 transition-colors hover:bg-surface-hover"
+                className="flex items-baseline gap-3 rounded-sm px-2 py-1.5 -mx-2 transition-colors hover:bg-surface-hover"
               >
                 <span className="shrink-0 font-mono text-xs text-muted">
                   {fechaCorta(evento.starts_at)}
@@ -142,6 +161,7 @@ function PanelSala({ sala }: { sala: SalaEnMapa }) {
 export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
   const contenedor = useRef<HTMLDivElement>(null);
   const [salaSeleccionada, setSalaSeleccionada] = useState<SalaEnMapa | null>(null);
+  const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!contenedor.current || salas.length === 0) return;
@@ -253,13 +273,42 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
     return () => mapa.remove();
   }, [salas]);
 
+  /**
+   * Tocar un pin tiene que producir un cambio visible.
+   *
+   * ⚠️ **No lo producía.** El mapa ocupa `60vh` y arranca debajo del
+   * encabezado de la página, así que el panel nacía fuera de pantalla: medido
+   * en un viewport de 900, aparecía en `top: 974` con la página sin
+   * desplazar. La bajada dice "Toca un punto para ver qué viene", uno tocaba
+   * y no pasaba nada — el módulo parecía roto sin estarlo, que es la versión
+   * en interfaz del fallo que se ve igual que un éxito.
+   *
+   * `block: "nearest"` y no `"start"`: si el panel ya se ve, no se mueve
+   * nada. Y sin desplazamiento suave para quien pidió menos movimiento.
+   */
+  useEffect(() => {
+    if (!salaSeleccionada) return;
+    const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    panel.current?.scrollIntoView({
+      block: "nearest",
+      behavior: quieto ? "auto" : "smooth",
+    });
+  }, [salaSeleccionada]);
+
   return (
     <div>
       <div
         ref={contenedor}
-        className="h-[60vh] min-h-[380px] w-full overflow-hidden rounded-lg border border-border bg-surface"
+        className="h-[60vh] min-h-[380px] w-full overflow-hidden rounded-sm border border-border bg-surface"
       />
-      {salaSeleccionada && <PanelSala sala={salaSeleccionada} />}
+      {salaSeleccionada && (
+        <div ref={panel}>
+          <PanelSala
+            sala={salaSeleccionada}
+            alCerrar={() => setSalaSeleccionada(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }
