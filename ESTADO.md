@@ -31,14 +31,6 @@ el siguiente paso.
   pendiente. El historial alterna —falló el 12, pasó el 13, falló dos veces la
   madrugada del 14, pasó a las 00:38 y volvió a caer— que es el patrón que ya
   se le conoce a esa fuente.
-- **El relleno de `artistas` no se ha corrido, y lo tiene que autorizar Juan.**
-  Las 113 filas que ya existían tienen la lista vacía: el cartel de varias
-  bandas solo se ve en lo que entre de ahora en adelante. El paso está escrito
-  (`python -m bogota_music_intel.moderacion_cli --rellenar-artistas
-  [--dry-run]`) y es un `update` masivo sobre la única copia de la base. Su
-  criterio: rellena solo donde el título publicado es exactamente el que produce
-  el normalizador desde el crudo; si difiere, alguien lo editó a mano y se
-  salta.
 - **El directorio tiene dos artistas**, y el segundo entró el 2026-09-13:
   Nicolás y los Fumadores (6 tracks) y El Kalvo (**ninguno**). Dos no son un
   directorio: **una plataforma que existe para dar a conocer la escena con dos
@@ -143,9 +135,21 @@ el siguiente paso.
   Tailwind no hubiera reconocido el token la clase no generaría nada y el texto
   quedaría del color heredado **sin ningún error**.
 - **La lista de artistas no se ha visto con datos reales en la cartelera.** Las
-  113 filas tienen la columna vacía hasta que se corra el relleno (§ 1), así que
-  hoy todo cae al camino de siempre. Lo verificado el 2026-09-15 es que **no hay
-  regresión**, no que lo nuevo se vea bien.
+  113 filas que ya existían tienen la columna vacía, así que hoy todo cae al
+  camino de siempre. Lo verificado el 2026-09-15 es que **no hay regresión**, no
+  que lo nuevo se vea bien.
+- **Hay un paso de relleno escrito y sin correr, y no corre prisa.** `python -m
+  bogota_music_intel.moderacion_cli --rellenar-artistas [--dry-run]` recalcula
+  `artistas` y `gira` de los canónicos que ya existían. Rellena solo donde el
+  título publicado es exactamente el que produce el normalizador desde el crudo;
+  si difiere, alguien lo editó a mano y se salta — por eso no necesita mirar
+  `reviewed_at`, que nunca supo distinguir "Juan dejó ese título" de "Juan nunca
+  lo miró".
+
+  **Afecta a 6 eventos publicados**, que son los que tienen "&" en el título, así
+  que también se pueden arreglar a mano desde el formulario. Juan lo dejó para
+  después el 2026-09-15. Cuando se corra, es un `update` masivo sobre la única
+  copia de la base y lo autoriza él.
 - **El formulario de tracks de `/admin` no se ha usado.** Sin verificar:
   agregar un track pegando la dirección, **editarlo** (título, año, carátula) y
   quitarlo. `npm run capturas` no llega ahí porque `/admin` pide sesión.
