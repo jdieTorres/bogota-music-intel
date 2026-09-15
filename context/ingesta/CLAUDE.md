@@ -87,14 +87,21 @@ slug.
 
 ## Normalización de títulos
 
-Los títulos crudos se guardan formateados: **"Artista | Gira"**, con **" & "
-entre varios artistas de cartel** (la barra es solo para lo que viene
-*después* del artista).
+Los títulos crudos se guardan formateados: **"Artista | Gira"**.
 
 ⚠️ **Corre en la ingesta, no al mostrar.** Se aplica cuando el cron abre el
 borrador, así que **el título guardado es el título publicado**: lo que el
 admin ve en la cola es exactamente lo que sale, y su corrección no la pisa
-ninguna transformación posterior. El frontend muestra `title` tal cual.
+ninguna transformación posterior.
+
+⚠️ **Con dos artistas o más, el título deja de ser lo que se muestra**
+(2026-09-15). `partir_titulo` devuelve la lista de artistas y la gira además
+del texto, y el canónico las guarda en `artistas` y `gira`; la pantalla compone
+el encabezado desde ahí en vez de usar `title`. Por eso el formulario de
+`/admin` previsualiza el resultado: sin esa línea volvería el problema que hizo
+mudar la normalización acá, el de que el admin vea una cosa y el visitante
+otra. **La lista es lo que dijo la fuente, no el cartel** — el cartel lo
+confirma una persona en `event_artists` (`context/moderacion/CLAUDE.md`).
 
 La regla que hay que tener en la cabeza antes de tocarlo: **solo se suben
 mayúsculas, nunca se bajan**, salvo que la fuente esté gritando el título

@@ -1,9 +1,11 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-13** (última pasada de la noche), recontado
-contra la base con el MCP al cierre de una sesión larga: tarjetas de compartir,
-la señal del cron, el cartel de cada toque y una pasada al formulario de
-artistas. Corrigió además tres cosas que este archivo venía diciendo mal.
+Última actualización: **2026-09-15**, recontado contra la base con el MCP. La
+sesión trajo el cartel de varios artistas, la primera pasada de diseño con
+impeccable, y siete arreglos que salieron de ella.
+
+⚠️ **Las cifras salieron idénticas a las del 2026-09-13, y eso es un dato**:
+el cron lleva un día en rojo y no ha habido triage, así que la base no se movió.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -19,6 +21,24 @@ el 2026-09-09: primero se pule y se despliega, y el contenido se carga sobre el
 sitio ya en pie. Siguen siendo lo que le falta al producto — no lo que bloquea
 el siguiente paso.
 
+- 🔴 **`Scraper cron` lleva en rojo desde el 2026-09-14 a las 19:01 UTC**, en
+  el paso `Run event scrapers`. Desde el commit `892b3c5` el rojo dice qué
+  fuente cayó y por qué, y ese mensaje está en el log — que la API pública no
+  deja leer sin token. Hay que abrirlo:
+  `github.com/jdieTorres/bogota-music-intel/actions/runs/34884325706`.
+  **Si dice que fue el portero anti-bots de Ticketlive, estrena en CI una de
+  las dos rutas que § 2 tiene anotadas como sin ocasión**, y eso cierra un
+  pendiente. El historial alterna —falló el 12, pasó el 13, falló dos veces la
+  madrugada del 14, pasó a las 00:38 y volvió a caer— que es el patrón que ya
+  se le conoce a esa fuente.
+- **El relleno de `artistas` no se ha corrido, y lo tiene que autorizar Juan.**
+  Las 113 filas que ya existían tienen la lista vacía: el cartel de varias
+  bandas solo se ve en lo que entre de ahora en adelante. El paso está escrito
+  (`python -m bogota_music_intel.moderacion_cli --rellenar-artistas
+  [--dry-run]`) y es un `update` masivo sobre la única copia de la base. Su
+  criterio: rellena solo donde el título publicado es exactamente el que produce
+  el normalizador desde el crudo; si difiere, alguien lo editó a mano y se
+  salta.
 - **El directorio tiene dos artistas**, y el segundo entró el 2026-09-13:
   Nicolás y los Fumadores (6 tracks) y El Kalvo (**ninguno**). Dos no son un
   directorio: **una plataforma que existe para dar a conocer la escena con dos
@@ -70,14 +90,26 @@ el siguiente paso.
 - **¿`geocode.py` también usa `json_de`?** Tiene el mismo `.json()` pelado
   contra Nominatim que costó cuatro corridas rojas del lado de los scrapers. Es
   una línea, pero no es el cron y no se tocó.
-- **¿Entra `impeccable` como skill?** Juan la pidió el 2026-09-09 y no se
-  instaló, por dos motivos que convenía que viera antes: su instalador de npm
-  baja un **binario precompilado** a `~/.impeccable/bin/` del que dependen sus
-  61 detectores, y su propio `DESIGN.md` empuja una estética de casa que
-  **prohíbe el magenta como acento de marca** — el color que acá tiene un
-  trabajo asignado. Si va, la vía es el plugin
-  (`/plugin marketplace add pbakaus/impeccable`) y como consejo, nunca como
-  corrector automático. `emil-design-eng` sí entró (MIT).
+- **¿Se borra `context/look-and-feel/tokens.css`?** Tiene los valores de Verde
+  Neón —`--background: #c8f0b8`, el verde menta que el rediseño del 2026-09-07
+  reemplazó—, dice de sí mismo que es la copia de referencia que hay que
+  sincronizar con `globals.css`, y el `CLAUDE.md` del área lo señala como "los
+  valores vivos". Llevaba ocho días diciendo colores que ya no existen cuando
+  se detectó el 2026-09-15. Se puede sincronizar o borrar; la recomendación es
+  borrarlo y dejar la tabla del `CLAUDE.md` como única copia, porque una copia
+  que hay que acordarse de sincronizar se vuelve a desincronizar. `verde-neon.md`
+  ya conserva el registro histórico de esa ronda.
+- **¿Los pines del mapa crecen a 44px?** Miden 30×30, contra los 44 de un
+  objetivo táctil. Su tamaño es una decisión tomada —"a 30px es una mancha de
+  color antes de ser un dibujo"— y agrandarlos cambia cómo se lee el mapa, no
+  solo cómo se toca. Los controles de zoom a 29px y la atribución son de
+  MapLibre y no se tocan.
+- **¿La cartelera necesita filtro de fecha?** Es lo que peor salió del critique
+  del 2026-09-15: 1 de 4 en "flexibilidad y eficiencia". Son 28 eventos del 17
+  de septiembre al 16 de diciembre en un solo scroll, sin buscador ni forma de
+  preguntar qué hay el viernes. **No es un defecto sino algo por diseñar**, y
+  por eso no se hizo. Con los `id` de día que entraron ese mismo día, un riel de
+  "esta semana / este mes" ya tiene a dónde anclar.
 - **¿Se les devuelve el año al título de los festivales que ya están
   revisados?** A los festivales viejos el normalizador les quitó el año cuando
   todavía eran `music`, y **no se re-normalizaron porque tienen `reviewed_at`**
@@ -104,6 +136,16 @@ el siguiente paso.
   corrida 29 pasó entera—, y el segundo, que una fuente devuelva una lista
   vacía, que nunca ha ocurrido. Lo demás de esa tanda sí corrió: la anotación
   con la fuente y el motivo salió en la corrida 28.
+- **El campo «Quiénes tocan» y el token `--danger` no se han visto
+  renderizados.** Los dos viven en `/admin`, que pide sesión, y `npm run
+  capturas` no entra ahí. Del token sí se comprobó lo que podía fallar callado:
+  que `.text-danger` y `.bg-danger` existan en el CSS compilado, porque si
+  Tailwind no hubiera reconocido el token la clase no generaría nada y el texto
+  quedaría del color heredado **sin ningún error**.
+- **La lista de artistas no se ha visto con datos reales en la cartelera.** Las
+  113 filas tienen la columna vacía hasta que se corra el relleno (§ 1), así que
+  hoy todo cae al camino de siempre. Lo verificado el 2026-09-15 es que **no hay
+  regresión**, no que lo nuevo se vea bien.
 - **El formulario de tracks de `/admin` no se ha usado.** Sin verificar:
   agregar un track pegando la dirección, **editarlo** (título, año, carátula) y
   quitarlo. `npm run capturas` no llega ahí porque `/admin` pide sesión.
@@ -126,9 +168,11 @@ el siguiente paso.
   los datos de Juan**. Que guardar vuelva a la lista y que publicar lleve a la
   ficha pública son dos caminos que solo se estrenan usándolos.
 - **El módulo del directorio no se ha visto en un teléfono de verdad**, como el
-  resto del sitio. Sí se midió en Chromium a 390 px —el reproductor de YouTube
-  apaisado cabe y los controles bajan a su propia fila—, pero eso no dice nada
-  de un teléfono real ni de Safari.
+  resto del sitio. Lo medible sí se cerró el 2026-09-15: la ficha de artista
+  **se desplazaba 4 px en horizontal a 390 px** —dos `-mx-3` anidados contra los
+  20 px de `px-5`— y se arregló. Vale como aviso: **eso lo encontró la medición
+  y no lo vio la revisión visual**, porque una captura no muestra que la página
+  se desplace. Un teléfono real y Safari siguen sin probarse.
 - **Las tarjetas de compartir no se han visto como las ve WhatsApp.** Las
   etiquetas salen correctas en el HTML servido (verificado sobre `next start`
   el 2026-09-13, con afiche, sin afiche y sin descripción), pero un validador
@@ -189,7 +233,9 @@ el siguiente paso.
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-13 a las 21:30 de Bogotá** contra la base, con el MCP.
+**2026-09-15 a las 01:50 de Bogotá** contra la base, con el MCP — **idénticas a
+las del 2026-09-13**, porque el cron lleva un día en rojo y no ha habido
+triage.
 
 | | |
 |---|---|
@@ -209,9 +255,10 @@ recontarlas con una consulta, no citarlas de memoria.** Recontadas el
 | Escena local marcada | **3 de 52** — se marca a mano y nada la calcula |
 | **Directorio** | **2 artistas publicados**, 6 tracks entre los dos — El Kalvo entró el 2026-09-13 **sin ninguno** |
 | **Carteles vinculados** | **1** — El Kalvo con su toque del 17 de octubre, el primero de todos |
+| **Con lista de artistas** | **0 de 113** — la columna nació el 2026-09-15 y el relleno no se ha corrido |
 | Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1 |
 | Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **251 backend + 133 frontend**, verdes en local y en CI (`Tests` #84) |
+| Tests | **262 backend + 142 frontend**, verdes en local y en CI (`Tests` sobre `3478d31`) |
 
 Cómo leerlas sin equivocarse:
 

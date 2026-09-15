@@ -82,6 +82,28 @@ duplicado— y crea el que falte.
 - **Quitar del cartel borra el vínculo y nada más.** Es lo que hace reversible
   equivocarse; ni el artista ni el evento se tocan.
 
+### Dos listas de artistas, y no se colapsan
+
+Desde el 2026-09-15 hay dos, y la diferencia es la de siempre —lo que dijo una
+fuente contra lo que afirmó una persona—:
+
+- **`canonical_events.artistas`** es lo que leyó la fuente o el afiche, en el
+  orden en que venía. La llena la ingesta, la corrige el admin en el campo
+  «Quiénes tocan», y **se pinta como texto sin enlace**: que un nombre coincida
+  con una ficha no prueba que sea el mismo artista.
+- **`event_artists`** es el cartel: fichas del directorio vinculadas a mano
+  desde la ficha del toque. Es lo único que enlaza y lo único que alimenta las
+  recomendaciones.
+
+Cuando hay cartel, manda el cartel. Escribir en el campo no crea ninguna ficha
+ni vincula a nadie — para eso está el cartel, donde se está mirando el afiche.
+
+⚠️ **En un festival el bloque se llama «De la escena tocan», no «En el
+cartel».** Rock al Parque tiene decenas de artistas y nadie va a vincularlos
+todos; rotular cinco fichas como el cartel afirmaría por omisión un lineup que
+nadie verificó. Es una selección editorial —lo que esta plataforma puede
+aportar y el sitio del festival no— y el pie lo dice y remite al anuncio.
+
 ### El formulario de artistas
 
 - **Lo que falta se dice en el campo que falta, no arriba de la página.** La

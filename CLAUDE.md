@@ -123,7 +123,12 @@ No negociables. Cada una se pagó con un error, y varias con dos.
   varias corridas.
 - **Verificar el frontend en un navegador de verdad, no solo en el HTML
   servido.** El mapa estuvo en negro con CI verde, tests pasando, `tsc` limpio
-  y build correcto.
+  y build correcto. **Y lo que se verifica es el resultado, no el cambio**: el
+  2026-09-15 un arreglo del orden de la ficha en móvil dejó `tsc` limpio y no
+  servía —el bloque se movió de columna pero no de sitio en el DOM, que es lo
+  que manda cuando la rejilla se apila—. Lo cazó medir dónde quedaba cada
+  elemento en la página, no releer el diff. Si el defecto se midió en píxeles,
+  el arreglo se comprueba en píxeles.
 - **Y "de verdad" incluye que la pestaña esté visible.** Chrome no le da
   frames de `requestAnimationFrame` a una pestaña oculta, así que un canvas
   —el mapa— no renderiza y **parece roto sin estarlo**. El 2026-09-07 eso
