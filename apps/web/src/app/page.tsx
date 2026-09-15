@@ -56,9 +56,13 @@ export default async function Page() {
         proximos={proximos}
         sinFecha={sinFecha}
         vacio={
+          /* Al lector no le sirve saber que existe un recolector ni qué hay
+             que correr para poblar una base: eso es cómo está hecho el
+             sistema, y la nota para quien mantiene el código va en el código.
+             Lo único accionable desde acá es volver. */
           <EstadoVacio
             titulo="No hay toques en cartelera"
-            detalle="El recolector corre todos los días a las 9:00 a. m. Si acabas de montar el proyecto, corre el scraper para poblar la base."
+            detalle="La cartelera se arma con lo que publican las salas, y se revisa todos los días. Vuelve en un rato."
           />
         }
       />
