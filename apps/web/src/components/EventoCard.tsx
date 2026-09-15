@@ -107,7 +107,7 @@ export function EventoCard({ evento }: { evento: Evento }) {
             // leerse como algo anotado al margen, no como otra etiqueta de la
             // fila de datos. Es lo único en todo el sitio que usa el magenta.
             <p className="font-hand text-base leading-none text-accent-3">
-              de la escena local
+              apoye local
             </p>
           )}
 
