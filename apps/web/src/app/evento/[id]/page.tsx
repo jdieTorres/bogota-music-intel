@@ -121,7 +121,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
                 className="mt-1 h-7 w-7 shrink-0 sm:mt-1.5 sm:h-8 sm:w-8"
               />
               <span className="text-balance">
-                <TituloDeEvento evento={evento} />
+                <TituloDeEvento evento={evento} fichas={cartel} />
               </span>
             </h1>
             <p className="mt-3 text-lg text-muted">
