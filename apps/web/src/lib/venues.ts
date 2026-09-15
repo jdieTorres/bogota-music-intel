@@ -42,10 +42,22 @@ function inicioDeHoyEnBogota(): string {
 }
 
 /**
- * Salas con al menos un evento próximo. Las que no tienen coordenadas no se
- * descartan: se devuelven aparte para listarlas bajo el mapa, porque un venue
- * sin geocodificar sigue siendo parte de la escena — solo que todavía no
- * sabemos dónde ponerlo.
+ * **Todas las salas publicadas**, tengan o no algo anunciado.
+ *
+ * ⚠️ Hasta el 2026-09-15 se descartaba la sala sin eventos próximos, con el
+ * argumento de que no aporta a un mapa de escena activa. El efecto real era
+ * que **el mapa mostraba 11 de 20 salas publicadas** y las otras nueve no
+ * aparecían en ningún lado: ni como pin ni en "sin ubicar", porque el descarte
+ * ocurría antes de mirar la coordenada. Lo notó Juan contando pines.
+ *
+ * El criterio que queda, decidido por él: **una sala de la escena merece su pin
+ * aunque hoy no tenga nada anunciado.** El mapa es de salas y no solo de
+ * fechas; que una sala esté vacía esta semana es información, no motivo para
+ * borrarla de la ciudad.
+ *
+ * Las que no tienen coordenadas siguen yendo aparte, para listarlas bajo el
+ * mapa: un venue sin geocodificar sigue siendo parte de la escena, solo que
+ * todavía no sabemos dónde ponerlo.
  */
 export async function getEscena(): Promise<EscenaEnMapa> {
   const { data, error } = await supabase
@@ -78,9 +90,6 @@ export async function getEscena(): Promise<EscenaEnMapa> {
     const eventos = ((fila.canonical_events ?? []) as EventoEnSala[])
       .slice()
       .sort((a, b) => (a.starts_at ?? "").localeCompare(b.starts_at ?? ""));
-
-    // Una sala sin eventos próximos no aporta al mapa de escena activa.
-    if (eventos.length === 0) continue;
 
     if (fila.latitude == null || fila.longitude == null) {
       sinUbicar.push({

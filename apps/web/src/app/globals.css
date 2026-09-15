@@ -151,6 +151,27 @@ body {
    que volvió el 2026-09-08 no es aquel: dice dos datos, aparece al apuntar
    y es CSS sobre un hijo del marcador (más abajo). */
 
+/* La sala que hoy no tiene nada anunciado: el mismo pin, atenuado. Está en
+   la escena y merece su punto —lo pidió Juan el 2026-09-15, contando que el
+   mapa mostraba 11 de 20 salas—, pero no puede leerse igual que una que sí
+   programa esta semana.
+
+   ⚠️ **Va sobre el SVG y no sobre el botón, por lo mismo que el `scale` de más
+   abajo**: MapLibre le escribe estilos **en línea** a cada marcador, y entre
+   ellos `opacity` —la usa para su propio desvanecido de pines tapados—. Un
+   `opacity` sobre `.marcador-sala` no hace nada, y la primera versión de esta
+   regla lo comprobó: la clase estaba puesta, el CSS estaba compilado, y
+   `getComputedStyle` devolvía 1. Es la segunda vez que este archivo tropieza
+   con el mismo estilo en línea. */
+.marcador-sala--sin-eventos svg {
+  opacity: 0.45;
+}
+
+.marcador-sala--sin-eventos:hover svg,
+.marcador-sala--sin-eventos:focus-visible svg {
+  opacity: 1;
+}
+
 .marcador-sala {
   /* Los tres colores del pin.
 

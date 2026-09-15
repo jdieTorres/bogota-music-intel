@@ -44,7 +44,7 @@ export default async function Page() {
     <div className="mx-auto max-w-5xl px-5 pb-16">
       <EncabezadoDePagina
         titulo="Dónde está sonando la ciudad"
-        bajada="Las salas con programación activa, ubicadas en el mapa. Toca un punto para ver qué viene."
+        bajada="Las salas de la escena, ubicadas en el mapa. Toca un punto para ver qué viene."
       />
 
       {/* Sin pestañas donde apoyarlo, el conteo va sobre el filete que abre
@@ -53,6 +53,11 @@ export default async function Page() {
           colgando sobre un estado vacío. */}
       {salas.length > 0 && (
         <div className="mb-6 flex justify-end border-b border-border pb-3">
+          {/* Las salas son todas las publicadas y los eventos solo los
+              vigentes, así que desde el 2026-09-15 hay salas en el mapa que no
+              aportan ninguno al conteo. Es a propósito y por eso se nombran
+              por separado: el mapa dice dónde está la escena, no solo dónde
+              hay algo esta semana. */}
           <p className="font-mono text-xs text-muted">
             {salas.length} {salas.length === 1 ? "sala" : "salas"} en el mapa ·{" "}
             {totalEventos} {totalEventos === 1 ? "evento" : "eventos"}

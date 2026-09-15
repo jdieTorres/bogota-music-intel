@@ -129,6 +129,13 @@ function PanelSala({ sala, alCerrar }: { sala: SalaEnMapa; alCerrar: () => void 
         </div>
         {sala.address && <p className="mt-1 text-sm text-muted">{sala.address}</p>}
 
+        {sala.eventos.length === 0 ? (
+          // El hueco se dice en voz alta, como en el resto del sitio: la sala
+          // existe y está en la escena, solo que hoy no tiene nada anunciado.
+          <p className="mt-4 border-t border-border pt-4 text-sm italic text-muted">
+            Sin nada anunciado por ahora.
+          </p>
+        ) : (
         <ul className="mt-4 space-y-1 border-t border-border pt-4">
           {sala.eventos.map((evento) => (
             <li key={evento.id}>
@@ -153,6 +160,7 @@ function PanelSala({ sala, alCerrar }: { sala: SalaEnMapa; alCerrar: () => void 
             </li>
           ))}
         </ul>
+        )}
       </div>
     </div>
   );
@@ -193,13 +201,24 @@ export function MapaEscena({ salas }: { salas: SalaEnMapa[] }) {
       // "redundante", el mapa vuelve a quedar sin teclado y en silencio.
       const marcador = document.createElement("button");
       marcador.type = "button";
-      marcador.className = "marcador-sala";
+      // Una sala sin nada anunciado lleva el mismo pin, atenuado. Se ve que
+      // está y se ve que hoy no suena: si fuera idéntico, tocarla y encontrar
+      // el panel vacío se sentiría roto.
+      marcador.className =
+        sala.eventos.length > 0
+          ? "marcador-sala"
+          : "marcador-sala marcador-sala--sin-eventos";
       // El punto verde pasó a ser la marca del masthead: Juan pidió que el
       // mismo ícono que identifica al sitio identifique a cada sala. Va como
       // cadena y con colores fijos — el porqué de las dos cosas está en
       // `MARCA_SALA_SVG`.
       marcador.innerHTML = MARCA_SALA_SVG;
-      marcador.setAttribute("aria-label", `${sala.name}, ${sala.eventos.length} eventos`);
+      marcador.setAttribute(
+        "aria-label",
+        sala.eventos.length === 0
+          ? `${sala.name}, sin nada anunciado`
+          : `${sala.name}, ${sala.eventos.length} ${sala.eventos.length === 1 ? "evento" : "eventos"}`,
+      );
 
       // El globo que aparece al apuntar el pin: nombre y dirección, nada
       // más. El detalle sigue en el panel de abajo; esto solo contesta

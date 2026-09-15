@@ -45,13 +45,26 @@ teselas las pide el worker y esas peticiones no aparecen en el panel de red de
 la extensión, ni siquiera cuando todo funciona. Detalle en
 `context/frontend/trampas.md`.
 
-**El mapa no cuenta lo mismo que la cartelera y no es un error**: `getEscena`
-filtra por `starts_at >= hoy` y suma conciertos, fiestas y festivales en un
-solo número, mientras la cartelera los separa en tres pestañas. Los junta a
-propósito: una sala con fiesta o con festival está tan activa como una con
-concierto. Y un evento sin fecha no puede pasar ese filtro, así que el mapa
-nunca lo muestra; la cartelera sí puede, porque tiene dónde ponerlo. Efecto
-lateral aceptado: el mapa no avisa que una sala tiene eventos sin fecha.
+**El mapa muestra todas las salas publicadas, tengan o no algo anunciado**
+(2026-09-15, pedido de Juan). Antes descartaba la que no tuviera eventos
+próximos, con el argumento de que no aporta a un mapa de escena activa; el
+efecto real era que **mostraba 11 de 20** y las otras nueve no salían en ningún
+lado —ni como pin ni en "sin ubicar"— porque el descarte ocurría antes de mirar
+la coordenada. El criterio que queda: **el mapa es de salas, no de fechas.** Que
+una sala esté vacía esta semana es información, no motivo para borrarla de la
+ciudad.
+
+La sin nada anunciado lleva el mismo pin **atenuado**, y su panel lo dice. Si
+fuera idéntico, tocarla y encontrar el panel vacío se sentiría roto.
+
+**El conteo cuenta dos cosas distintas y no es un error**: las salas son todas
+las publicadas y los eventos solo los vigentes, así que hay salas que no aportan
+ninguno. Y `getEscena` suma conciertos, fiestas y festivales en un solo número
+mientras la cartelera los separa en tres pestañas, a propósito: una sala con
+fiesta está tan activa como una con concierto. Un evento sin fecha no pasa el
+filtro de `starts_at >= hoy`, así que el mapa nunca lo muestra; la cartelera sí
+puede, porque tiene dónde ponerlo. Efecto lateral aceptado: el mapa no avisa que
+una sala tiene eventos sin fecha.
 
 **Una sala sin coordenada se lista bajo el mapa como "sin ubicar"**, no se le
 pone un pin aproximado.
