@@ -26,3 +26,8 @@ apps/web/capturas/
 # Claude Code — settings.local.json lleva el token de Supabase.
 # Lo ignoraba solo el ignore global del usuario; acá no depende de la máquina.
 .claude/settings.local.json
+
+# El motor de impeccable: 15 MB de binario por plataforma, que su propio
+# instalador vuelve a bajar a ~/.impeccable/bin/ cuando falta. Las skills sí
+# se versionan —son texto y dicen qué reglas se están usando—; el .exe no.
+.claude/skills/impeccable/scripts/bin/
