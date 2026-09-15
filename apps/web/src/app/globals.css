@@ -151,25 +151,39 @@ body {
    que volvió el 2026-09-08 no es aquel: dice dos datos, aparece al apuntar
    y es CSS sobre un hijo del marcador (más abajo). */
 
-/* La sala que hoy no tiene nada anunciado: el mismo pin, atenuado. Está en
-   la escena y merece su punto —lo pidió Juan el 2026-09-15, contando que el
-   mapa mostraba 11 de 20 salas—, pero no puede leerse igual que una que sí
-   programa esta semana.
+/* La sala que hoy no tiene nada anunciado: el mismo pin en gris. Está en la
+   escena y merece su punto —lo pidió Juan el 2026-09-15, contando que el mapa
+   mostraba 11 de 20 salas—, pero no puede leerse igual que una que sí programa
+   esta semana.
 
-   ⚠️ **Va sobre el SVG y no sobre el botón, por lo mismo que el `scale` de más
-   abajo**: MapLibre le escribe estilos **en línea** a cada marcador, y entre
-   ellos `opacity` —la usa para su propio desvanecido de pines tapados—. Un
-   `opacity` sobre `.marcador-sala` no hace nada, y la primera versión de esta
-   regla lo comprobó: la clase estaba puesta, el CSS estaba compilado, y
-   `getComputedStyle` devolvía 1. Es la segunda vez que este archivo tropieza
-   con el mismo estilo en línea. */
-.marcador-sala--sin-eventos svg {
-  opacity: 0.45;
+   ⚠️ **Se apaga el color, nunca la opacidad**, y esto no es una preferencia:
+   la primera versión bajó el SVG entero a `opacity: 0.45` y **el pin dejó de
+   tener forma**. El aro blanco se volvió translúcido mientras la sombra seguía
+   proyectándose entera, así que el marcador pasó de ser un disco con borde a
+   una mancha verde difusa sin punto focal — y al alejar, con veinte pines
+   amontonados en el centro, se superponían hasta parecer mal ubicados. Lo
+   reportó Juan así: "no están bien ubicados, al alejarse se descuadran".
+   Estaban exactos: medidos contra su proyección Mercator, 0.0 px de error en
+   los siete que se comprobaron.
+
+   El comentario de `.marcador-sala` ya lo decía: **lo que sostiene la
+   legibilidad de este pin es el aro blanco y la sombra.** Bajar la opacidad los
+   desactiva de hecho. Cambiar el relleno los deja intactos.
+
+   Y va con la clase repetida —`.marcador-sala.marcador-sala--sin-eventos`—
+   porque `.marcador-sala` se define más abajo con la misma especificidad y
+   redefine `--pin-fondo`: sin esa clase de más, el pin volvía a salir verde.
+   Es el mismo recurso que usan los overrides de la hoja de MapLibre, y por lo
+   mismo: ganar sin `!important`. */
+.marcador-sala.marcador-sala--sin-eventos {
+  --pin-fondo: #8e9a8b;
+  --pin-motivo: #dfe7dd;
 }
 
-.marcador-sala--sin-eventos:hover svg,
-.marcador-sala--sin-eventos:focus-visible svg {
-  opacity: 1;
+.marcador-sala.marcador-sala--sin-eventos:hover,
+.marcador-sala.marcador-sala--sin-eventos:focus-visible {
+  --pin-fondo: #1fb21a;
+  --pin-motivo: #4fd4ef;
 }
 
 .marcador-sala {
