@@ -10,6 +10,7 @@ import os
 import sys
 
 from bogota_music_intel.eventos_excluidos import cargar_bloqueados
+from bogota_music_intel.scrapers.http import BloqueadoPorPortero
 from bogota_music_intel.scrapers.models import dedupe_events
 from bogota_music_intel.scrapers.registry import SCRAPERS
 from bogota_music_intel.storage import get_client, save_events
@@ -35,6 +36,28 @@ def _anotar(mensaje: str) -> None:
     # se come lo que venga detrás.
     escapado = mensaje.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
     print(f"::error::{escapado}")
+
+
+# Fuentes cuyo bloqueo anti-bots ya se dio por conocido, y que por eso **no
+# pintan la corrida de rojo cuando las frena el portero**.
+#
+# Decidido por Juan el 2026-09-15, con seis días de evidencia: el cron salía en
+# rojo 5 de cada 6 días por Ticketlive mientras las otras seis fuentes guardaban
+# sin problema, así que el rojo había dejado de significar "hay que mirar esto"
+# para significar "Ticketlive otra vez". Es la regla dura de que **una señal que
+# sirve para todo no señala nada**, y estaba pasando.
+#
+# ⚠️ **Solo calla el bloqueo, no a la fuente.** Si el parser de Ticketlive se
+# rompe, si su sitio devuelve un 500 o si cambia el formato, la excepción no es
+# `BloqueadoPorPortero` y la corrida sale en rojo como siempre. Y el bloqueo
+# sigue escrito en el log y en la anotación de la corrida: lo único que cambia
+# es el color.
+#
+# ⚠️ **Y esta lista no se puede quedar corta en silencio**, que es lo que suele
+# costar caro con una lista a mano: si otra fuente empieza a chocar contra un
+# portero, no está acá, **sale en rojo** — y eso es exactamente lo que se quiere,
+# porque un bloqueo nuevo sí es noticia.
+BLOQUEO_CONOCIDO = frozenset({"ticketlive"})
 
 
 def main() -> int:
@@ -109,8 +132,14 @@ def main() -> int:
                 detalle += f", {result.pruned} obsoletos eliminados"
             print(f"[{source}] {detalle}")
         except Exception as exc:  # noqa: BLE001 - una fuente rota no debe tumbar a las demás
-            had_errors = True
-            fallo = f"[{source}] FALLÓ: {type(exc).__name__}: {exc}"
+            # El bloqueo ya conocido no vuelve a pintar la corrida de rojo.
+            # Sigue saliendo en el log con su nombre y su motivo: lo que cambia
+            # es el color, no la información.
+            esperado = isinstance(exc, BloqueadoPorPortero) and source in BLOQUEO_CONOCIDO
+            if not esperado:
+                had_errors = True
+            marca = "bloqueada" if esperado else "FALLÓ"
+            fallo = f"[{source}] {marca}: {type(exc).__name__}: {exc}"
             print(fallo, file=sys.stderr)
             _anotar(fallo)
 

@@ -23,30 +23,6 @@ el 2026-09-09: primero se pule y se despliega, y el contenido se carga sobre el
 sitio ya en pie. Siguen siendo lo que le falta al producto — no lo que bloquea
 el siguiente paso.
 
-- 🟠 **El cron sale en rojo 5 de cada 6 días desde el 2026-09-09, y es solo
-  Ticketlive.** Juan leyó el log el 2026-09-15 y dice exactamente esto:
-
-  > `[ticketlive] FALLÓ: RuntimeError: la frenó el anti-bots de SiteGround.` La
-  > respuesta fue un **202 con `content-type: text/html`** y un refresco a
-  > `/.well-known/sgcaptcha/`.
-
-  ⚠️ **Las otras seis fuentes corren y guardan.** El `except` de `scrape_cli`
-  está **dentro** del bucle —"una fuente rota no debe tumbar a las demás"— y
-  solo al final devuelve 1 si hubo algún error. Así que **la cartelera no se
-  está vaciando**: el rojo es de una fuente, no de la corrida.
-
-  Contado sobre las corridas agendadas (`event=schedule`; las de
-  `workflow_dispatch` no cuentan): 14 verdes de 19, todas verdes del 3 al 8, y
-  de las últimas seis solo pasó la del 13. Lo que empeoró el 9 fue **la suerte
-  de Ticketlive con la IP del runner**, no el pipeline.
-
-  Lo que esto deja decidido y lo que deja abierto está abajo, en la pregunta
-  del rojo: es la que ahora tiene una consecuencia medida.
-
-  ⚠️ **Y la hora programada no es la hora real.** El workflow dice `0 14 * * *`
-  —las 9:00 de Bogotá— pero GitHub lo dispara con retraso: las últimas doce
-  corridas salieron entre las 16:32 y las 19:01 UTC, o sea entre las 11:32 a. m.
-  y las 2:01 p. m. de acá. Si a las 9:30 no hay corrida, no está roto.
 - **El directorio tiene tres artistas y los seis tracks son de uno solo.**
   Nicolás y los Fumadores (6), El Kalvo (0) y Kidchen (0, entró el 2026-09-15).
   Tres no son un directorio: **una plataforma que existe para dar a conocer la
@@ -93,18 +69,6 @@ el siguiente paso.
 
 ### Preguntas abiertas — hay que hacérselas a Juan, no resolverlas por cuenta propia
 
-- 🔥 **¿Un fallo de una sola fuente tiene que pintar la corrida entera de
-  rojo?** Hoy sí: el CLI sale con 1 si cualquiera falló. **Y el 2026-09-15 esa
-  pregunta dejó de ser teórica**: el cron lleva seis días saliendo en rojo por
-  Ticketlive mientras las otras seis fuentes guardan sin problema, así que el
-  rojo dejó de significar "hay que mirar esto" y pasó a significar "Ticketlive
-  otra vez". Es la regla dura de que **una señal que sirve para todo no señala
-  nada**, y ya está pasando.
-
-  Distinguir un bloqueo conocido de un fallo nuevo pide **recordar las corridas
-  anteriores** —una tabla nueva, migración incluida—. La salida barata, si se
-  quiere una: que Ticketlive no sume a `had_errors` cuando el motivo es el
-  portero, y que su bloqueo se reporte aparte. Esa decisión es de Juan.
 - **¿`geocode.py` también usa `json_de`?** Tiene el mismo `.json()` pelado
   contra Nominatim que costó cuatro corridas rojas del lado de los scrapers. Es
   una línea, pero no es el cron y no se tocó.
@@ -220,9 +184,9 @@ el siguiente paso.
 
   **Sobre la fuente no hay nada que decidir**: si alguna vez se quiere cambiar,
   las únicas palancas legítimas están en
-  `context/ingesta/fuentes-y-legalidad.md`. Lo que sí hay que decidir es si su
-  bloqueo debe seguir pintando de rojo la corrida entera — está arriba, en las
-  preguntas abiertas.
+  `context/ingesta/fuentes-y-legalidad.md`. Y desde el 2026-09-15 **su bloqueo
+  ya no pinta la corrida de rojo**, así que el rojo vuelve a querer decir algo
+  (`context/ingesta/CLAUDE.md`).
 - **10 eventos vigentes cuelgan solo de `visitbogota`, que ya no corre.** ⚠️
   **Este archivo decía 6 y decía que eran del Movistar; el 2026-09-13 se
   recontaron y son 10, en tres salas**: 6 del Movistar Arena, 3 del Parque

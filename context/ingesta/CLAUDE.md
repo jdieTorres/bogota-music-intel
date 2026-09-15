@@ -168,6 +168,27 @@ fuente costó cuatro corridas rojas del cron, porque `ticketlive` seguía
 muriendo con un `Expecting value: line 1 column 1` que no nombra ni la fuente.
 Quien sabe que un 200 puede no ser JSON es la capa que habla HTTP.
 
+**Un bloqueo anti-bots ya conocido no pinta la corrida de rojo** (2026-09-15).
+`json_de` lanza `BloqueadoPorPortero` cuando reconoce al portero, y
+`scrape_cli` no suma a `had_errors` si esa fuente está en `BLOQUEO_CONOCIDO`
+—hoy solo `ticketlive`—.
+
+Por qué se decidió: el cron salió en rojo 5 de cada 6 días desde el 2026-09-09
+por Ticketlive mientras las otras seis fuentes guardaban sin problema, así que
+**el rojo dejó de significar "hay que mirar esto" y pasó a significar
+"Ticketlive otra vez"**. Es la regla dura de que una señal que sirve para todo
+no señala nada, ya no como riesgo sino como hecho.
+
+⚠️ **Calla el bloqueo, no a la fuente.** Si su parser se rompe o el sitio
+devuelve un 500, la excepción no es `BloqueadoPorPortero` y la corrida sale en
+rojo como siempre. Y el bloqueo sigue entero en el log y en la anotación: lo
+único que cambia es el color.
+
+⚠️ **Y la lista no se puede quedar corta en silencio.** Una fuente que empieza a
+chocar contra un portero **no está** en ella, así que sale en rojo — que es
+exactamente lo que se quiere, porque un bloqueo nuevo sí es noticia. Los tres
+casos tienen test.
+
 **Los desafíos de WAF desde CI son intermitentes, no bloqueos.** Los pone la
 IP del runner y cambian de corrida en corrida, así que **una sola corrida roja
 no prueba un bloqueo** —ni una verde lo contrario—: la conclusión sale de

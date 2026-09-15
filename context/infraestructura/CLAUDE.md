@@ -1,5 +1,16 @@
 # Infraestructura — base de datos, CI y despliegue
 
+## El cron no corre a la hora que dice
+
+`scraper.yml` declara `0 14 * * *` —las 9:00 de Bogotá— y **GitHub lo dispara
+con retraso**: medido sobre doce corridas hasta el 2026-09-15, salieron entre
+las 16:32 y las 19:01 UTC, o sea entre las 11:32 a. m. y las 2:01 p. m. de acá.
+Es el comportamiento normal de los crons de Actions, que se encolan según la
+carga de la plataforma.
+
+Sirve para no diagnosticar de más: **si a las 9:30 no hay corrida del día, no
+está roto** — todavía no le ha tocado el turno.
+
 ## Stack
 
 - **Base de datos:** Supabase (Postgres + Auth + Storage). Free tier: 500 MB,

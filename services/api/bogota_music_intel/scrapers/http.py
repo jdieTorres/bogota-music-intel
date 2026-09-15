@@ -37,6 +37,22 @@ _CABECERAS_QUE_DELATAN = (
 # un portero" en vez de "la respuesta no era JSON", que son dos problemas
 # distintos y tienen salidas distintas. Uno se arregla con código; el otro se
 # arregla pidiendo acceso, o no pidiéndole a esa fuente desde acá.
+class BloqueadoPorPortero(RuntimeError):
+    """La frenó un anti-bots, no un defecto nuestro.
+
+    Existe para que quien decide el color de la corrida pueda distinguir **un
+    bloqueo conocido de un fallo nuevo**: los dos son errores, pero uno se
+    arregla con código y el otro pidiendo acceso —o no pidiéndole a esa fuente
+    desde CI—. Hereda de `RuntimeError` para no romper nada que ya lo atrape
+    así.
+
+    ⚠️ **Reconocerlo no relaja la regla de no evadir bloqueos.** Sigue siendo
+    un error, sigue saliendo en el log con su nombre y su motivo; lo único que
+    cambia es que una fuente donde el bloqueo ya se dio por conocido no vuelva
+    a pintar de rojo toda la corrida. Ver `scrape_cli`.
+    """
+
+
 _PORTEROS = (
     ("SiteGround", "sgcaptcha"),
     ("Cloudflare", "cf_chl"),
@@ -98,7 +114,8 @@ def json_de(response: httpx.Response) -> dict | list:
             if quien
             else ""
         )
-        raise RuntimeError(
+        error = BloqueadoPorPortero if quien else RuntimeError
+        raise error(
             f"{encabezado}La API respondió {response.status_code} con "
             f"content-type «{tipo}», que no es JSON. Cabeceras: {pistas}. "
             f"Empieza así: {inicio!r}"

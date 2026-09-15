@@ -8,6 +8,7 @@ import sys
 import pytest
 
 from bogota_music_intel import scrape_cli
+from bogota_music_intel.scrapers.http import BloqueadoPorPortero
 from bogota_music_intel.scrapers.models import ScrapedEvent
 
 
@@ -80,3 +81,55 @@ def test_fuera_de_actions_no_se_imprime_la_anotacion(monkeypatch, capsys):
     _correr(monkeypatch, {"vacia": list})
 
     assert "::error::" not in capsys.readouterr().out
+
+
+def _portero():
+    raise BloqueadoPorPortero(
+        "la frenó el anti-bots de SiteGround. La fuente no está rota y esto "
+        "NO se evade: se pide acceso o se deja de pedir desde CI."
+    )
+
+
+def test_el_bloqueo_conocido_no_pinta_la_corrida_de_rojo(monkeypatch, capsys):
+    """Decidido el 2026-09-15, con seis días de evidencia.
+
+    El cron salía en rojo 5 de cada 6 días por Ticketlive mientras las otras
+    seis fuentes guardaban sin problema, así que el rojo había dejado de
+    significar "hay que mirar esto".
+    """
+    codigo = _correr(
+        monkeypatch,
+        {"ticketlive": _portero, "sana": lambda: [_evento("sana")]},
+    )
+
+    salida = capsys.readouterr()
+    assert codigo == 0
+    # Que no pinte de rojo no es que se calle: el motivo sigue entero.
+    assert "[ticketlive] bloqueada" in salida.err
+    assert "anti-bots de SiteGround" in salida.err
+    assert "[sana] 1 eventos" in salida.out
+
+
+def test_la_misma_fuente_rota_por_otra_cosa_sí_sale_en_rojo(monkeypatch, capsys):
+    """⚠️ Lo que hace segura la excepción anterior.
+
+    Solo calla el bloqueo del portero, no a la fuente: si su parser se rompe o
+    su sitio devuelve un 500, la corrida vuelve a salir en rojo.
+    """
+    def revienta():
+        raise RuntimeError("la API respondió 500")
+
+    codigo = _correr(monkeypatch, {"ticketlive": revienta})
+
+    assert codigo == 1
+    assert "[ticketlive] FALLÓ" in capsys.readouterr().err
+
+
+def test_un_portero_en_una_fuente_nueva_sí_sale_en_rojo(monkeypatch, capsys):
+    """La lista de bloqueos conocidos no se puede quedar corta en silencio: una
+    fuente que empieza a chocar contra un portero no está en ella, así que sale
+    en rojo — y un bloqueo nuevo sí es noticia."""
+    codigo = _correr(monkeypatch, {"otra": _portero})
+
+    assert codigo == 1
+    assert "[otra] FALLÓ" in capsys.readouterr().err
