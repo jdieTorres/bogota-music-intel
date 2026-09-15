@@ -66,6 +66,20 @@ filtro de `starts_at >= hoy`, así que el mapa nunca lo muestra; la cartelera s�
 puede, porque tiene dónde ponerlo. Efecto lateral aceptado: el mapa no avisa que
 una sala tiene eventos sin fecha.
 
+**En un toque, el nombre del artista es el enlace** (2026-09-15). Va dentro del
+título, en verde, subrayado y con el ícono de enlace externo, y abre en otra
+pestaña. Antes había un bloque "En el cartel" debajo que repetía los mismos
+nombres que el título ya traía.
+
+⚠️ **Enlaza solo el cartel confirmado** (`event_artists`), nunca por
+coincidencia con los nombres que leyó la fuente: que un texto coincida no
+prueba que sea el mismo artista. Y **en la cartelera no enlaza**, porque la fila
+entera ya es un enlace al evento y uno dentro de otro es HTML inválido.
+
+El bloque se quedó para **fiestas y festivales**, donde el título es el nombre
+del ciclo y no contiene a nadie. Ahí siempre se llama «De la escena tocan»
+(`context/moderacion/CLAUDE.md`).
+
 **Una sala sin coordenada se lista bajo el mapa como "sin ubicar"**, no se le
 pone un pin aproximado.
 

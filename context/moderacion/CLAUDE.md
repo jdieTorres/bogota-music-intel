@@ -190,6 +190,21 @@ esa opción viene a evitar. ⚠️ **Hay un orden que importa: se aprueba la sal
 antes de publicar el evento**, o la ficha escribe "sala por confirmar" porque
 RLS no deja ver una sala sin publicar.
 
+⚠️ **Los formularios no piden un título: lo arman.** Desde el 2026-09-15 el
+nombre de un toque sale de «Artista/s» más «Gira», y el campo de artistas
+**no es opcional** — al desaparecer el título, un toque sin nadie que toque no
+tiene nombre. En la cola, el título de los canónicos viejos se desestructura al
+abrirlos, **campo por campo**: la lista solo si la columna viene vacía, la gira
+solo si la suya lo está. Hacerlo todo o nada dejó dos eventos con la gira
+todavía dentro del título, y al guardar se habría perdido en silencio.
+
+⚠️ **Fiesta y festival conservan un campo de nombre**, y es la misma razón de
+siempre: ahí no hay artista de cartel, así que el título *es* el nombre del
+ciclo y no se puede armar con nadie. Al guardar uno se vacían `artistas` y
+`gira` — si quedaran con dos nombres, la cartelera mostraría esa lista en vez
+del nombre del ciclo, porque el encabezado mira cuántos artistas hay y no el
+tipo.
+
 ⚠️ **El año que el afiche no imprime se infiere, y es una excepción deliberada
 a no inventar datos.** La pidió Juan el 2026-09-15: los flyers de esta escena
 casi nunca imprimen el año porque dan por hecho el que corre, y devolver `null`

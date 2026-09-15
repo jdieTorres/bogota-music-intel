@@ -261,14 +261,27 @@ function Ficha({
     price_min: evento.price_min,
     price_max: evento.price_max,
     generos: evento.generos,
-    // Los canónicos anteriores al 2026-09-15 tienen la columna vacía y todo su
-    // contenido dentro de `title`, así que acá se parte para poder editarlo por
-    // los dos campos. Lo que trae el cron desde entonces ya viene partido y no
-    // se toca. Ver `desestructurarTitulo`: el " & " no es una inversa perfecta
-    // y por eso esto solo se hace en un formulario que alguien mira.
-    ...(evento.artistas.length === 0 && evento.title
-      ? desestructurarTitulo(evento.title)
-      : { artistas: evento.artistas, gira: evento.gira }),
+    // Los canónicos anteriores al 2026-09-15 tienen las columnas vacías y todo
+    // su contenido dentro de `title`, así que acá se parte para poder editarlo
+    // por los dos campos. Ver `desestructurarTitulo`: el " & " no es una
+    // inversa perfecta, y por eso esto solo se hace en un formulario que
+    // alguien mira.
+    //
+    // ⚠️ **Campo por campo y no todo o nada.** Con la condición anterior
+    // —desestructurar solo si `artistas` venía vacía— dos eventos revisados con
+    // el formulario intermedio quedaban con la lista llena y **la gira todavía
+    // dentro del título**; al guardar, el título se recomponía sin ella y "El
+    // Kalvo | 20 Años del Rap Rolo" habría pasado a ser "El Kalvo". Una pérdida
+    // callada, que es la peor clase.
+    ...(() => {
+      const delTitulo = evento.title
+        ? desestructurarTitulo(evento.title)
+        : { artistas: [], gira: null };
+      return {
+        artistas: evento.artistas.length > 0 ? evento.artistas : delTitulo.artistas,
+        gira: evento.gira ?? delTitulo.gira,
+      };
+    })(),
     ticket_url: evento.ticket_url,
     event_type: evento.event_type,
     is_local: evento.is_local,

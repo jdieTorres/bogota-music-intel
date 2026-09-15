@@ -1,11 +1,13 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-15**, recontado contra la base con el MCP. La
-sesión trajo el cartel de varios artistas, la primera pasada de diseño con
-impeccable, y siete arreglos que salieron de ella.
+Última actualización: **2026-09-15 por la tarde**, recontado contra la base con
+el MCP. La sesión trajo el cartel de varios artistas, la primera pasada de
+diseño con impeccable, el mapa completo, y la reestructuración de los dos
+formularios de `/admin`.
 
-⚠️ **Las cifras salieron idénticas a las del 2026-09-13, y eso es un dato**:
-el cron lleva un día en rojo y no ha habido triage, así que la base no se movió.
+**Y Juan hizo triage con las herramientas nuevas**: publicó un evento cargado a
+mano con cinco bandas —el caso que originó todo esto—, sumó un artista al
+directorio, vinculó el segundo cartel y aprobó una sala.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -21,45 +23,54 @@ el 2026-09-09: primero se pule y se despliega, y el contenido se carga sobre el
 sitio ya en pie. Siguen siendo lo que le falta al producto — no lo que bloquea
 el siguiente paso.
 
-- 🔴 **`Scraper cron` lleva en rojo desde el 2026-09-14 a las 19:01 UTC**, en
-  el paso `Run event scrapers`. Desde el commit `892b3c5` el rojo dice qué
+- 🔴 **El cron falla 5 de cada 6 días desde el 2026-09-09**, y eso es peor de
+  lo que este archivo venía diciendo. Contado el 2026-09-15 sobre las corridas
+  **agendadas** (`event=schedule`, las de `workflow_dispatch` no cuentan): 14
+  verdes de 19 en total, pero **de las últimas seis solo pasó la del 13**. Del
+  3 al 8 estaban todas en verde; el deterioro empieza el 9.
+
+  El paso que cae es `Run event scrapers`. Desde `892b3c5` el rojo dice qué
   fuente cayó y por qué, y ese mensaje está en el log — que la API pública no
-  deja leer sin token. Hay que abrirlo:
+  deja leer sin token, así que **hay que abrirlo con sesión**:
   `github.com/jdieTorres/bogota-music-intel/actions/runs/34884325706`.
-  **Si dice que fue el portero anti-bots de Ticketlive, estrena en CI una de
-  las dos rutas que § 2 tiene anotadas como sin ocasión**, y eso cierra un
-  pendiente. El historial alterna —falló el 12, pasó el 13, falló dos veces la
-  madrugada del 14, pasó a las 00:38 y volvió a caer— que es el patrón que ya
-  se le conoce a esa fuente.
-- **El directorio tiene dos artistas**, y el segundo entró el 2026-09-13:
-  Nicolás y los Fumadores (6 tracks) y El Kalvo (**ninguno**). Dos no son un
-  directorio: **una plataforma que existe para dar a conocer la escena con dos
-  fichas no da a conocer nada**, y esa parte no la puede hacer nadie más porque
-  ninguna base global sabe quiénes son. Se cargan en `/admin` → Artistas.
-- 🔥 **Las dos fichas publicadas tienen notas de prueba.** Dicen "hola / prueba
-  / test / avisos / bajo / tierra / formato?" y "test", y **se ven en la página
-  pública**. Las notas de contratapa son el material propio del proyecto —lo
-  único que no salió de otra parte— así que son justo lo que no puede quedar
-  así el día que esto se despliegue.
-- **Hay un cartel vinculado, y hacen falta muchos más.** El Kalvo quedó unido a
-  su toque del 17 de octubre el 2026-09-13, el primero desde que existe la
-  tabla. Con uno solo, **dos de las tres señales de recomendación siguen sin
-  poder calcularse** ("compartieron cartel" y "también ha tocado en"): las dos
-  necesitan artistas que coincidan en carteles distintos. Se arma desde la
-  ficha de cada toque (`context/moderacion/CLAUDE.md`).
-- **7 de 20 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
-  con vista previa. Es lo único que le falta al mapa: las 20 ya tienen
-  coordenada y ninguna se lista como "sin ubicar".
+
+  ⚠️ **Y la hora programada no es la hora real.** El workflow dice `0 14 * * *`
+  —las 9:00 de Bogotá— pero GitHub lo dispara con retraso: las últimas doce
+  corridas salieron entre las 16:32 y las 19:01 UTC, o sea entre las 11:32 a. m.
+  y las 2:01 p. m. de acá. Si a las 9:30 no hay corrida, no está roto.
+- **El directorio tiene tres artistas y los seis tracks son de uno solo.**
+  Nicolás y los Fumadores (6), El Kalvo (0) y Kidchen (0, entró el 2026-09-15).
+  Tres no son un directorio: **una plataforma que existe para dar a conocer la
+  escena con tres fichas no da a conocer nada**, y esa parte no la puede hacer
+  nadie más porque ninguna base global sabe quiénes son. ⚠️ Y **dos de las tres
+  no tienen nada que sonar**, que es justo lo que la ficha de artista hace
+  bien: la de Nicolás es la única donde el módulo se ve entero.
+- 🔥 **Las tres fichas publicadas tienen notas de prueba, y el problema crece
+  con cada artista nuevo.** Dicen "hola / prueba / test / avisos / bajo /
+  tierra / formato?" y "test" las otras dos —Kidchen entró así el 2026-09-15—,
+  y **se ven en la página pública**. Las notas de contratapa son el material
+  propio del proyecto —lo único que no salió de otra parte— así que son justo
+  lo que no puede quedar así el día que esto se despliegue.
+- **Hay dos carteles vinculados, y hacen falta muchos más.** El Kalvo con su
+  toque del 17 de octubre y Kidchen con el suyo. Con dos, **las dos señales de
+  recomendación que dependen de coincidencias siguen sin poder calcularse**
+  ("compartieron cartel" y "también ha tocado en"): necesitan artistas que
+  coincidan en carteles **distintos**, y estos dos están en toques separados.
+  Se arma desde la ficha de cada toque (`context/moderacion/CLAUDE.md`).
+- **8 de 21 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
+  con vista previa. Es lo único que le falta al mapa: las 21 tienen coordenada,
+  ninguna se lista como "sin ubicar", y desde el 2026-09-15 **todas salen como
+  pin** aunque no tengan nada anunciado.
 - **2 salas por aprobar**: Ágora Bogotá Centro de Convenciones y Museo de Arte
   Moderno de Bogotá MAMBO. Ninguna tiene eventos vigentes, así que no corre
   prisa.
-- 🔥 **El género: 9 de 52 publicados lo tienen**, con 5 en uso —Rock, Hip
+- 🔥 **El género: 9 de 53 publicados lo tienen**, con 5 en uso —Rock, Hip
   Hop/Rap, Popular, Reggaeton, Vallenato—. Desde el 2026-09-08 **ninguna fuente
   lo escribe**: `generos` es columna propia (`text[]`, varios por evento) y la
   llena Juan en `/admin`. Ahora además **es la navegación del directorio**: los
   géneros del filtro salen de los eventos donde tocó cada artista, así que un
   directorio sin géneros se queda sin su único eje de exploración.
-- **La escena local marcada: 3 de 52.** Mismo caso: desde que se dio de baja
+- **La escena local marcada: 4 de 53.** Mismo caso: desde que se dio de baja
   MusicBrainz nada la calcula. La marca rosa solo sale si Juan la pone.
 - **Tres tipos de Ticketlive sin mapear**: `destacado`, `dix-fm` y `externos`.
   Sus eventos entran igual —el aviso sale en el log de cada corrida del cron—
@@ -128,16 +139,6 @@ el siguiente paso.
   corrida 29 pasó entera—, y el segundo, que una fuente devuelva una lista
   vacía, que nunca ha ocurrido. Lo demás de esa tanda sí corrió: la anotación
   con la fuente y el motivo salió en la corrida 28.
-- **El campo «Quiénes tocan» y el token `--danger` no se han visto
-  renderizados.** Los dos viven en `/admin`, que pide sesión, y `npm run
-  capturas` no entra ahí. Del token sí se comprobó lo que podía fallar callado:
-  que `.text-danger` y `.bg-danger` existan en el CSS compilado, porque si
-  Tailwind no hubiera reconocido el token la clase no generaría nada y el texto
-  quedaría del color heredado **sin ningún error**.
-- **La lista de artistas no se ha visto con datos reales en la cartelera.** Las
-  113 filas que ya existían tienen la columna vacía, así que hoy todo cae al
-  camino de siempre. Lo verificado el 2026-09-15 es que **no hay regresión**, no
-  que lo nuevo se vea bien.
 - **Hay un paso de relleno escrito y sin correr, y no corre prisa.** `python -m
   bogota_music_intel.moderacion_cli --rellenar-artistas [--dry-run]` recalcula
   `artistas` y `gira` de los canónicos que ya existían. Rellena solo donde el
@@ -146,19 +147,27 @@ el siguiente paso.
   `reviewed_at`, que nunca supo distinguir "Juan dejó ese título" de "Juan nunca
   lo miró".
 
-  **Afecta a 6 eventos publicados**, que son los que tienen "&" en el título, así
-  que también se pueden arreglar a mano desde el formulario. Juan lo dejó para
-  después el 2026-09-15. Cuando se corra, es un `update` masivo sobre la única
-  copia de la base y lo autoriza él.
+  **Afecta a los publicados que tienen "&" en el título y la columna vacía.**
+  También se pueden arreglar a mano desde el formulario, que es lo que Juan
+  viene haciendo: el 2026-09-15 llenó cuatro así. Lo dejó para después. Cuando
+  se corra, es un `update` masivo sobre la única copia de la base y lo autoriza
+  él.
+- **El bloque «De la escena tocan» no se ha estrenado.** Sale solo en fiestas y
+  festivales, y **no hay ninguna con artistas vinculados**: los dos carteles que
+  existen son de toques, donde el enlace va dentro del título. Se ve el día que
+  se le arme el cartel a un festival.
+- ⚠️ **Dos eventos tienen la gira dentro del `title` y la columna vacía**, de
+  haber sido revisados con el formulario intermedio del 2026-09-15 —el que
+  todavía pedía título aparte—: El Kalvo y Jorge Celedón. Abrirlos y guardar
+  habría recompuesto el título **sin la gira**, perdiéndola en silencio. Se
+  arregló el mismo día haciendo que la desestructuración vaya **campo por campo**
+  y no todo o nada, así que la gira se recupera del título al abrirlos. Queda
+  anotado porque el dato sigue así en la base hasta que alguien los guarde.
+- **El relleno de `artistas` sigue sin correr**, y ahora hay cuatro eventos con
+  la columna llena porque Juan los tocó a mano. Ver el paso de abajo.
 - **El formulario de tracks de `/admin` no se ha usado.** Sin verificar:
   agregar un track pegando la dirección, **editarlo** (título, año, carátula) y
   quitarlo. `npm run capturas` no llega ahí porque `/admin` pide sesión.
-- **Del `/admin` de eventos sigue sin verse el formulario.** El 2026-09-13 sí
-  se miraron con sesión de admin la sección de Artistas, su ficha entera y el
-  editor de notas; lo que no se ha visto renderizado desde los cambios del
-  2026-09-08 es **el formulario de eventos**: el bloque de carga de afiche, los
-  dos campos de fecha, y que guardar un evento al que se llegó con `?evento=`
-  devuelva a su ficha pública.
 - **Ninguna nota de contratapa está publicada con formato todavía**, así que
   el camino que pinta HTML en la ficha pública no se ha visto con datos reales.
   Las dos notas que hay son texto plano y se pintan por el otro camino. El CSS
@@ -237,32 +246,30 @@ el siguiente paso.
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-15 a las 01:50 de Bogotá** contra la base, con el MCP — **idénticas a
-las del 2026-09-13**, porque el cron lleva un día en rojo y no ha habido
-triage.
+**2026-09-15 a las 10:50 de Bogotá** contra la base, con el MCP.
 
 | | |
 |---|---|
 | Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
 | Filas crudas | **130** — visitbogota 56 *(congeladas)*, movistar 16, royal 15, ticketlive 11, latino 10, lourdes 9, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **113** — 52 publicados, 4 borradores, 57 descartados |
-| En pantalla | **28 toques, 0 fiestas, 4 festivales** = 32 vigentes. La cartelera dice "28 toques en 10 salas" y el mapa "20 salas · 32 eventos": cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
-| Publicados ya pasados | **20** — 32 + 20 cierran los 52 |
-| Sin revisar | **20 de 52** publicados |
-| Salas | **39 filas** — 20 publicadas, 2 por aprobar, 17 descartadas |
-| Coordenadas | **20 de 20** — ninguna sala publicada queda sin ubicar |
-| Fotos de sala | **13 de 20** |
-| Afiche | **51 de 52** publicados — es la imagen de la tarjeta de compartir |
-| Precio | **19 de 52** publicados |
-| Género | **9 de 52** publicados, 5 géneros en uso, ninguno compuesto |
-| Escena local marcada | **3 de 52** — se marca a mano y nada la calcula |
-| **Directorio** | **2 artistas publicados**, 6 tracks entre los dos — El Kalvo entró el 2026-09-13 **sin ninguno** |
-| **Carteles vinculados** | **1** — El Kalvo con su toque del 17 de octubre, el primero de todos |
-| **Con lista de artistas** | **0 de 113** — la columna nació el 2026-09-15 y el relleno no se ha corrido |
+| Canónicos | **114** — 53 publicados, 4 borradores, 57 descartados |
+| En pantalla | **29 toques, 0 fiestas, 4 festivales** = 33 vigentes. La cartelera dice "29 toques en 11 salas" y el mapa "21 salas · 33 eventos": cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
+| Publicados ya pasados | **20** — 33 + 20 cierran los 53 |
+| Sin revisar | **18 de 53** publicados |
+| Salas | **40 filas** — 21 publicadas, 2 por aprobar, 17 descartadas |
+| Coordenadas | **21 de 21** — ninguna sala publicada queda sin ubicar, y **las 21 salen en el mapa** aunque no tengan nada anunciado |
+| Fotos de sala | **13 de 21** |
+| Afiche | **52 de 53** publicados — es la imagen de la tarjeta de compartir |
+| Precio | **19 de 53** publicados |
+| Género | **9 de 53** publicados, 5 géneros en uso, ninguno compuesto |
+| Escena local marcada | **4 de 53** — se marca a mano y nada la calcula |
+| **Directorio** | **3 artistas publicados** — Kidchen entró el 2026-09-15 |
+| **Carteles vinculados** | **2** — El Kalvo y Kidchen, los dos en toques |
+| **Con lista de artistas** | **4 de 114** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
 | Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1 |
 | Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **262 backend + 142 frontend**, verdes en local y en CI (`Tests` sobre `3478d31`) |
+| Tests | **262 backend + 168 frontend**, verdes en local y en CI (`Tests` sobre `580dbf6`) |
 
 Cómo leerlas sin equivocarse:
 
@@ -296,6 +303,12 @@ Cómo leerlas sin equivocarse:
 `openGraph`, `robots.txt`, `sitemap.xml` y el `noindex` de `/admin`. Eran lo
 que "se congela al desplegar y se nota en el primer enlace compartido", y ya no
 bloquean nada.
+
+⚠️ **Y desde el 2026-09-15 hay algo que compite con el orden de abajo:** el
+cron falla 5 de cada 6 días desde el 9 (§ 1). Mientras no corra, la cartelera
+**se vacía sola** —los eventos pasan de fecha y no entra nada nuevo— así que
+desplegar un sitio que se está vaciando es desplegar un problema. Leer ese log
+cuesta un minuto con sesión y decide si esto es la primera tarea o la última.
 
 1. 🎯 **Desplegar a Vercel.** **Nada de lo construido lo ha visto nadie más que
    Juan**, y hay cuatro cosas que **solo se prueban ahí**: el tope de 60 s del
