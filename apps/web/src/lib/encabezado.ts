@@ -195,3 +195,30 @@ export function trozosConEnlaces(
 
   return trozos;
 }
+
+/**
+ * Cuánto mide cada nombre del cartel, en `em` sobre el tamaño del título.
+ *
+ * **Los dos primeros van a tamaño completo y del tercero en adelante bajan en
+ * escalón** (pedido de Juan, 2026-09-15). Con cinco bandas —que es un caso
+ * real, no hipotético— el título a un solo tamaño ocupaba cuatro renglones y
+ * se leía como una lista de la compra.
+ *
+ * ⚠️ **Esto afirma una jerarquía, y por eso antes no se hacía.** Mientras el
+ * orden lo ponía la máquina —el orden en que la sala escribió los nombres— dar
+ * más peso al primero era afirmar un cabeza de cartel que nadie había
+ * verificado. Lo legítima el drag & drop del formulario: **el orden lo decide
+ * una persona**, así que la pantalla puede reflejarlo.
+ *
+ * Dos a tamaño completo y no uno, porque el cartel compartido entre dos es
+ * frecuente y partirlo ahí inventaría un telonero.
+ */
+const ESCALON = 0.15;
+/** Por debajo de esto el nombre deja de leerse, así que el escalón se detiene
+ *  aunque el cartel siga. */
+const PISO = 0.55;
+
+export function escalaDeArtista(indice: number): number {
+  if (indice < 2) return 1;
+  return Math.max(PISO, Number((1 - (indice - 1) * ESCALON).toFixed(2)));
+}

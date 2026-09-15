@@ -5,6 +5,7 @@ import {
   encabezado,
   encabezadoEnTexto,
   desestructurarTitulo,
+  escalaDeArtista,
   tituloDesde,
   trozosConEnlaces,
 } from "@/lib/encabezado";
@@ -191,5 +192,27 @@ describe("trozosConEnlaces", () => {
   it("cada ficha enlaza una sola vez", () => {
     const trozos = trozosConEnlaces("El Kalvo y El Kalvo", [kalvo]);
     expect(trozos.filter((t) => t.slug)).toHaveLength(1);
+  });
+});
+
+describe("escalaDeArtista", () => {
+  it("los dos primeros van a tamaño completo", () => {
+    expect(escalaDeArtista(0)).toBe(1);
+    expect(escalaDeArtista(1)).toBe(1);
+  });
+
+  it("del tercero en adelante baja en escalón", () => {
+    expect(escalaDeArtista(2)).toBe(0.85);
+    expect(escalaDeArtista(3)).toBe(0.7);
+  });
+
+  it("tiene piso: un cartel largo no llega a ser ilegible", () => {
+    expect(escalaDeArtista(4)).toBe(0.55);
+    expect(escalaDeArtista(12)).toBe(0.55);
+  });
+
+  it("nunca crece ni se invierte", () => {
+    const escalas = [0, 1, 2, 3, 4, 5, 6].map(escalaDeArtista);
+    expect(escalas).toEqual([...escalas].sort((a, b) => b - a));
   });
 });

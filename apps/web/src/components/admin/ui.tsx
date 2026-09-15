@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { getGeneros } from "@/lib/admin/generos";
+import { moverEn } from "@/lib/admin/orden";
 
 /** Los átomos visuales que comparten las dos secciones de moderación.
  *  Viven aparte para que eventos y salas se vean iguales sin copiar clases. */
@@ -260,6 +261,95 @@ export function CampoDeFechaYHora({
  * la señal cruda de la cartelera de origen —el clasificador la necesita— y no
  * un género.
  */
+
+/**
+ * Los chips de un campo de lista, reordenables.
+ *
+ * Lo pidió Juan el 2026-09-15 para artistas y géneros. En los artistas no es
+ * cosmético: **el orden es el del cartel**, y desde que existe es lo que
+ * legitima que el título dé más peso a los primeros — mientras lo ponía la
+ * máquina, destacar a alguien afirmaba un cabeza de cartel que nadie había
+ * verificado.
+ *
+ * ⚠️ **Arrastrar no puede ser la única forma de reordenar.** El
+ * arrastre nativo del navegador no existe en táctil y deja fuera a quien no
+ * puede usar un ratón con precisión, así que los mismos movimientos están en
+ * las flechas ← → cuando el chip tiene el foco. Es la misma razón por la que
+ * el marcador del mapa es un `<button>` de verdad.
+ *
+ * Se usa el arrastre nativo de HTML y no una librería: son cuatro manejadores
+ * y una función pura (`moverEn`), contra una dependencia que habría que
+ * mantener.
+ */
+function ChipsOrdenables({
+  valor,
+  alCambiar,
+  colorDelTexto = "",
+}: {
+  valor: string[];
+  alCambiar: (valor: string[]) => void;
+  /** Los géneros van en el cian de "dato frío"; los artistas, en el del texto. */
+  colorDelTexto?: string;
+}) {
+  const [arrastrando, setArrastrando] = useState<number | null>(null);
+
+  if (valor.length === 0) return null;
+
+  const mover = (desde: number, hasta: number) => {
+    const nuevo = moverEn(valor, desde, hasta);
+    alCambiar(nuevo);
+    // El foco viaja con el chip: sin esto, mover con el teclado lo pierde en
+    // el primer movimiento y hay que volver a tabular para el segundo.
+    queueMicrotask(() => {
+      const contenedor = document.querySelector<HTMLElement>(
+        `[data-chips] [data-indice="${hasta}"]`,
+      );
+      contenedor?.focus();
+    });
+  };
+
+  return (
+    <div data-chips className="mb-2 flex flex-wrap gap-1.5">
+      {valor.map((texto, i) => (
+        <button
+          key={texto}
+          type="button"
+          data-indice={i}
+          draggable
+          onDragStart={(e) => {
+            setArrastrando(i);
+            e.dataTransfer.effectAllowed = "move";
+            // Firefox no inicia el arrastre si no se escribe algo.
+            e.dataTransfer.setData("text/plain", String(i));
+          }}
+          onDragEnd={() => setArrastrando(null)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const desde = Number(e.dataTransfer.getData("text/plain"));
+            setArrastrando(null);
+            if (!Number.isNaN(desde)) mover(desde, i);
+          }}
+          onClick={() => alCambiar(valor.filter((v) => v !== texto))}
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+            e.preventDefault();
+            mover(i, e.key === "ArrowLeft" ? i - 1 : i + 1);
+          }}
+          className={
+            "cursor-grab rounded-full border border-border px-2.5 py-1 text-xs transition-colors hover:border-danger/40 hover:text-danger " +
+            colorDelTexto +
+            (arrastrando === i ? " opacity-40" : "")
+          }
+          title="Clic para quitar · arrastra o usa ← → para reordenar"
+        >
+          {texto} ×
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function CampoDeGeneros({
   valor,
   alCambiar,
@@ -290,21 +380,11 @@ export function CampoDeGeneros({
     <label className="sm:col-span-2">
       <Rotulo>Géneros (opcional)</Rotulo>
 
-      {valor.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {valor.map((genero) => (
-            <button
-              key={genero}
-              type="button"
-              onClick={() => alCambiar(valor.filter((g) => g !== genero))}
-              className="rounded-full border border-border px-2.5 py-1 text-xs text-accent-2 transition-colors hover:border-danger/40 hover:text-danger"
-              title="Quitar"
-            >
-              {genero} ×
-            </button>
-          ))}
-        </div>
-      )}
+      <ChipsOrdenables
+        valor={valor}
+        alCambiar={alCambiar}
+        colorDelTexto="text-accent-2"
+      />
 
       <input
         value={escribiendo}
@@ -336,8 +416,9 @@ export function CampoDeGeneros({
       </datalist>
 
       <span className="mt-1 block text-xs leading-relaxed text-muted">
-        Salen como chips al lado del título. Se pueden poner varios; uno nuevo
-        queda guardado y se sugiere en los eventos siguientes.
+        Salen como chips al lado del título, en este orden — arrástralos o usa
+        ← → para cambiarlo. Uno nuevo queda guardado y se sugiere en los
+        eventos siguientes.
       </span>
     </label>
   );
@@ -384,21 +465,7 @@ export function CampoDeArtistas({
     <label className="sm:col-span-2">
       <Rotulo>Artista/s</Rotulo>
 
-      {valor.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {valor.map((artista) => (
-            <button
-              key={artista}
-              type="button"
-              onClick={() => alCambiar(valor.filter((a) => a !== artista))}
-              className="rounded-full border border-border px-2.5 py-1 text-xs transition-colors hover:border-danger/40 hover:text-danger"
-              title="Quitar"
-            >
-              {artista} ×
-            </button>
-          ))}
-        </div>
-      )}
+      <ChipsOrdenables valor={valor} alCambiar={alCambiar} />
 
       <input
         value={escribiendo}
@@ -429,7 +496,8 @@ export function CampoDeArtistas({
 
       <span className="mt-1 block text-xs leading-relaxed text-muted">
         Hace falta al menos uno: es el nombre del toque. Con dos o más, la
-        cartelera los muestra como lista.
+        cartelera los muestra como lista y <strong>los dos primeros salen más
+        grandes</strong>, así que el orden importa: arrástralos o usa ← →.
       </span>
     </label>
   );

@@ -23,7 +23,12 @@
 import Link from "next/link";
 
 import { IconEnlaceExterno } from "@/components/icons";
-import { type FichaDeArtista, encabezado, trozosConEnlaces } from "@/lib/encabezado";
+import {
+  type FichaDeArtista,
+  encabezado,
+  escalaDeArtista,
+  trozosConEnlaces,
+} from "@/lib/encabezado";
 import type { Evento } from "@/lib/events";
 
 /** El verde de la marca, que en el resto del sitio se gasta justamente en el
@@ -80,7 +85,11 @@ export function TituloDeEvento({
   return (
     <>
       {piezas.artistas.map((artista, i) => (
-        <span key={artista}>
+        // El tamaño baja del tercero en adelante (`escalaDeArtista`). Va en
+        // `em` y no en píxeles porque el mismo componente se pinta a 5xl en la
+        // ficha y a tamaño de fila en la cartelera: el escalón tiene que ser
+        // proporcional, no absoluto.
+        <span key={artista} style={{ fontSize: `${escalaDeArtista(i)}em` }}>
           {i > 0 && <span className="text-muted"> · </span>}
           <ConEnlaces texto={artista} fichas={fichas} />
         </span>
