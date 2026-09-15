@@ -178,8 +178,32 @@ default `borrador`.
 ### Carga manual
 
 Evento nuevo (entra como borrador, a la misma cola, para que no haya un camino
-que se salte la revisión) y sala nueva (nace publicada: la crea quien aprobaría
-el borrador).
+que se salte la revisión) y sala nueva.
+
+**La sala nace publicada si se crea desde su propia sección y en borrador si se
+escribe al vuelo desde el formulario de un evento** (2026-09-15). La diferencia
+es de información, no de confianza: quien entra a Salas se sentó a llenar
+dirección, coordenada y foto; quien escribe el nombre en el formulario de un
+evento tiene un nombre leído de un flyer y nada más, y pedirle la ficha entera
+en ese momento lo obliga a abandonar el evento a medio cargar — que es lo que
+esa opción viene a evitar. ⚠️ **Hay un orden que importa: se aprueba la sala
+antes de publicar el evento**, o la ficha escribe "sala por confirmar" porque
+RLS no deja ver una sala sin publicar.
+
+⚠️ **El año que el afiche no imprime se infiere, y es una excepción deliberada
+a no inventar datos.** La pidió Juan el 2026-09-15: los flyers de esta escena
+casi nunca imprimen el año porque dan por hecho el que corre, y devolver `null`
+estaba perdiendo la fecha entera de eventos cuyo día y mes sí se sabían. Se
+elige el año que deja la fecha en el futuro próximo —"15 de enero" leído en
+septiembre es del año entrante— con siete días de gracia hacia atrás, para el
+caso de cargar el flyer del toque de anoche.
+
+Lo que salva la regla y no es opcional: **queda dicho en las notas del
+evento** ("El afiche no imprime el año: dice 09/12 y se asumió 2026"), así que
+nadie lee después una fecha completa creyendo que el afiche la traía. Y a
+diferencia del cron, esto pasa por los ojos de Juan antes de publicarse. El
+modelo sigue sin deducir nada: devuelve `dia_y_mes` y el año lo pone el
+formulario, que sí sabe en qué fecha se está cargando.
 
 **La moderación no reabre el scraping prohibido.** Que el dato caiga en una
 cola en vez de publicarse no cambia qué tenemos permitido pedir. Para Tuboleta,

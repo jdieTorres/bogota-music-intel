@@ -171,6 +171,54 @@ export async function crearSala(sala: SalaNueva) {
   return data as { id: string; name: string };
 }
 
+/**
+ * Una sala escrita al vuelo desde el formulario de un evento.
+ *
+ * Nace en **borrador**, no publicada como la que se crea desde su propia
+ * sección, y la diferencia es de información: quien crea una sala en Salas se
+ * sentó a llenarle dirección, coordenada y foto; acá lo único que se tiene es
+ * un nombre leído de un flyer. Pedirlo todo en ese momento obligaría a
+ * abandonar el evento a medio cargar — que es justo lo que esto viene a
+ * evitar.
+ *
+ * El evento también nace en borrador, así que no hay forma de que una sala sin
+ * revisar llegue a la cartelera antes que su ficha. ⚠️ Pero sí hay un orden que
+ * importa: **si se publica el evento sin aprobar la sala, la ficha escribe
+ * "sala por confirmar"**, porque RLS no deja ver una sala que no está
+ * publicada. Se aprueba primero la sala.
+ *
+ * El slug sale de `slugDeSala`, que replica a `python-slugify`: si no
+ * coincidiera, el día que un scraper publique esa sala la crearía de nuevo y
+ * los eventos quedarían repartidos entre las dos copias.
+ */
+export async function crearSalaEnBorrador(nombre: string) {
+  const { data, error } = await supabase
+    .from("venues")
+    .insert({
+      slug: slugDeSala(nombre),
+      name: nombre.trim(),
+      city: "Bogotá",
+      source_type: "manual",
+      status: "borrador",
+    })
+    .select("id, name")
+    .single();
+
+  if (error) {
+    // El choque de slug es el caso frecuente y no se puede dejar en crudo: el
+    // selector solo ofrece salas **publicadas**, así que una que ya esté en
+    // borrador o descartada no aparece ahí y se intenta crear de nuevo.
+    if (error.code === "23505") {
+      throw new Error(
+        `Ya existe una sala con el nombre «${nombre.trim()}», pero no está publicada. ` +
+          "Búscala en Salas → Por aprobar y apruébala; después vuelve acá y sale en la lista.",
+      );
+    }
+    throw new Error(`No se pudo crear la sala: ${error.message}`);
+  }
+  return data as { id: string; name: string };
+}
+
 /** Las salas aprobadas, para elegir al cargar un evento a mano. */
 export async function getSalasPublicadas(): Promise<{ id: string; name: string }[]> {
   const { data, error } = await supabase

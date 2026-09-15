@@ -27,14 +27,18 @@ import {
 } from "@/components/admin/ui";
 import { CampoDePrecio } from "@/components/admin/CampoDePrecio";
 import { type CamposDelAfiche, esSoloUnEnlace, salaQueCoincide } from "@/lib/admin/afiche";
-import { desdeCamposDeFecha } from "@/lib/admin/fecha";
+import { desdeCamposDeFecha, fechaConAnioInferido } from "@/lib/admin/fecha";
 import { leerAfiche, subirAfiche } from "@/lib/admin/carga-de-afiche";
 import { crearEvento } from "@/lib/admin/eventos";
 import type { PrecioEvento } from "@/lib/precio";
 import type { TipoEvento } from "@/lib/events";
 import { getArtistasParaVincular } from "@/lib/admin/artistas";
-import { getSalasPublicadas } from "@/lib/admin/salas";
+import { crearSalaEnBorrador, getSalasPublicadas } from "@/lib/admin/salas";
 import { encabezadoEnTexto } from "@/lib/encabezado";
+
+/** El valor del selector que significa "la escribo yo". No puede chocar con
+ *  ningún id de sala, que son uuid. */
+const SALA_NUEVA = "__nueva__";
 
 export function FormularioDeEvento({
   setError,
@@ -46,6 +50,7 @@ export function FormularioDeEvento({
   const [salas, setSalas] = useState<{ id: string; name: string }[]>([]);
   const [titulo, setTitulo] = useState("");
   const [sala, setSala] = useState("");
+  const [salaNueva, setSalaNueva] = useState("");
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
   const [precio, setPrecio] = useState<PrecioEvento>({
@@ -83,7 +88,10 @@ export function FormularioDeEvento({
       .catch(() => setDelDirectorio([]));
   }, []);
 
-  const listo = titulo.trim() && sala && evidencia.trim().length >= 10;
+  // Con la sala escrita a mano, lo que hace falta es el nombre y no el id:
+  // el id todavía no existe cuando se aprieta el botón.
+  const salaLista = sala === SALA_NUEVA ? salaNueva.trim().length > 0 : Boolean(sala);
+  const listo = titulo.trim() && salaLista && evidencia.trim().length >= 10;
 
   /**
    * Corre una lectura y vuelca lo leído en los campos vacíos.
@@ -103,7 +111,13 @@ export function FormularioDeEvento({
       if (!titulo && c.titulo) setTitulo(c.titulo);
       // Cada mitad entra por su cuenta: un afiche que anuncia el día y no la
       // hora llena la fecha y deja la hora vacía, que es el hueco honesto.
-      if (!fecha && c.fecha_local) setFecha(c.fecha_local);
+      // El año inferido entra igual que el resto: solo si el campo está vacío.
+      // Cuando el afiche no lo imprime, `dia_y_mes` trae "MM-DD" y acá se le
+      // pone el que corresponde — ver `anioParaDiaYMes`, que explica por qué
+      // esta es una excepción deliberada a no inventar datos.
+      const delAfiche =
+        c.fecha_local ?? (c.dia_y_mes ? fechaConAnioInferido(c.dia_y_mes) : null);
+      if (!fecha && delAfiche) setFecha(delAfiche);
       if (!hora && c.hora_local) setHora(c.hora_local);
       const encontrada = salaQueCoincide(c.sala_nombre, salas);
       if (!sala) setSala(encontrada ?? "");
@@ -121,6 +135,12 @@ export function FormularioDeEvento({
       setNotas(
         [
           c.precio_texto && `Precio impreso: ${c.precio_texto}`,
+          // Sin esto, la fecha completa se leería después como si el afiche la
+          // trajera. La inferencia se acepta; disimularla, no.
+          !c.fecha_local &&
+            c.dia_y_mes &&
+            delAfiche &&
+            `El afiche no imprime el año: dice ${c.dia_y_mes.replace("-", "/")} y se asumió ${delAfiche.slice(0, 4)}.`,
           c.sala_nombre &&
             !encontrada &&
             `El afiche dice «${c.sala_nombre}», que no está entre las salas cargadas.`,
@@ -156,9 +176,15 @@ export function FormularioDeEvento({
     setOcupado(true);
     setError(null);
     try {
+      // La sala primero, porque el evento la necesita por id. Si esto falla
+      // —el caso frecuente es que ya exista sin publicar— el evento no se crea
+      // y el formulario se queda entero, con todo lo escrito.
+      const venueId =
+        sala === SALA_NUEVA ? (await crearSalaEnBorrador(salaNueva)).id : sala;
+
       await crearEvento({
         title: titulo.trim(),
-        venue_id: sala,
+        venue_id: venueId,
         starts_at: desdeCamposDeFecha(fecha, hora),
         ...precio,
         ticket_url: boleteria.trim() || null,
@@ -329,6 +355,11 @@ export function FormularioDeEvento({
           </span>
         </label>
 
+        {/* La sala que no está en la lista se escribe acá mismo y nace en
+            borrador. Antes decía "creala en la pestaña Salas", que obligaba a
+            abandonar un evento a medio cargar para ir a llenar una ficha
+            entera — y lo que se tiene en ese momento es un nombre leído de un
+            flyer, nada más. */}
         <label>
           <Rotulo>Sala</Rotulo>
           <select value={sala} onChange={(e) => setSala(e.target.value)} className={CAMPO}>
@@ -338,10 +369,28 @@ export function FormularioDeEvento({
                 {s.name}
               </option>
             ))}
+            <option value={SALA_NUEVA}>— no está en la lista, la escribo —</option>
           </select>
-          <span className="mt-1 block text-xs text-muted">
-            ¿No está? Creala en la pestaña Salas.
-          </span>
+          {sala === SALA_NUEVA ? (
+            <>
+              <input
+                value={salaNueva}
+                onChange={(e) => setSalaNueva(e.target.value)}
+                placeholder="Nombre de la sala, como se escribe"
+                className={`${CAMPO} mt-2`}
+              />
+              <span className="mt-1 block text-xs leading-relaxed text-muted">
+                Se crea en borrador, con el nombre y nada más. Queda en Salas →
+                Por aprobar para ponerle dirección, coordenada y foto.{" "}
+                <strong>Apruébala antes de publicar el evento</strong>, o la ficha
+                dirá «sala por confirmar».
+              </span>
+            </>
+          ) : (
+            <span className="mt-1 block text-xs text-muted">
+              Solo salen las aprobadas.
+            </span>
+          )}
         </label>
 
         <CampoDeFechaYHora

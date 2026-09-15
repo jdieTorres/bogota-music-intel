@@ -247,7 +247,7 @@ triage.
 | Filas crudas | **130** — visitbogota 56 *(congeladas)*, movistar 16, royal 15, ticketlive 11, latino 10, lourdes 9, rockal 8, idartes 5 |
 | Crudas sin clasificar | **0** |
 | Canónicos | **113** — 52 publicados, 4 borradores, 57 descartados |
-| En pantalla | **28 toques, 0 fiestas, 4 festivales** = 32 vigentes. La cartelera dice "28 toques en 10 salas" y el mapa "11 salas · 32 eventos": cuentan distinto **a propósito** (`context/frontend/CLAUDE.md`) |
+| En pantalla | **28 toques, 0 fiestas, 4 festivales** = 32 vigentes. La cartelera dice "28 toques en 10 salas" y el mapa "20 salas · 32 eventos": cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
 | Publicados ya pasados | **20** — 32 + 20 cierran los 52 |
 | Sin revisar | **20 de 52** publicados |
 | Salas | **39 filas** — 20 publicadas, 2 por aprobar, 17 descartadas |
