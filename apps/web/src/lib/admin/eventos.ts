@@ -14,6 +14,7 @@
  */
 
 import type { TipoEvento } from "@/lib/events";
+import { inicioDeHoyEnBogota } from "@/lib/fechas";
 import type { ClasePrecio } from "@/lib/precio";
 import { supabase } from "@/lib/supabase";
 
@@ -150,19 +151,6 @@ export function salaEnLaCola(evento: EventoEnCola): string {
 
 /** Las tres pestañas de la pantalla. */
 export type Pestaña = "cola" | "publicados" | "pasados";
-
-/** Inicio del día de hoy en Bogotá, en UTC. Igual que en la cartelera: se
- *  corta por día y no por hora, porque un show de las 8 p. m. sigue siendo
- *  de hoy a las 11. */
-function inicioDeHoyEnBogota(): string {
-  const partes = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Bogota",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-  return `${partes}T00:00:00-05:00`;
-}
 
 async function consultar(
   armar: (q: ReturnType<typeof consultaBase>) => ReturnType<typeof consultaBase>,

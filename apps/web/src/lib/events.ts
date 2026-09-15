@@ -4,6 +4,7 @@ import {
   SOLO_FESTIVALES,
   SOLO_FIESTAS,
 } from "@/lib/editorial";
+import { inicioDeHoyEnBogota } from "@/lib/fechas";
 import { formatearPrecio, type PrecioEvento } from "@/lib/precio";
 import { supabase } from "@/lib/supabase";
 
@@ -111,21 +112,6 @@ const CAMPOS = `
  * publicar borradores sin que nadie lo note.
  */
 const PUBLICADO = "publicado";
-
-
-/** Inicio del día de hoy en Bogotá, en UTC. Un evento que empieza a las 8pm
- *  sigue siendo "de hoy" a las 11pm, así que se corta por día y no por hora. */
-function inicioDeHoyEnBogota(): string {
-  const ahora = new Date();
-  const partes = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Bogota",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(ahora);
-  // Bogotá es UTC-5 todo el año (Colombia no usa horario de verano).
-  return `${partes}T00:00:00-05:00`;
-}
 
 /** Lo próximo de una pestaña, en orden cronológico. El filtro editorial es
  *  lo único que cambia entre conciertos y fiestas.

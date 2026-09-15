@@ -1,5 +1,6 @@
 import { EN_CARTELERA } from "@/lib/editorial";
 import type { TipoEvento } from "@/lib/events";
+import { inicioDeHoyEnBogota } from "@/lib/fechas";
 import { supabase } from "@/lib/supabase";
 
 export type EventoEnSala = {
@@ -30,16 +31,6 @@ export type EscenaEnMapa = {
   salas: SalaEnMapa[];
   sinUbicar: SalaSinUbicar[];
 };
-
-function inicioDeHoyEnBogota(): string {
-  const partes = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Bogota",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-  return `${partes}T00:00:00-05:00`;
-}
 
 /**
  * **Todas las salas publicadas**, tengan o no algo anunciado.

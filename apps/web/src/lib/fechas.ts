@@ -1,18 +1,5 @@
 const TZ = "America/Bogota";
 
-/** "jueves, 27 de agosto" — encabezado de cada día del calendario. */
-export function tituloDeDia(claveISO: string): string {
-  // claveISO viene como YYYY-MM-DD; el mediodía evita que el cambio de huso
-  // corra la fecha un día hacia atrás al formatear.
-  const fecha = new Date(`${claveISO}T12:00:00-05:00`);
-  return new Intl.DateTimeFormat("es-CO", {
-    timeZone: TZ,
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(fecha);
-}
-
 /**
  * ¿La fuente publicó hora, o solo fecha?
  *
@@ -55,9 +42,9 @@ export function horaDeEvento(iso: string | null, precision: string): string | nu
  * separar sin partir texto a mano, que en español se rompe con los meses de
  * una palabra y con la coma del locale.
  *
- * ⚠️ El mediodía del mismo truco que `tituloDeDia` no es opcional: la clave
- * llega como `YYYY-MM-DD` y a medianoche el huso corre la fecha un día hacia
- * atrás al formatear. Colombia es UTC-5 todo el año.
+ * ⚠️ El mediodía no es opcional: la clave llega como `YYYY-MM-DD` y a
+ * medianoche el huso corre la fecha un día hacia atrás al formatear.
+ * Colombia es UTC-5 todo el año.
  */
 export function piezasDeDia(claveISO: string): {
   diaSemana: string;
@@ -117,9 +104,9 @@ export function fechaLarga(iso: string): string {
  * comparar en TypeScript está `siguePorVenir`: dos cadenas ISO con husos
  * distintos no se pueden comparar como texto.
  *
- * Existe una copia de esto en `events.ts` y otra en `venues.ts`, las dos
- * anteriores a este archivo y marcadas como duplicadas a propósito. Lo nuevo
- * usa esta.
+ * ⚠️ **Es la única copia, y tiene que seguir siéndolo.** Hubo tres más
+ * —`events.ts`, `venues.ts` y `admin/eventos.ts`— y solo esta estaba bajo el
+ * test de regresión que guarda la regla del huso.
  */
 export function inicioDeHoyEnBogota(): string {
   const partes = new Intl.DateTimeFormat("en-CA", {
