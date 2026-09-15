@@ -112,10 +112,30 @@ el siguiente paso.
 
 ## 2. Lo que quedó a medias
 
-- **Queda una ruta del cron sin estrenar: "traer cero eventos es fallo".**
-  Necesita que una fuente devuelva una lista vacía, y nunca ha ocurrido.
+- **Dos rutas del cron sin estrenar en CI.**
 
-  **La otra ya se estrenó**, y bien: el mensaje que nombra al portero anti-bots
+  1. 🟡 **Que el bloqueo de Ticketlive salga en verde** (`BLOQUEO_CONOCIDO`, del
+     2026-09-15). Probado en local y con tres tests —el bloqueo no pinta rojo,
+     otro fallo de la misma fuente sí, y un portero en una fuente nueva
+     también—, pero **sin una corrida real que lo ejercite**.
+
+     ⚠️ **Y la corrida a mano del 2026-09-15 a las 16:24 UTC no cuenta, aunque
+     salió verde**: tiene **cero anotaciones**, y el código anota igual cuando
+     calla el color —solo cambia "FALLÓ" por "bloqueada"—. O sea que a
+     Ticketlive le tocó entrar bien, y el verde llegó por el camino de siempre.
+     Confirmado que el mecanismo de anotaciones funciona: la corrida roja del
+     2026-09-14 sí expone las suyas.
+
+     **Cómo se comprueba, en un comando**: leer las anotaciones de la última
+     corrida (`/actions/runs/<id>/jobs` → `check-runs/<job>/annotations`, sin
+     token) y ver que diga `[ticketlive] bloqueada` **con la corrida en verde**.
+     Por la estadística —Ticketlive entra 1 de cada 6— lo normal es que la
+     corrida del día siguiente ya lo muestre.
+
+  2. **"Traer cero eventos es fallo"**: necesita que una fuente devuelva una
+     lista vacía, y nunca ha ocurrido.
+
+  **Lo que sí se estrenó**, y bien: el mensaje que nombra al portero anti-bots
   salió en el log del 2026-09-14 con todo lo que tenía que decir —qué fuente,
   qué la frenó, el código 202, el `content-type` que no era JSON y el principio
   del cuerpo—. `json_de` hizo su trabajo: el error dice **qué** pasó y no solo
