@@ -6,7 +6,7 @@ import { MapaEscena } from "@/components/MapaEscena";
 import { metadatosDePagina } from "@/lib/sitio";
 import { type EscenaEnMapa, getEscena } from "@/lib/venues";
 
-export const revalidate = 1800;
+export const revalidate = 60;
 
 export const metadata: Metadata = metadatosDePagina({
   titulo: "Mapa de la escena",

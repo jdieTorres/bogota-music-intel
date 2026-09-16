@@ -6,7 +6,7 @@ import { urlDelSitio } from "@/lib/sitio";
 
 // Mismo medio hora que las páginas: el cron corre una vez al día, y un
 // sitemap que se rearma en cada visita haría cuatro consultas por robot.
-export const revalidate = 1800;
+export const revalidate = 60;
 
 /** Las cinco públicas. `/admin` no entra: no es para lectores. */
 const RUTAS_FIJAS = ["/", "/fiestas", "/festivales", "/mapa", "/directorio"];

@@ -10,7 +10,7 @@ import type { TrackEnCola } from "@/components/rockola/Rockola";
 import { type Directorio, getDirectorio } from "@/lib/artists";
 import { metadatosDePagina } from "@/lib/sitio";
 
-export const revalidate = 1800;
+export const revalidate = 60;
 
 export const metadata: Metadata = metadatosDePagina({
   titulo: "Directorio de la escena",

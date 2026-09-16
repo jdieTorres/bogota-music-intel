@@ -10,7 +10,7 @@ import {
 
 // La cartelera se actualiza una vez al día vía GitHub Actions; media hora de
 // caché mantiene la página rápida sin quedar desactualizada.
-export const revalidate = 1800;
+export const revalidate = 60;
 
 export default async function Page() {
   let crudos: Evento[];

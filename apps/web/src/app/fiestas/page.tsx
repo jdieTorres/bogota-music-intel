@@ -11,7 +11,7 @@ import {
 } from "@/lib/events";
 import { metadatosDePagina } from "@/lib/sitio";
 
-export const revalidate = 1800;
+export const revalidate = 60;
 
 export const metadata: Metadata = metadatosDePagina({
   titulo: "Fiestas",

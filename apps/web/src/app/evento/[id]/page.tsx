@@ -17,7 +17,7 @@ import { primerEnlace } from "@/lib/enlaces";
 import { fechaLarga, horaDeEvento } from "@/lib/fechas";
 import { metadatosDePagina } from "@/lib/sitio";
 
-export const revalidate = 1800;
+export const revalidate = 60;
 
 const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
 

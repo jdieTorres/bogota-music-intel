@@ -11,7 +11,7 @@ import { fechaLarga, siguePorVenir } from "@/lib/fechas";
 import { metadatosDePagina } from "@/lib/sitio";
 import { aTextoPlano, esHtml } from "@/lib/texto-rico";
 
-export const revalidate = 1800;
+export const revalidate = 60;
 
 export async function generateMetadata(
   props: PageProps<"/artista/[slug]">,
