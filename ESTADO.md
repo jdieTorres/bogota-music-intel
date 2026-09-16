@@ -1,13 +1,21 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-15 por la tarde**, recontado contra la base con
-el MCP. La sesión trajo el cartel de varios artistas, la primera pasada de
-diseño con impeccable, el mapa completo, y la reestructuración de los dos
-formularios de `/admin`.
+Última actualización: **2026-09-15 al cierre del día**, recontado contra la
+base con el MCP. La sesión trajo el cartel de varios artistas, la primera
+pasada de diseño con impeccable, el mapa completo, la reestructuración de los
+dos formularios de `/admin` y la unificación del corte del día de Bogotá.
 
 **Y Juan hizo triage con las herramientas nuevas**: publicó un evento cargado a
 mano con cinco bandas —el caso que originó todo esto—, sumó un artista al
 directorio, vinculó el segundo cartel y aprobó una sala.
+
+⚠️ **Al cierre del día se vació la pestaña «Ya pasaron»**: se borraron 26
+canónicos con fecha anterior al 2026-09-15 y sus 32 filas crudas, porque en
+local no aportaban nada. **Eso movió casi todas las cifras de § 3 hacia abajo
+sin que nadie tocara el producto** — el género y la escena local perdieron
+cobertura porque buena parte de lo marcado a mano era justamente lo viejo. Se
+decidió **no bloquearlos**, así que lo que sus fuentes sigan listando puede
+volver a la cola en la próxima corrida del cron.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -35,7 +43,10 @@ el siguiente paso.
   tierra / formato?" y "test" las otras dos —Kidchen entró así el 2026-09-15—,
   y **se ven en la página pública**. Las notas de contratapa son el material
   propio del proyecto —lo único que no salió de otra parte— así que son justo
-  lo que no puede quedar así el día que esto se despliegue.
+  lo que no puede quedar así el día que esto se despliegue. Las tres sí tienen
+  foto y ciudad de origen. Al pasar: **`Kidchen` tiene la ciudad como
+  `"Bogotá "`, con un espacio al final**, que es del tipo de cosa que después
+  parte un agrupamiento en dos.
 - **Hay dos carteles vinculados, y hacen falta muchos más.** El Kalvo con su
   toque del 17 de octubre y Kidchen con el suyo. Con dos, **las dos señales de
   recomendación que dependen de coincidencias siguen sin poder calcularse**
@@ -43,20 +54,52 @@ el siguiente paso.
   coincidan en carteles **distintos**, y estos dos están en toques separados.
   Se arma desde la ficha de cada toque (`context/moderacion/CLAUDE.md`).
 - **8 de 21 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
-  con vista previa. Es lo único que le falta al mapa: las 21 tienen coordenada,
-  ninguna se lista como "sin ubicar", y desde el 2026-09-15 **todas salen como
-  pin** aunque no tengan nada anunciado.
-- **2 salas por aprobar**: Ágora Bogotá Centro de Convenciones y Museo de Arte
-  Moderno de Bogotá MAMBO. Ninguna tiene eventos vigentes, así que no corre
-  prisa.
-- 🔥 **El género: 9 de 53 publicados lo tienen**, con 5 en uso —Rock, Hip
-  Hop/Rap, Popular, Reggaeton, Vallenato—. Desde el 2026-09-08 **ninguna fuente
-  lo escribe**: `generos` es columna propia (`text[]`, varios por evento) y la
-  llena Juan en `/admin`. Ahora además **es la navegación del directorio**: los
-  géneros del filtro salen de los eventos donde tocó cada artista, así que un
-  directorio sin géneros se queda sin su único eje de exploración.
-- **La escena local marcada: 4 de 53.** Mismo caso: desde que se dio de baja
-  MusicBrainz nada la calcula. La marca rosa solo sale si Juan la pone.
+  con vista previa. Desde el 2026-09-15 **todas las que tienen coordenada salen
+  como pin** aunque no tengan nada anunciado.
+- ⚠️ **Una sala publicada no tiene coordenada, y este archivo decía que no
+  había ninguna.** Es `Carrera 24 #72 - 31`, que Juan creó a mano el 2026-09-15
+  a las 03:06 junto con el toque de las cinco bandas. Cuando se escribió "las
+  21 tienen coordenada" eran 20 de 20 y era cierto; **la sala 21 entró después
+  y el numerador se quedó quieto**.
+
+  **Lo que hay que decidir es más que geocodificarla**: su `name` es una
+  dirección y su `address` está en null, o sea que el dato existe y está en el
+  campo equivocado. Mientras siga así no se puede geocodificar, porque lo que
+  se geocodifica es `address`. Y ponerle un nombre es una decisión editorial de
+  Juan, no un arreglo: **un toque en un local sin nombre público es
+  exactamente el caso de la escena underground que esta plataforma existe para
+  cubrir**, y "la dirección como nombre" puede ser la respuesta correcta.
+  Mientras tanto se lista como "sin ubicar", que es lo que manda la regla de no
+  poner un pin aproximado.
+- **2 salas por aprobar**: ⚠️ **no son las que decía este archivo.** Son
+  **Parque de la 93** y **Teatro Panorama**. Ágora Bogotá y el MAMBO, que es lo
+  que estaba escrito acá, **Juan las descartó el 2026-09-09 a las 02:34** y la
+  línea nunca se actualizó: llevaba seis días nombrando dos salas resueltas e
+  ignorando dos que sí esperan.
+
+  Ninguna de las dos tiene eventos vigentes —lo único que cuelga de Teatro
+  Panorama es un Santiago Cruz del 16 de septiembre ya descartado—, así que
+  sigue sin correr prisa. **Se desvió porque la cola de salas se mueve sola con
+  el cron y acá había nombres propios en vez de un conteo**; los nombres van
+  con su fecha de verificación o no van.
+- 🔥 **El género: 5 de 33 vigentes lo tienen**, con 6 en uso —Rock (2), y Hip
+  Hop/Rap, Math Rock, Midwest Emo, Screamo y Vallenato con 1 cada uno—. Desde
+  el 2026-09-08 **ninguna fuente lo escribe**: `generos` es columna propia
+  (`text[]`, varios por evento) y la llena Juan en `/admin`. Ahora además **es
+  la navegación del directorio**: los géneros del filtro salen de los eventos
+  donde tocó cada artista, así que un directorio sin géneros se queda sin su
+  único eje de exploración.
+
+  ⚠️ **El borrado de lo pasado se llevó cobertura, no solo filas.** Antes eran
+  9 de 53 publicados; los que tenían género eran en buena parte los viejos, así
+  que la proporción apenas se movió pero **el trabajo manual de clasificar se
+  perdió con ellos**. Los tres géneros nuevos —Math Rock, Midwest Emo,
+  Screamo— son del toque que Juan cargó a mano, y son la señal de que la
+  taxonomía útil para la escena no se parece a la que traían las salas grandes.
+- **La escena local marcada: 3 de 33 vigentes**, más 1 confirmado que *no* y 29
+  sin saber. Mismo caso: desde que se dio de baja MusicBrainz nada la calcula.
+  La marca rosa solo sale si Juan la pone. **Los tres estados siguen separados**
+  y el ranking solo castiga al confirmado que no.
 - **Tres tipos de Ticketlive sin mapear**: `destacado`, `dix-fm` y `externos`.
   Sus eventos entran igual —el aviso sale en el log de cada corrida del cron—
   pero nadie ha decidido a qué `event_type` van.
@@ -81,6 +124,11 @@ el siguiente paso.
   borrarlo y dejar la tabla del `CLAUDE.md` como única copia, porque una copia
   que hay que acordarse de sincronizar se vuelve a desincronizar. `verde-neon.md`
   ya conserva el registro histórico de esa ronda.
+- **¿Qué estilo de pestaña gana en `/admin`?** Eventos y Salas repiten doce
+  líneas idénticas de markup subrayado y Artistas usa otro estilo para lo
+  mismo. Unificarlas es una línea después de extraerlas, pero **cuál de los dos
+  gana es de Juan** — y no se puede comprobar en píxeles, porque `npm run
+  capturas` no llega a `/admin`, que pide sesión.
 - **¿Los pines del mapa crecen a 44px?** Miden 30×30, contra los 44 de un
   objetivo táctil. Su tamaño es una decisión tomada —"a 30px es una mancha de
   color antes de ser un dibujo"— y agrandarlos cambia cómo se lee el mapa, no
@@ -119,18 +167,26 @@ el siguiente paso.
      otro fallo de la misma fuente sí, y un portero en una fuente nueva
      también—, pero **sin una corrida real que lo ejercite**.
 
-     ⚠️ **Y la corrida a mano del 2026-09-15 a las 16:24 UTC no cuenta, aunque
-     salió verde**: tiene **cero anotaciones**, y el código anota igual cuando
-     calla el color —solo cambia "FALLÓ" por "bloqueada"—. O sea que a
-     Ticketlive le tocó entrar bien, y el verde llegó por el camino de siempre.
-     Confirmado que el mecanismo de anotaciones funciona: la corrida roja del
-     2026-09-14 sí expone las suyas.
+     ⚠️ **Van dos corridas verdes y ninguna sirve de prueba.** La de a mano del
+     2026-09-15 16:24 UTC y la programada de las **17:55 UTC** (`run`
+     35004254563) salieron verdes con **cero anotaciones** las dos, y el código
+     anota igual cuando calla el color —solo cambia "FALLÓ" por "bloqueada"—.
+     Confirmado que el mecanismo funciona: la corrida roja del 2026-09-14 sí
+     expone las suyas.
 
-     **Cómo se comprueba, en un comando**: leer las anotaciones de la última
-     corrida (`/actions/runs/<id>/jobs` → `check-runs/<job>/annotations`, sin
-     token) y ver que diga `[ticketlive] bloqueada` **con la corrida en verde**.
-     Por la estadística —Ticketlive entra 1 de cada 6— lo normal es que la
-     corrida del día siguiente ya lo muestre.
+     🔥 **Y el método de comprobación que estaba escrito acá no discrimina.**
+     Decía que bastaba con esperar a la corrida siguiente y leer las
+     anotaciones, pero **Ticketlive no tiene filas nuevas desde el 2026-09-11**
+     (`max(scraped_at)`), así que "cero anotaciones y cero filas" no distingue
+     *entró bien y no había nada nuevo* de *estuvo bloqueada y no se anotó*. Las
+     dos hipótesis dan exactamente la misma evidencia — que es el defecto que
+     este proyecto ya tiene nombrado: un fallo que se ve igual que un éxito.
+
+     **Lo que sí lo comprobaría**, y hay que decidir cuál: leer el **log** del
+     paso `Run event scrapers` de una corrida verde y buscar ahí la línea de
+     Ticketlive, que existe aunque no haya anotación; o hacer que el camino del
+     bloqueo deje una marca que no dependa de las anotaciones. **Mientras tanto
+     esto no se puede dar por estrenado**, y llevaba un día dándose por casi.
 
   2. **"Traer cero eventos es fallo"**: necesita que una fuente devuelva una
      lista vacía, y nunca ha ocurrido.
@@ -164,8 +220,18 @@ el siguiente paso.
   arregló el mismo día haciendo que la desestructuración vaya **campo por campo**
   y no todo o nada, así que la gira se recupera del título al abrirlos. Queda
   anotado porque el dato sigue así en la base hasta que alguien los guarde.
-- **El relleno de `artistas` sigue sin correr**, y ahora hay cuatro eventos con
-  la columna llena porque Juan los tocó a mano. Ver el paso de abajo.
+  Verificado el 2026-09-15: los dos siguen con `gira` en null, y **el de Jorge
+  Celedón es el 17 de septiembre**, así que si se quiere arreglar antes de que
+  se le pase la fecha quedan dos días.
+- **El relleno de `artistas` sigue sin correr**, y ahora hay **cinco** eventos
+  con la columna llena porque Juan los tocó a mano. Ver el paso de abajo.
+- **Hay un cambio de look sin commitear**, en
+  `apps/web/src/components/TituloDeEvento.tsx`: el enlace del artista dentro
+  del título deja el subrayado y pasa a **brillo con halo** en hover
+  (`brightness-110` más `text-shadow` del acento). Es una decisión de estilo a
+  medio tomar —el comentario de encima todavía explica por qué iba subrayado—
+  y **no se ha visto en el navegador**. Lo decide Juan: o se termina y se
+  commitea con el comentario corregido, o se descarta.
 - **El formulario de tracks de `/admin` no se ha usado.** Sin verificar:
   agregar un track pegando la dirección, **editarlo** (título, año, carátula) y
   quitarlo. `npm run capturas` no llega ahí porque `/admin` pide sesión.
@@ -225,25 +291,31 @@ el siguiente paso.
   ⚠️ Y hay algo más que **solo se prueba desplegado**: el route handler del
   afiche declara `maxDuration = 60`, el tope del plan Hobby, y ese límite es del
   entorno y no del código.
-- **20 publicados sin revisar** (de 52). Tienen `reviewed_at` en null y eso es
+- **9 publicados sin revisar** (de 34). Tienen `reviewed_at` en null y eso es
   correcto: nadie los revisó. El número baja solo a medida que Juan toca cada
   evento por otro motivo.
-- **20 publicados ya pasaron de fecha** y siguen en `publicado`. No se ven —la
-  cartelera filtra por el inicio del día de hoy en Bogotá— así que no es un bug,
-  y con los 32 vigentes cierran los 52. ⚠️ **Contarlos con `starts_at < now()`
-  da de más**: un show de hoy que empezó hace dos horas sigue en pantalla,
-  porque el corte es el **inicio del día**, no el instante.
+- ⚠️ **Contar lo pasado con `starts_at < now()` da de más**: un show de hoy que
+  empezó hace dos horas sigue en pantalla, porque el corte es el **inicio del
+  día en Bogotá**, no el instante. Es `inicioDeHoyEnBogota()`, y desde el
+  2026-09-15 **está escrita una sola vez**, en `apps/web/src/lib/fechas.ts`.
 - **Sin verificar, porque no se ve desde fuera del dashboard:** si el proyecto
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
   `sb_*` del 2026-08-28 no tocó.
-- **Cuatro `context/*/CLAUDE.md` pasaron de las ~150 líneas que su propia regla
-  de tamaño fija**: look-and-feel 305, frontend 199, ingesta 188, moderación
-  180. No es un problema de hoy —crecen desde el 2026-09-07— pero es cómo esta
-  documentación se volvió ilegible la primera vez. Lo que sobra es relato: el
-  diagnóstico del rediseño y lo que se descartó de la primera ronda tienen su
-  `.md` de detalle esperándolos (`verde-neon.md`). **Es una pasada propia, no
-  un arreglo al pasar**, y por eso sigue acá en vez de hacerse a medias.
+- **Cuatro `context/*/CLAUDE.md` pasan de las ~150 líneas que su propia regla
+  de tamaño fija**, y ⚠️ **los cuatro son más grandes de lo que este archivo
+  decía**: look-and-feel **314** (decía 305), moderación **250** (decía 180),
+  frontend **226** (decía 199), ingesta **216** (decía 188). Recontados con
+  `wc -l` el 2026-09-15. Los otros cuatro están holgados: infraestructura 127,
+  editorial 121, producto 52, archivo 51.
+
+  No es un problema de hoy —crecen desde el 2026-09-07— pero es cómo esta
+  documentación se volvió ilegible la primera vez, y **el que más creció es el
+  que nadie estaba mirando**: moderación sumó 70 líneas desde la última
+  medición. Lo que sobra es relato: el diagnóstico del rediseño y lo que se
+  descartó de la primera ronda tienen su `.md` de detalle esperándolos
+  (`verde-neon.md`). **Es una pasada propia, no un arreglo al pasar**, y por eso
+  sigue acá en vez de hacerse a medias.
 - **Opcional:** añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para
   que el CI prerenderice contra la base real en vez de contra placeholders.
 
@@ -253,49 +325,61 @@ el siguiente paso.
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-15 a las 10:50 de Bogotá** contra la base, con el MCP.
+**2026-09-15 al cierre del día** contra la base, con el MCP, **después del
+borrado de lo pasado**.
+
+⚠️ **Los denominadores cambiaron de "publicados" a "vigentes".** Antes los 53
+publicados incluían 20 que ya habían pasado, así que "9 de 53" mezclaba lo que
+se ve con lo que no. Ahora que lo pasado se borró, publicados (34) y vigentes
+(33) casi coinciden — pero el denominador que importa para la cobertura es
+siempre **lo que está en pantalla**.
 
 | | |
 |---|---|
 | Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
-| Filas crudas | **130** — visitbogota 56 *(congeladas)*, movistar 16, royal 15, ticketlive 11, latino 10, lourdes 9, rockal 8, idartes 5 |
+| Filas crudas | **99** — visitbogota 43 *(congeladas)*, royal 13, movistar 11, ticketlive 10, latino 7, rockal 7, lourdes 5, idartes 3 |
 | Crudas sin clasificar | **0** |
-| Canónicos | **114** — 53 publicados, 4 borradores, 57 descartados |
-| En pantalla | **29 toques, 0 fiestas, 4 festivales** = 33 vigentes. La cartelera dice "29 toques en 11 salas" y el mapa "21 salas · 33 eventos": cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
-| Publicados ya pasados | **20** — 33 + 20 cierran los 53 |
-| Sin revisar | **18 de 53** publicados |
+| Crudas huérfanas | **0** — ninguna quedó sin canónico tras el borrado, que es lo que evita que el `moderacion_cli` les abra borrador nuevo |
+| Canónicos | **89** — 34 publicados, 5 borradores, 50 descartados |
+| En pantalla | **29 toques, 0 fiestas, 4 festivales** = 33 vigentes, en **12 salas**. La cartelera y el mapa cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
+| Publicados ya pasados | **1** — `Casi`, el único que sobrevivió al borrado por ser cargado a mano |
+| Sin revisar | **9 de 34** publicados |
 | Salas | **40 filas** — 21 publicadas, 2 por aprobar, 17 descartadas |
-| Coordenadas | **21 de 21** — ninguna sala publicada queda sin ubicar, y **las 21 salen en el mapa** aunque no tengan nada anunciado |
+| Coordenadas | ⚠️ **20 de 21** — la que falta es `Carrera 24 #72 - 31`, y se lista como "sin ubicar" en vez de recibir un pin aproximado, que es lo correcto. Las otras 20 salen en el mapa aunque no tengan nada anunciado |
 | Fotos de sala | **13 de 21** |
-| Afiche | **52 de 53** publicados — es la imagen de la tarjeta de compartir |
-| Precio | **19 de 53** publicados |
-| Género | **9 de 53** publicados, 5 géneros en uso, ninguno compuesto |
-| Escena local marcada | **4 de 53** — se marca a mano y nada la calcula |
-| **Directorio** | **3 artistas publicados** — Kidchen entró el 2026-09-15 |
+| Afiche | **33 de 33** vigentes — es la imagen de la tarjeta de compartir |
+| Precio | **11 de 33** vigentes |
+| Género | **5 de 33** vigentes, **6 géneros en uso**: Rock (2), y Hip Hop/Rap, Math Rock, Midwest Emo, Screamo y Vallenato con 1 cada uno |
+| Escena local marcada | **3 de 33** vigentes — más 1 confirmado que *no*, y 29 sin saber. Se marca a mano y nada la calcula |
+| **Directorio** | **3 artistas publicados**, **6 tracks concentrados en 1** — Kidchen entró el 2026-09-15 |
 | **Carteles vinculados** | **2** — El Kalvo y Kidchen, los dos en toques |
-| **Con lista de artistas** | **4 de 114** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
-| Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1 |
+| **Con lista de artistas** | **5 de 89** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
+| Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1. **El borrado de lo pasado no sumó ninguno** |
 | Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **262 backend + 168 frontend**, verdes en local y en CI (`Tests` sobre `580dbf6`) |
+| Tests | **265 backend + 178 frontend**, verdes en CI (`Tests` sobre `4e9a720`). ⚠️ El backend decía 262 y son 265: recontado con `pytest --collect-only` |
 
 Cómo leerlas sin equivocarse:
 
 - ⚠️ **El estado de un canónico es `status`, no `published_at`.** Hay
   descartados que conservan la fecha en la que estuvieron publicados, y es
   correcto que la conserven.
-- ⚠️ **"Salas 39" es el total de filas, no lo que se ve.** Las 17 descartadas
+- ⚠️ **"Salas 40" es el total de filas, no lo que se ve.** Las 17 descartadas
   existen y no aparecen en ningún lado.
 - **Las fiestas cayeron a 0 y los festivales de 6 a 4** entre el 2026-09-09 y
   el 2026-09-13, sin que nadie tocara nada: se les pasó la fecha. La cartelera
   se vacía sola si no entra nada nuevo, y por eso el conteo de "en pantalla" no
   se puede citar de memoria ni de la semana pasada.
-- ⚠️ **Las 56 filas de visitbogota están congeladas, no vivas.** La fuente salió
+- ⚠️ **Las 43 filas de visitbogota están congeladas, no vivas.** La fuente salió
   del registry el 2026-09-08; sus filas quedan como registro y no se actualizan.
-  Lo mismo vale para `scraped_at`, que es "cuándo se vio por primera vez" y no
-  "última corrida": el upsert no lo reescribe.
-- **Las filas crudas bajan además de subir.** El cron poda las que su fuente
-  dejó de listar, así que el total no es un acumulado: entre el 2026-09-09 y
-  hoy pasó de 126 a 130 después de haber tocado 131.
+- ⚠️ **`scraped_at` sí se reescribe en el upsert** — este archivo decía lo
+  contrario hasta el 2026-09-15. Se ve en que `royal_center` lo tiene en
+  `2026-09-15T17:55Z`, que es la corrida del cron de ese día. **Sirve entonces
+  como "última vez que la fuente la vio", y es la forma barata de saber qué
+  fuente dejó de entrar** sin abrir los logs de CI.
+- **Las filas crudas bajan además de subir**, y por dos motivos distintos: el
+  cron poda las que su fuente dejó de listar **y todavía no han ocurrido**
+  (`_prune_missing_events`), y el 2026-09-15 se borraron a mano las 32 de lo ya
+  pasado. El total no es un acumulado: pasó de 131 a 99 en un día.
 - **Las fiestas y los festivales tienen `is_local = null` y eso es correcto.**
   No hay un artista de cartel a quien preguntarle.
 - **Los canónicos bajan al unificar duplicados.** Pasaron de 115 a 113 el
