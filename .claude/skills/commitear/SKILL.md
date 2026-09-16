@@ -142,6 +142,21 @@ curl -s "https://api.github.com/repos/jdieTorres/bogota-music-intel/actions/runs
 (el repo es público, no hace falta token; `gh` no está instalado en esta
 máquina)
 
+⚠️ **Sin token son 60 peticiones por hora, y se acaban.** Pasó el 2026-09-16
+con siete commits en una sesión: el límite saltó justo en el último y hubo que
+verificarlo por otro lado. El gasto no está en la consulta final sino **en el
+sondeo**, así que:
+
+- **Espera 60 segundos entre consulta y consulta, no 15.** El build de `Tests`
+  tarda alrededor de 50, así que casi siempre basta una sola pregunta y a lo
+  sumo dos. Sondear cada 15 multiplica por cuatro el costo de cada verificación
+  para no enterarse antes de nada.
+- **Si igual se agota** —`HTTP 403` con "API rate limit exceeded"—, la salida es
+  mirar `https://github.com/jdieTorres/bogota-music-intel/actions` en el
+  navegador, que no consume cuota. Es la salida de emergencia, no el método: la
+  API dice lo mismo sin abrir nada.
+- **Nunca des el CI por bueno porque la API no contestó.** Un 403 no es un
+  verde: es no haber mirado.
 - **Esperá a que termine** el run del commit que acabás de subir, en vez de
   reportar `in_progress`. Si tarda, decí que quedó corriendo — no lo des por
   verde.
