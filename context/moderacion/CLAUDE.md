@@ -41,6 +41,15 @@ dentro de una fuente, por eso el mismo show llegaba dos veces. Revisar es
   paso que la rearma, ese evento dejaría de vigilarse para siempre.
 - **No hay política de DELETE sobre ninguna tabla.** La única forma de borrar
   es `borrar_evento()`.
+- ⚠️ **Vaciar lo ya pasado NO va por `borrar_evento()`**, porque esa función
+  bloquea `(source, source_event_id)` para siempre y **"ya pasó" es una fecha,
+  no una decisión editorial**. Varios `source_event_id` no llevan año
+  —`jorge-drexler`, `feria-eva`— así que bloquearlos mataría en silencio la
+  edición siguiente. Se borran las filas crudas **primero** y el canónico
+  después: `events.canonical_id` es `on delete set null`, así que al revés
+  quedan crudas sueltas y el `moderacion_cli` les abre borrador nuevo. Lo que
+  la fuente siga listando volverá a la cola, y eso es lo correcto: es la fuente
+  diciendo que el evento sigue vivo.
 - ⚠️ **Descartar una sala baja sus eventos de la cartelera, y va por RPC.**
   `descartar_sala()` pone la sala en `descartado` y devuelve sus eventos
   publicados a `borrador`, en una sola operación. Hasta el 2026-09-09 solo
