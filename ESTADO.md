@@ -1,9 +1,10 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-15 al cierre del día**, recontado contra la
-base con el MCP. La sesión trajo el cartel de varios artistas, la primera
-pasada de diseño con impeccable, el mapa completo, la reestructuración de los
-dos formularios de `/admin` y la unificación del corte del día de Bogotá.
+Última actualización: **2026-09-16 por la tarde**, recontado contra la base con
+el MCP. El 2026-09-15 trajo el cartel de varios artistas, la primera pasada de
+diseño con impeccable, el mapa completo, la reestructuración de los dos
+formularios de `/admin` y la unificación del corte del día de Bogotá; el
+2026-09-16, la revisión de seguridad previa al despliegue.
 
 **Y Juan hizo triage con las herramientas nuevas**: publicó un evento cargado a
 mano con cinco bandas —el caso que originó todo esto—, sumó un artista al
@@ -14,8 +15,19 @@ canónicos con fecha anterior al 2026-09-15 y sus 32 filas crudas, porque en
 local no aportaban nada. **Eso movió casi todas las cifras de § 3 hacia abajo
 sin que nadie tocara el producto** — el género y la escena local perdieron
 cobertura porque buena parte de lo marcado a mano era justamente lo viejo. Se
-decidió **no bloquearlos**, así que lo que sus fuentes sigan listando puede
-volver a la cola en la próxima corrida del cron.
+decidió **no bloquearlos**.
+
+**Y el 2026-09-16 se vio qué costaba eso: cuatro volvieron.** La corrida del
+cron reabrió como borradores a Bloodbath, Miami Horror, Guaco y Macaco, los
+cuatro de `lourdes_music_hall` y todos con fecha de agosto o principios de
+septiembre. **Lourdes mantiene sus eventos pasados listados indefinidamente**,
+así que iban a volver en cada corrida. Se borraron de nuevo, esta vez **con
+bloqueo** — y ahí sí corresponde, porque su `source_event_id` lleva la fecha
+(`guaco-2026-08-22`) y no puede colisionar con una edición futura del mismo
+artista. Es justo lo contrario de `jorge-drexler` o `feria-eva`.
+
+🔒 **Ese mismo día se cerró la lectura pública de la tabla cruda** — ver § 2,
+es lo último que salió de la revisión previa al despliegue.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -160,6 +172,35 @@ el siguiente paso.
 
 ## 2. Lo que quedó a medias
 
+- 🔒 **La tabla cruda dejó de ser legible entera, y falta comprobar `/admin`.**
+  Hasta el 2026-09-16 `events` tenía `for select using (true)`: era la única de
+  las ocho tablas sin filtro, y con la publishable key —que va en el bundle del
+  navegador— eso dejaba a la vista **70 de 106 filas**, las de los borradores y
+  las de lo descartado. Eso último es **el criterio editorial de Juan en bruto**:
+  qué shows miró y resolvió no publicar, con nombre y fecha.
+
+  **Venía de la primera migración** (`20260827000000`), de cuando `events` era
+  lo que el frontend mostraba. El 2026-08-31 llegó `canonical_events` y la
+  pantalla pasó a leer el canónico: la tabla cambió de rol y sus permisos no.
+
+  Ahora hay dos políticas, el mismo patrón que las otras siete
+  (`20260916180000_events_solo_lo_publicado.sql`). ✅ Comprobado **con la
+  publishable key, no leyendo la política**: un anónimo pasa de 106 filas a 36,
+  el borrador de Cosculluela y el descartado de Gorillaz devuelven `[]`, y el
+  embed de la cartelera sigue resolviendo `source` y `source_url` de lo
+  publicado.
+
+  ⚠️ **Lo que falta es `/admin`**, y no lo puede verificar una sesión: la
+  política nueva usa `es_admin()`, así que necesita que Juan entre. Hay que
+  abrir la cola y mirar que cada evento siga mostrando lo que dice la fuente
+  —el bloque que compara `source`, `title` y `price_text` contra lo editado—.
+  **Si eso se ve vacío, la política de admin no está funcionando.**
+- ⚠️ **Hay un evento con la fecha en el año 0026.** "Carlos Rivera - Vida México
+  Tour 2026" de `visitbogota`, con `starts_at` en `0026-10-02`, entró así el
+  2026-09-01. Está descartado, así que no se ve en ningún lado — pero es un
+  fallo de parseo real y **nada avisó**: una fecha absurda pasa los mismos
+  chequeos que una buena. No se sabe si es el único; hay que mirar si el parser
+  de esa fuente puede volver a producirla.
 - **Dos rutas del cron sin estrenar en CI.**
 
   1. 🟡 **Que el bloqueo de Ticketlive salga en verde** (`BLOQUEO_CONOCIDO`, del
@@ -340,12 +381,13 @@ siempre **lo que está en pantalla**.
 | | |
 |---|---|
 | Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
-| Filas crudas | **99** — visitbogota 43 *(congeladas)*, royal 13, movistar 11, ticketlive 10, latino 7, rockal 7, lourdes 5, idartes 3 |
+| Filas crudas | **102** — visitbogota 43 *(congeladas)*, royal 13, movistar 11, ticketlive 10, rockal 8, latino 7, idartes 5, lourdes 5 |
+| Crudas visibles para un anónimo | **36 de 102** — solo las de canónicos publicados, desde el 2026-09-16. Comprobado con la publishable key, no deducido de la política |
 | Crudas sin clasificar | **0** |
-| Crudas huérfanas | **0** — ninguna quedó sin canónico tras el borrado, que es lo que evita que el `moderacion_cli` les abra borrador nuevo |
-| Canónicos | **89** — 34 publicados, 5 borradores, 50 descartados |
+| Crudas huérfanas | **0** — ninguna quedó sin canónico tras los dos borrados, que es lo que evita que el `moderacion_cli` les abra borrador nuevo |
+| Canónicos | **93** — 34 publicados, 9 borradores, 50 descartados |
 | En pantalla | **29 toques, 0 fiestas, 4 festivales** = 33 vigentes, en **12 salas**. La cartelera y el mapa cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
-| Publicados ya pasados | **1** — `Casi`, el único que sobrevivió al borrado por ser cargado a mano |
+| Publicados ya pasados | **1** — `Casi`, el único que sobrevivió a los dos borrados por ser cargado a mano |
 | Sin revisar | **9 de 34** publicados |
 | Salas | **40 filas** — 21 publicadas, 2 por aprobar, 17 descartadas |
 | Coordenadas | ⚠️ **20 de 21** — la que falta es `Carrera 24 #72 - 31`, y se lista como "sin ubicar" en vez de recibir un pin aproximado, que es lo correcto. Las otras 20 salen en el mapa aunque no tengan nada anunciado |
@@ -356,10 +398,10 @@ siempre **lo que está en pantalla**.
 | Escena local marcada | **3 de 33** vigentes — más 1 confirmado que *no*, y 29 sin saber. Se marca a mano y nada la calcula |
 | **Directorio** | **3 artistas publicados**, **6 tracks concentrados en 1** — Kidchen entró el 2026-09-15 |
 | **Carteles vinculados** | **2** — El Kalvo y Kidchen, los dos en toques |
-| **Con lista de artistas** | **5 de 89** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
-| Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1. **El borrado de lo pasado no sumó ninguno** |
+| **Con lista de artistas** | **5 de 93** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
+| Bloqueados | **41** `(fuente, id)` — visitbogota 26, idartes 7, lourdes 4, movistar 3, ticketlive 1. El borrado del 2026-09-15 no sumó ninguno a propósito; los 4 de lourdes entraron el 2026-09-16 y el motivo está escrito en la fila |
 | Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **267 backend + 178 frontend**. ⚠️ El backend decía 262: eran 265 al recontarlo, más los 2 del nivel de anotación del 2026-09-16 |
+| Tests | **267 backend + 178 frontend**, verdes en local el 2026-09-16 (`Tests` en CI sobre `2a29482`) |
 
 Cómo leerlas sin equivocarse:
 
@@ -387,10 +429,12 @@ Cómo leerlas sin equivocarse:
   código. De ahí sale que `max(scraped_at)` de una fuente responde "cuándo
   entró su última fila **nueva**" y **no** "cuándo entró la fuente por última
   vez" — que era justo la pregunta que se le estaba haciendo.
-- **Las filas crudas bajan además de subir**, y por dos motivos distintos: el
+- **Las filas crudas bajan además de subir**, y por tres motivos distintos: el
   cron poda las que su fuente dejó de listar **y todavía no han ocurrido**
-  (`_prune_missing_events`), y el 2026-09-15 se borraron a mano las 32 de lo ya
-  pasado. El total no es un acumulado: pasó de 131 a 99 en un día.
+  (`_prune_missing_events`), el cron trae nuevas, y el 2026-09-15 y el
+  2026-09-16 se borraron a mano 32 y 4. El total no es un acumulado: 131 → 99
+  el 15, y 106 → 102 el 16, con la corrida del cron de por medio. **Citarlo de
+  memoria no sirve ni de un día para otro.**
 - **Las fiestas y los festivales tienen `is_local = null` y eso es correcto.**
   No hay un artista de cartel a quien preguntarle.
 - **Los canónicos bajan al unificar duplicados.** Pasaron de 115 a 113 el
@@ -411,6 +455,27 @@ bloquean nada.
    route handler del afiche, el sitio en un teléfono real, las tarjetas de
    compartir en un validador de Open Graph, y qué dominio resuelve
    `NEXT_PUBLIC_SITIO_URL` si no se configura. Las cuatro variables, en § 2.
+
+   **La revisión previa se hizo el 2026-09-16** y esto es lo que dio:
+
+   - ✅ Build, `tsc`, ESLint, 178 tests de frontend y 267 de backend: verdes.
+   - ✅ RLS activo en las ocho tablas, y la de `events` corregida (§ 2).
+   - ✅ Las tres RPC destructivas —`borrar_evento`, `descartar_sala`,
+     `unificar_duplicado`— están expuestas a `anon` vía REST, **pero las tres
+     tienen `es_admin()` como primera línea**. El linter de Supabase las marca
+     y no son un agujero; la defensa está dentro de la función, no en el
+     permiso de `execute`.
+   - ✅ `admins` tiene RLS sin ninguna política, que es **correcto a propósito**:
+     así nadie la lee, y `es_admin()` entra por ser `security definer`. El
+     linter lo reporta como aviso y no hay nada que arreglar.
+   - ⚠️ **La protección de contraseñas filtradas está desactivada** en Supabase
+     Auth. Es un interruptor del panel y el login de `/admin` es lo único
+     autenticado del sitio.
+   - ⚠️ **Sin verificar**: si el proyecto todavía expone las claves legacy JWT.
+     Sigue sin poderse mirar desde fuera del dashboard.
+
+   Y lo que hay que arreglar antes de que lo vea alguien no es técnico: **las
+   tres notas de artista dicen "test"** (§ 1).
 
 2. **Más fuentes.** `mitaquilla.com.co` quedó confirmada abierta el 2026-09-08 —
    con el User-Agent correcto, ver `context/ingesta/fuentes-y-legalidad.md`— y
