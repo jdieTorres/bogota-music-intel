@@ -190,6 +190,34 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
 
 ## 2. Lo que quedó a medias
 
+- ⏱️ **El caché de las páginas está en 60 segundos a propósito, y hay que
+  subirlo el día que haya tráfico.** Estaba en 1800 —media hora— y el 2026-09-16
+  eso se sintió: Juan publicó un evento desde `/admin` en el sitio desplegado y
+  no salía en la cartelera, aunque por URL directa sí. No era un bug sino el
+  CDN sirviendo una copia vieja.
+
+  **La condición que dispara volver a subirlo es que el sitio tenga visitantes
+  de verdad.** Hoy el caché no protege de nada —hay un solo visitante, que es
+  Juan— y sí rompe el ciclo de publicar y comprobar. Cuando haya tráfico el
+  cálculo se invierte y 60 segundos pasa a ser regenerar de más. El número y el
+  porqué viven en `apps/web/src/lib/cache.ts`; `cache.test.ts` falla si alguna
+  de las ocho rutas se desvía.
+
+  ⚠️ **Lo que no se hizo, y es lo correcto cuando eso pase**: revalidación bajo
+  demanda, un endpoint que `/admin` llame al publicar. Se descartó hoy porque
+  su precio es una lista de llamadas a mantener —publicar, editar, quitar de la
+  cartelera, descartar una sala— y una que se olvide deja ese camino con el
+  retraso viejo sin que nada avise.
+- ⚠️ **`/evento/[id]` y `/artista/[slug]` no se cachean nunca**, así que **cada
+  visita a una ficha consulta Supabase**. Se ve en el build —salen como
+  `ƒ (Dynamic)`, sin columna de revalidate— y se confirmó en producción:
+  `X-Vercel-Cache: MISS` tres veces seguidas. Declaran `revalidate` como las
+  demás, pero algo las vuelve dinámicas y **no se investigó cuál es la causa**.
+
+  Hoy no duele porque no hay tráfico, y de hecho es lo que hizo que el evento
+  recién publicado sí se viera por URL directa. Pero es lo primero que hay que
+  mirar el día que el plan gratuito de Supabase empiece a apretar.
+
 - ⚠️ **Hay un evento con la fecha en el año 0026.** "Carlos Rivera - Vida México
   Tour 2026" de `visitbogota`, con `starts_at` en `0026-10-02`, entró así el
   2026-09-01. Está descartado, así que no se ve en ningún lado — pero es un
@@ -429,7 +457,7 @@ siempre **lo que está en pantalla**.
 | **Con lista de artistas** | **5 de 93** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
 | Bloqueados | **41** `(fuente, id)` — visitbogota 26, idartes 7, lourdes 4, movistar 3, ticketlive 1. El borrado del 2026-09-15 no sumó ninguno a propósito; los 4 de lourdes entraron el 2026-09-16 y el motivo está escrito en la fila |
 | Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **267 backend + 188 frontend**, verdes en CI (`Tests` sobre `31fb54e`). Los 10 nuevos son de `lib/admin/clave.ts` |
+| Tests | **267 backend + 198 frontend**, verdes en CI. Los 20 nuevos del frontend son de `lib/admin/clave.ts` y `lib/cache.ts` |
 
 Cómo leerlas sin equivocarse:
 
