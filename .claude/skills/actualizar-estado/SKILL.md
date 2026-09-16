@@ -10,7 +10,7 @@ Juan dentro de tres semanas— no tenga que reconstruirla. No es un resumen de l
 que se hizo: el historial de git ya lo cuenta. Es el registro de **lo que no se
 puede deducir leyendo el código**.
 
-Ejecutá esto de corrido y entregá el resultado. No preguntes por dónde empezar.
+Ejecuta esto de corrido y entrega el resultado. No preguntes por dónde empezar.
 
 ## 0. Cómo está organizada la documentación
 
@@ -46,10 +46,10 @@ algo adentro que pertenece a un `.md` de detalle.** El archivo general llegó a
 ## 1. Reunir evidencia (no confiar en la memoria de la conversación)
 
 La conversación tiene sesgo de recencia y olvida lo que se dejó pendiente hace
-horas. Buscá los hechos:
+horas. Busca los hechos:
 
 - `git log --oneline <último-commit-que-tocó-ESTADO.md>..HEAD` — todo lo que
-  pasó desde la última actualización. Sacá el commit con
+  pasó desde la última actualización. Saca el commit con
   `git log -1 --format=%H -- ESTADO.md`.
 - `git status` — lo que está sin commitear suele ser justamente lo que quedó a
   medias.
@@ -58,11 +58,11 @@ horas. Buscá los hechos:
 - Comentarios largos en el código que expliquen un *porqué*: si una decisión
   vive solo en un comentario, no está documentada.
 - ¿Los pipelines de CI/cron han llegado a ejecutarse de verdad, o solo pasan
-  los tests? **Mirá los dos workflows**, `Tests` y `Scraper cron`: uno no dice
+  los tests? **Mira los dos workflows**, `Tests` y `Scraper cron`: uno no dice
   nada del otro. El repo es público, se consulta sin token con
   `curl -s "https://api.github.com/repos/jdieTorres/bogota-music-intel/actions/runs?per_page=20"`
   y agrupando por `name`. (`gh` no está instalado en esta máquina.)
-- **Recontá los datos reales** en vez de citar los de la última vez. Las cifras
+- **Recuenta los datos reales** en vez de citar los de la última vez. Las cifras
   de `ESTADO.md` § 3 envejecen con cada corrida del cron y con cada sesión de
   triage de Juan.
 
@@ -71,22 +71,22 @@ horas. Buscá los hechos:
 Pasa, y es el hallazgo más valioso de todos: significa que alguien viene
 tomando decisiones sobre una foto vieja. Cuando ocurra:
 
-- **Corregí el documento y decíselo a Juan explícitamente**, con las dos
+- **Corrige el documento y díselo a Juan explícitamente**, con las dos
   versiones —lo que decía, lo que resultó ser— y desde cuándo estaba mal si se
   puede saber. Nunca ajustes una cifra o un estado en silencio: el hecho de que
   la documentación se desviara es en sí mismo información sobre el proyecto.
-- Preguntate **por qué se desvió**. Si un dato envejece solo, la línea debería
+- Pregúntate **por qué se desvió**. Si un dato envejece solo, la línea debería
   decir cómo recalcularlo o llevar su fecha, no solo el número — y
   probablemente estaba en el archivo equivocado: los números van a `ESTADO.md`.
 - Si lo escrito resultó ser **una suposición nunca comprobada** en vez de un
-  hecho, marcá en el texto qué quedó verificado y en qué fecha.
+  hecho, marca en el texto qué quedó verificado y en qué fecha.
 - Si la contradicción toca una decisión que Juan tomó, **no la revoques por tu
-  cuenta**: corregí el hecho, dejá la decisión, y planteásela.
+  cuenta**: corrige el hecho, deja la decisión, y plantéasela.
 
 ## 2. Encontrar lo que quedó a medias
 
 Es la parte que más se escapa, porque nada falla. Va todo a `ESTADO.md` § 2.
-Buscá específicamente:
+Busca específicamente:
 
 - **Funciona en la máquina de Juan pero nunca en CI ni en producción.** Un
   script que solo se ha corrido a mano no está probado. Este proyecto ya se
@@ -94,18 +94,18 @@ Buscá específicamente:
 - **Escrito pero nunca ejecutado**: un cron que nunca disparó, una migración
   entregada y sin aplicar, un deploy que no se ha hecho.
 - **Recomendado pero sin confirmar**: rotar una credencial, aplicar una
-  migración. Si Juan no dijo que lo hizo, sigue pendiente — anotalo así.
+  migración. Si Juan no dijo que lo hizo, sigue pendiente — anótalo así.
 - **Cobertura parcial que se lee como completa**: "el mapa está hecho" con 9 de
-  13 salas ubicadas. Poné el numerador y el denominador.
-- **Verificado a medias**: distinguí "los tests pasan" de "lo miré
+  13 salas ubicadas. Pon el numerador y el denominador.
+- **Verificado a medias**: distingue "los tests pasan" de "lo miré
   funcionando". Un mapa puede estar en negro con CI verde, tests pasando, tsc
   limpio y build correcto.
 - **Un denominador que creció y dejó al numerador quieto.** Aprobar cuatro
   salas nuevas convirtió un 9/9 en un 9/13 sin que nadie tocara nada.
 
-Separá en `ESTADO.md` **lo que está bloqueado en Juan** (§ 1) de lo que
+Separa en `ESTADO.md` **lo que está bloqueado en Juan** (§ 1) de lo que
 cualquiera puede destrabar (§ 2). Si un pendiente está bloqueado en una
-decisión de producto que solo Juan puede tomar, **escribí la pregunta**, no
+decisión de producto que solo Juan puede tomar, **escribe la pregunta**, no
 solo el pendiente.
 
 ## 3. Encontrar las decisiones no documentadas
@@ -138,7 +138,7 @@ Reglas de redacción, en español y en el tono del resto de los archivos:
 - **No duplicar entre archivos.** Un hecho vive en un solo lugar; los demás lo
   referencian con su ruta. Dos copias se desincronizan y la que alguien lea
   primero gana.
-- Si agregás una carpeta nueva a `context/`, **añadí su fila a la tabla "Dónde
+- Si agregás una carpeta nueva a `context/`, **añade su fila a la tabla "Dónde
   está cada cosa" de `CLAUDE.md`**, o nadie la va a leer: esos archivos no se
   cargan solos.
 
@@ -146,15 +146,15 @@ Reglas de redacción, en español y en el tono del resto de los archivos:
 
 Este paso es tan importante como escribir, y es el que se olvida.
 
-- **Releé entero lo que tocaste**: la actualización tiene que dejarlo
+- **Relee entero lo que tocaste**: la actualización tiene que dejarlo
   coherente, no solo tener párrafos nuevos. Un "Siguiente: Fase 4" viejo
   desinforma más de lo que informa un párrafo que falte.
-- **Sacá lo que ya se resolvió.** Un pendiente cerrado se borra de
+- **Saca lo que ya se resolvió.** Un pendiente cerrado se borra de
   `ESTADO.md`; no se tacha ni se deja con un "~~hecho~~" arrastrando su
-  historia. Si lo que enseñó vale, ascendelo a regla; si no, se va.
-- **Sacá lo que dejó de estar vivo.** Una API muerta, un módulo borrado, un
+  historia. Si lo que enseñó vale, asciéndelo a regla; si no, se va.
+- **Saca lo que dejó de estar vivo.** Una API muerta, un módulo borrado, un
   bloqueo que ya no aplica: `context/archivo/`, o nada.
-- **Sacá el detalle que ya no le cambia la decisión a nadie.** La aclaración de
+- **Saca el detalle que ya no le cambia la decisión a nadie.** La aclaración de
   la nacionalidad de un artista vive en su lista curada con su `evidencia`, no
   en un `CLAUDE.md`.
 - **Cuidado con la anécdota.** Un error que costó un bug deja **una regla de
@@ -163,12 +163,12 @@ Este paso es tan importante como escribir, y es el que se olvida.
 
 ## 6. Cerrar
 
-- Commiteá con un mensaje que diga **qué información se agregó**, no
+- Commitea con un mensaje que diga **qué información se agregó**, no
   "actualiza docs".
-- En la respuesta a Juan, contá qué quedó registrado y **por qué eso valía la
-  pena escribirlo**. Si algo no lo pudiste verificar, decilo en vez de darlo
-  por bueno, y si algo resultó estar mal escrito, decilo primero.
-- Decí también **qué podaste**, no solo qué agregaste. Una corrida que solo
+- En la respuesta a Juan, cuenta qué quedó registrado y **por qué eso valía la
+  pena escribirlo**. Si algo no lo pudiste verificar, dilo en vez de darlo
+  por bueno, y si algo resultó estar mal escrito, dilo primero.
+- Di también **qué podaste**, no solo qué agregaste. Una corrida que solo
   suma líneas está haciendo la mitad del trabajo.
 - Que el repo esté limpio y no haya cambios grandes no es motivo para no correr
   esto: verificar lo ya escrito vale por sí solo, y un informe corto y honesto
