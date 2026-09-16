@@ -1,10 +1,22 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-16 por la tarde**, recontado contra la base con
-el MCP. El 2026-09-15 trajo el cartel de varios artistas, la primera pasada de
-diseño con impeccable, el mapa completo, la reestructuración de los dos
-formularios de `/admin` y la unificación del corte del día de Bogotá; el
-2026-09-16, la revisión de seguridad previa al despliegue.
+Última actualización: **2026-09-16 al cierre del día**, recontado contra la
+base con el MCP.
+
+🚀 **El sitio está desplegado: `https://bogota-music-intel.vercel.app`**, desde
+el 2026-09-16. Era el 🎯 de este archivo desde hacía semanas y **ya no es un
+pendiente**: hay un sitio público que alguien que no sea Juan puede abrir.
+
+Lo que hizo falta, para que conste y no se vuelva a buscar: **Root Directory =
+`apps/web`**. Sin eso Vercel mira la raíz, no encuentra `package.json` —no hay,
+esto no es un monorepo con workspaces— y detecta el framework como `other`. Las
+variables son tres, no cuatro: `NEXT_PUBLIC_SITIO_URL` **no se puso a
+propósito**, ver § 2.
+
+El 2026-09-15 trajo el cartel de varios artistas, la primera pasada de diseño
+con impeccable, el mapa completo y la unificación del corte del día de Bogotá;
+el 2026-09-16, el despliegue, la revisión de seguridad que lo precedió y el
+cambio de contraseña del admin.
 
 **Y Juan hizo triage con las herramientas nuevas**: publicó un evento cargado a
 mano con cinco bandas —el caso que originó todo esto—, sumó un artista al
@@ -26,12 +38,9 @@ bloqueo** — y ahí sí corresponde, porque su `source_event_id` lleva la fecha
 (`guaco-2026-08-22`) y no puede colisionar con una edición futura del mismo
 artista. Es justo lo contrario de `jorge-drexler` o `feria-eva`.
 
-🔒 **Ese mismo día se cerró la lectura pública de la tabla cruda**, que era lo
-único serio que encontró la revisión previa al despliegue: `events` dejaba ver
-70 de 106 filas a cualquiera —los borradores y lo descartado, o sea el criterio
-editorial en bruto—. Cerrado y **verificado en el navegador con la sesión de
-Juan**, así que ya no es un pendiente: está en § 4 como parte de la revisión, y
-el relato en `20260916180000_events_solo_lo_publicado.sql`.
+🔒 **Antes de desplegar se hizo una revisión de seguridad, y encontró una cosa
+seria**: la tabla cruda era legible entera por cualquiera. Se arregló el mismo
+día. Qué se miró y qué dio, en **§ 5**.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -42,10 +51,13 @@ Si algo de acá se vuelve permanente, sube a un `CLAUDE.md`; si algo de un
 
 ## 1. Bloqueado en Juan (nadie más lo puede destrabar)
 
-⚠️ **Los dos primeros van después del despliegue, no antes.** Lo decidió Juan
-el 2026-09-09: primero se pule y se despliega, y el contenido se carga sobre el
-sitio ya en pie. Siguen siendo lo que le falta al producto — no lo que bloquea
-el siguiente paso.
+🔥 **Desde el 2026-09-16 esto dejó de poder esperar.** Juan decidió el
+2026-09-09 que el contenido se cargaba sobre el sitio ya en pie, y esa
+condición **ya se cumplió**: el sitio está desplegado. Lo que hasta ayer era
+"le falta al producto" ahora **se ve en una página pública**, y encabeza § 4.
+
+La primera que urge no es una cifra: son las tres notas de artista que dicen
+"test".
 
 - **El directorio tiene tres artistas y los seis tracks son de uno solo.**
   Nicolás y los Fumadores (6), El Kalvo (0) y Kidchen (0, entró el 2026-09-15).
@@ -57,9 +69,11 @@ el siguiente paso.
 - 🔥 **Las tres fichas publicadas tienen notas de prueba, y el problema crece
   con cada artista nuevo.** Dicen "hola / prueba / test / avisos / bajo /
   tierra / formato?" y "test" las otras dos —Kidchen entró así el 2026-09-15—,
-  y **se ven en la página pública**. Las notas de contratapa son el material
-  propio del proyecto —lo único que no salió de otra parte— así que son justo
-  lo que no puede quedar así el día que esto se despliegue. Las tres sí tienen
+  y **se ven en la página pública** — que desde el 2026-09-16 quiere decir **en
+  internet**, en `bogota-music-intel.vercel.app/directorio`, no en una pestaña
+  de localhost. Las notas de contratapa son el material propio del proyecto
+  —lo único que no salió de otra parte— así que son justo lo que no podía
+  quedar así el día del despliegue, y quedó. Las tres sí tienen
   foto y ciudad de origen. Al pasar: **`Kidchen` tiene la ciudad como
   `"Bogotá "`, con un espacio al final**, que es del tipo de cosa que después
   parte un agrupamiento en dos.
@@ -208,10 +222,14 @@ el siguiente paso.
      la fuente. Una fuente puede entrar bien y no traer nada nuevo.
 
      Lo que falta, entonces, es solo que **ocurra**: que Ticketlive esté
-     bloqueada en una corrida posterior al 2026-09-16. Cuando pase, la
-     anotación saldrá como **aviso amarillo** y no como error (`::warning::`,
-     desde el 2026-09-16), así que el color de la anotación ya dice cuál de los
-     dos casos fue sin leer el texto.
+     bloqueada en una corrida. Cuando pase, la anotación saldrá como **aviso
+     amarillo** y no como error (`::warning::`, desde el 2026-09-16), así que el
+     color ya dice cuál de los dos casos fue sin leer el texto.
+
+     **La corrida del 2026-09-16 a las 17:58 UTC fue la primera por `schedule`
+     con el cambio puesto** (sobre `2a29482`) y salió verde con cero
+     anotaciones, o sea que Ticketlive entró bien otra vez. Sigue sin
+     estrenarse; ya no por falta de método sino por falta de ocasión.
 
   2. **"Traer cero eventos es fallo"**: necesita que una fuente devuelva una
      lista vacía, y nunca ha ocurrido.
@@ -278,10 +296,15 @@ el siguiente paso.
   20 px de `px-5`— y se arregló. Vale como aviso: **eso lo encontró la medición
   y no lo vio la revisión visual**, porque una captura no muestra que la página
   se desplace. Un teléfono real y Safari siguen sin probarse.
-- **Las tarjetas de compartir no se han visto como las ve WhatsApp.** Las
-  etiquetas salen correctas en el HTML servido (verificado sobre `next start`
-  el 2026-09-13, con afiche, sin afiche y sin descripción), pero un validador
-  de Open Graph necesita una URL pública. **Se prueba al desplegar y no antes.**
+- ⚠️ **La portada promete una imagen de compartir que no tiene.**
+  `layout.tsx:67` declara `twitter: { card: "summary_large_image" }` para todo
+  el sitio, y la portada no lleva `og:image` —la deuda de la marca, § 4—. Esa
+  tarjeta anuncia una imagen grande y no hay ninguna, así que X la degrada;
+  WhatsApp no se entera porque lee `og:*`. **La etiqueta está afirmando algo
+  falso mientras tanto.** Dos salidas: bajar la portada a `summary` hasta que
+  haya marca, o dejarlo. **Es decisión de Juan**, que es quien afina la voz y la
+  marca. Las fichas de evento no tienen el problema: las verificadas el
+  2026-09-16 traen `og:image` con su `alt` y la imagen responde 200.
 - **El lector de afiches funciona y deja huecos.** Juan lo probó el 2026-09-08
   con saldo cargado: lee, y los campos que el afiche no dice quedan vacíos con
   su explicación en las notas. Queda sin ejercitar el caso extremo —un afiche
@@ -307,15 +330,38 @@ el siguiente paso.
   no, porque ni el Simón Bolívar ni el Medplus tienen scraper**. Y el número
   crece solo: cada vez que una fuente viva deja de listar un evento, su fila
   cruda se poda y el canónico queda colgando de la congelada.
-- **Nunca se ha desplegado a Vercel.** Es el siguiente paso — ver § 4. Hacen
-  falta cuatro variables: `NEXT_PUBLIC_SUPABASE_URL`,
-  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY` y, desde el
-  2026-09-13, **`NEXT_PUBLIC_SITIO_URL`** — de ella salen las direcciones
-  absolutas de las tarjetas de compartir, el sitemap y el robots.txt. Sin ella
-  se intenta el dominio que inyecta Vercel, y **eso no está comprobado**.
-  ⚠️ Y hay algo más que **solo se prueba desplegado**: el route handler del
-  afiche declara `maxDuration = 60`, el tope del plan Hobby, y ese límite es del
-  entorno y no del código.
+- **`NEXT_PUBLIC_SITIO_URL` sigue sin configurarse, y es deliberado.** El
+  despliegue del 2026-09-16 **comprobó el punto 2 de `lib/sitio.ts`**, que
+  llevaba desde el 2026-09-13 anotado como no comprobable fuera de producción:
+  sin esa variable, `VERCEL_PROJECT_PRODUCTION_URL` resuelve bien y el sitio se
+  anuncia entero con su dominio —`og:url`, los 41 `<loc>` del sitemap y el
+  `Sitemap:` del robots.txt, todos verificados con `curl` contra el sitio vivo—.
+
+  Ponerla ahora sería una segunda copia del dominio que hay que acordarse de
+  actualizar, que es el problema que ya tiene `tokens.css` con los colores. **Se
+  decide el día que haya dominio propio**, que es cuando hay que revisar esto de
+  todos modos. ⚠️ **Sin verificar**: si Vercel reapunta
+  `VERCEL_PROJECT_PRODUCTION_URL` a un dominio custom. Ese día se mira.
+- **Falta probar el tope de 60 s del lector de afiches**, que es de las cosas
+  que solo se prueban desplegado: el route handler declara `maxDuration = 60`,
+  el tope del plan Hobby, y ese límite es del entorno y no del código. Se
+  ejercita subiendo un afiche en `/admin` **en el sitio desplegado**, no en
+  local.
+- 🔒 **No hay pantalla que reciba el token de recuperación de contraseña**, así
+  que **"olvidé mi contraseña" sigue sin funcionar**. El 2026-09-16 se cubrió el
+  otro caso —cambiarla con la sesión abierta, `CambioDeClave.tsx`— y eso alcanza
+  para el día a día, pero con **un solo admin** el caso de olvidarla es el que
+  deja a alguien fuera para siempre.
+
+  Se descubrió intentando usarlo: el dashboard de Supabase **no deja escribir
+  una contraseña nueva** —sus únicas acciones sobre un usuario son mandar
+  recuperación o magic link— y el enlace del correo aterriza donde diga la
+  `Site URL` sin que nada lea el token. La `Site URL` ya apunta a producción
+  desde el 2026-09-16; lo que falta es la pantalla.
+
+  ⚠️ **Y `Redirect URLs` está vacío**, así que el día que exista esa pantalla y
+  se quiera probar en local hay que añadir `http://localhost:3000/**`. Hoy no
+  rompe nada porque ni `signInWithPassword` ni `updateUser` redirigen.
 - **9 publicados sin revisar** (de 34). Tienen `reviewed_at` en null y eso es
   correcto: nadie los revisó. El número baja solo a medida que Juan toca cada
   evento por otro motivo.
@@ -367,6 +413,7 @@ siempre **lo que está en pantalla**.
 | Crudas sin clasificar | **0** |
 | Crudas huérfanas | **0** — ninguna quedó sin canónico tras los dos borrados, que es lo que evita que el `moderacion_cli` les abra borrador nuevo |
 | Canónicos | **93** — 34 publicados, 9 borradores, 50 descartados |
+| **Dónde vive** | **`bogota-music-intel.vercel.app`** desde el 2026-09-16 · Vercel Hobby (⚠️ no comercial) · Root Directory `apps/web` · 3 variables, sin `NEXT_PUBLIC_SITIO_URL` (§ 2) |
 | En pantalla | **29 toques, 0 fiestas, 4 festivales** = 33 vigentes, en **12 salas**. La cartelera y el mapa cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
 | Publicados ya pasados | **1** — `Casi`, el único que sobrevivió a los dos borrados por ser cargado a mano |
 | Sin revisar | **9 de 34** publicados |
@@ -382,7 +429,7 @@ siempre **lo que está en pantalla**.
 | **Con lista de artistas** | **5 de 93** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
 | Bloqueados | **41** `(fuente, id)` — visitbogota 26, idartes 7, lourdes 4, movistar 3, ticketlive 1. El borrado del 2026-09-15 no sumó ninguno a propósito; los 4 de lourdes entraron el 2026-09-16 y el motivo está escrito en la fila |
 | Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **267 backend + 178 frontend**, verdes en local el 2026-09-16 (`Tests` en CI sobre `2a29482`) |
+| Tests | **267 backend + 188 frontend**, verdes en CI (`Tests` sobre `31fb54e`). Los 10 nuevos son de `lib/admin/clave.ts` |
 
 Cómo leerlas sin equivocarse:
 
@@ -426,45 +473,18 @@ Cómo leerlas sin equivocarse:
 
 ## 4. El siguiente paso
 
-**Lo que había que resolver antes de desplegar quedó cerrado el 2026-09-13**:
-`openGraph`, `robots.txt`, `sitemap.xml` y el `noindex` de `/admin`. Eran lo
-que "se congela al desplegar y se nota en el primer enlace compartido", y ya no
-bloquean nada.
+**El 🎯 de este archivo era desplegar, y se cumplió el 2026-09-16.** Lo que
+sigue no es técnico.
 
-1. 🎯 **Desplegar a Vercel.** **Nada de lo construido lo ha visto nadie más que
-   Juan**, y hay cuatro cosas que **solo se prueban ahí**: el tope de 60 s del
-   route handler del afiche, el sitio en un teléfono real, las tarjetas de
-   compartir en un validador de Open Graph, y qué dominio resuelve
-   `NEXT_PUBLIC_SITIO_URL` si no se configura. Las cuatro variables, en § 2.
+1. 🎯 **Llenar el directorio, y antes que nada borrar las notas de prueba.**
+   Sube al primer puesto por una razón que no es de gusto: **lo decidió Juan el
+   2026-09-09 y su condición ya se cumplió**. Dijo que el contenido se cargaba
+   sobre el sitio ya en pie; el sitio está en pie. Y mientras tanto tres fichas
+   que dicen "test" están en internet, no en una pestaña de localhost.
 
-   **La revisión previa se hizo el 2026-09-16** y esto es lo que dio:
-
-   - ✅ Build, `tsc`, ESLint, 178 tests de frontend y 267 de backend: verdes.
-   - ✅ RLS activo en las ocho tablas. La de `events` estaba abierta —era la
-     única sin filtro, desde la primera migración— y se cerró el 2026-09-16
-     (`20260916180000_events_solo_lo_publicado.sql`). **Verificado por los dos
-     lados, que es lo que lo cierra**: con la publishable key un anónimo pasa de
-     106 filas a 36 y los borradores devuelven `[]`; y en el navegador con la
-     sesión de Juan, el bloque «Ver lo que publican las fuentes» de un evento
-     con dos fuentes las sigue trayendo completas. Se eligió a propósito un
-     publicado con dos fuentes y no un borrador de una: si la política de admin
-     se hubiera roto, el contador habría dicho `(0)`.
-   - ✅ Las tres RPC destructivas —`borrar_evento`, `descartar_sala`,
-     `unificar_duplicado`— están expuestas a `anon` vía REST, **pero las tres
-     tienen `es_admin()` como primera línea**. El linter de Supabase las marca
-     y no son un agujero; la defensa está dentro de la función, no en el
-     permiso de `execute`.
-   - ✅ `admins` tiene RLS sin ninguna política, que es **correcto a propósito**:
-     así nadie la lee, y `es_admin()` entra por ser `security definer`. El
-     linter lo reporta como aviso y no hay nada que arreglar.
-   - ⚠️ **La protección de contraseñas filtradas está desactivada** en Supabase
-     Auth. Es un interruptor del panel y el login de `/admin` es lo único
-     autenticado del sitio.
-   - ⚠️ **Sin verificar**: si el proyecto todavía expone las claves legacy JWT.
-     Sigue sin poderse mirar desde fuera del dashboard.
-
-   Y lo que hay que arreglar antes de que lo vea alguien no es técnico: **las
-   tres notas de artista dicen "test"** (§ 1).
+   El detalle de qué falta —tres artistas, dos sin tracks, 5 de 33 con género,
+   3 de 33 marcados como escena— está en § 1. **Nada de eso lo puede hacer otro
+   que Juan**: ninguna base global sabe quién es El Kalvo.
 
 2. **Más fuentes.** `mitaquilla.com.co` quedó confirmada abierta el 2026-09-08 —
    con el User-Agent correcto, ver `context/ingesta/fuentes-y-legalidad.md`— y
@@ -477,4 +497,44 @@ bloquean nada.
    su MCP (plan gratis, servidor remoto): queda montada para esa pasada, sin
    usar todavía. ⚠️ **Arrastra una deuda desde el 2026-09-13**: la tarjeta de
    compartir del sitio entero no lleva imagen porque tendría que llevar la
-   marca, y la marca todavía no existe.
+   marca, y la marca todavía no existe — y desde el despliegue eso además deja
+   una etiqueta afirmando algo falso (§ 2).
+
+---
+
+## 5. La revisión de seguridad del 2026-09-16
+
+Se hizo antes de desplegar y **encontró una cosa seria**, que se arregló el
+mismo día. Queda acá porque es el registro de qué se miró: repetirla entera
+cuesta una hora, y saber qué ya se revisó evita mirarlo dos veces.
+
+- 🔒 **`events` tenía lectura pública sin filtro** —la única de las ocho tablas—
+  y dejaba ver 70 de 106 filas: los borradores y lo descartado, que es el
+  criterio editorial de Juan en bruto. Venía de la primera migración, de cuando
+  esa tabla era lo que el frontend mostraba. Cerrado en
+  `20260916180000_events_solo_lo_publicado.sql`.
+
+  **Verificado por los dos lados, que es lo que lo cierra**: con la publishable
+  key un anónimo pasa de 106 filas a 36 y los borradores devuelven `[]`; y en el
+  navegador con la sesión de Juan, el bloque «Ver lo que publican las fuentes»
+  de un evento con **dos** fuentes las sigue trayendo completas. Se eligió a
+  propósito un publicado con dos fuentes y no un borrador de una: si la política
+  de admin se hubiera roto, el contador habría dicho `(0)`.
+- ✅ Build, `tsc`, ESLint y los tests, verdes.
+- ✅ RLS activo en las ocho tablas.
+- ✅ Las tres RPC destructivas —`borrar_evento`, `descartar_sala`,
+  `unificar_duplicado`— están expuestas a `anon` vía REST, **pero las tres
+  tienen `es_admin()` como primera línea**. El linter de Supabase las marca y no
+  son un agujero: la defensa está dentro de la función, no en el permiso de
+  `execute`.
+- ✅ `admins` tiene RLS sin ninguna política, y es **correcto a propósito**: así
+  nadie la lee, y `es_admin()` entra por ser `security definer`. El linter lo
+  reporta como aviso y no hay nada que arreglar.
+- ✅ `/api/afiche` —lo único que cuesta plata— exige `Authorization` y llama a
+  `es_admin()`: 401 sin sesión, 403 si no es admin. Nadie gasta el saldo de
+  Anthropic abriendo el sitio. Y `robots.txt` bloquea `/api/`.
+- ✅ **La protección de contraseñas filtradas**, que estaba desactivada, la
+  activó Juan el 2026-09-16.
+- ⚠️ **Sin verificar**: si el proyecto todavía expone las claves legacy JWT.
+  Sigue sin poderse mirar desde fuera del dashboard, y es lo único de esta lista
+  que quedó abierto.
