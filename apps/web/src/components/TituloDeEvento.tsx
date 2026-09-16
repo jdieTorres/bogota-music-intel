@@ -35,7 +35,8 @@ import type { Evento } from "@/lib/events";
  *  enlace, y subrayado para que se lea como uno dentro de un titular donde
  *  todo pesa igual. */
 const ENLACE =
-  "text-accent underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent";
+  "text-accent transition-[filter,text-shadow] hover:brightness-110 " +
+  "hover:[text-shadow:0_0_2px_var(--accent)]";
 
 function ConEnlaces({ texto, fichas }: { texto: string; fichas: FichaDeArtista[] }) {
   return (
