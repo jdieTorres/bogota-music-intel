@@ -110,6 +110,44 @@ def test_el_bloqueo_conocido_no_pinta_la_corrida_de_rojo(monkeypatch, capsys):
     assert "[sana] 1 eventos" in salida.out
 
 
+def test_el_bloqueo_conocido_se_anota_como_aviso_y_no_como_error(monkeypatch, capsys):
+    """⚠️ El nivel de la anotación tiene que decir cuál de los dos casos fue.
+
+    `::error::` pinta la anotación de rojo en la UI **aunque el check salga en
+    verde**, así que anotar el bloqueo conocido como error deja una corrida
+    verde con una anotación roja: las dos señales dicen cosas distintas sobre
+    lo mismo, y quien la mire tiene que leer el texto para saber a cuál
+    creerle. Es la misma regla que hizo falta para el `exit code 1` — una
+    señal que sirve para todo no señala nada.
+    """
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    codigo = _correr(monkeypatch, {"ticketlive": _portero})
+
+    salida = capsys.readouterr()
+    assert codigo == 0
+    assert "::warning::[ticketlive] bloqueada" in salida.out
+    # Y no de error, que es lo que contradecía al verde.
+    assert "::error::" not in salida.out
+
+
+def test_un_fallo_de_verdad_se_sigue_anotando_como_error(monkeypatch, capsys):
+    """Lo que hace segura la distinción de arriba: solo el bloqueo conocido
+    baja de nivel. Cualquier otro fallo sigue siendo un error, y el rojo de la
+    anotación acompaña al rojo del check."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    def revienta():
+        raise RuntimeError("la API respondió 500")
+
+    codigo = _correr(monkeypatch, {"ticketlive": revienta})
+
+    salida = capsys.readouterr()
+    assert codigo == 1
+    assert "::error::[ticketlive] FALLÓ" in salida.out
+    assert "::warning::" not in salida.out
+
+
 def test_la_misma_fuente_rota_por_otra_cosa_sí_sale_en_rojo(monkeypatch, capsys):
     """⚠️ Lo que hace segura la excepción anterior.
 

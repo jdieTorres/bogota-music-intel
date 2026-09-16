@@ -184,6 +184,16 @@ devuelve un 500, la excepción no es `BloqueadoPorPortero` y la corrida sale en
 rojo como siempre. Y el bloqueo sigue entero en el log y en la anotación: lo
 único que cambia es el color.
 
+⚠️ **El nivel de la anotación tiene que acompañar al del check** (2026-09-16).
+Una anotación `::error::` sale roja en la UI **aunque el check esté verde**, así
+que anotar el bloqueo conocido como error dejaba una corrida verde con una
+anotación roja: dos señales diciendo cosas distintas sobre lo mismo. El bloqueo
+esperado va como `::warning::` y todo lo demás como `::error::`, de modo que
+**el color ya dice cuál de los dos casos fue sin leer el texto**. El llamador
+pasa si el fallo era esperado; traducir eso al vocabulario de GitHub Actions es
+de `_anotar`, porque el formato lo impone la plataforma y se respeta dentro del
+módulo que la usa.
+
 ⚠️ **Y la lista no se puede quedar corta en silencio.** Una fuente que empieza a
 chocar contra un portero **no está** en ella, así que sale en rojo — que es
 exactamente lo que se quiere, porque un bloqueo nuevo sí es noticia. Los tres

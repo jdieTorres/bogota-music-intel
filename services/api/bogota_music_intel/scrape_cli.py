@@ -16,7 +16,7 @@ from bogota_music_intel.scrapers.registry import SCRAPERS
 from bogota_music_intel.storage import get_client, save_events
 
 
-def _anotar(mensaje: str) -> None:
+def _anotar(mensaje: str, *, esperado: bool = False) -> None:
     """Deja el motivo del fallo en el resumen de la corrida, no solo en el log.
 
     ⚠️ **Un rojo que no dice qué se rompió no se lee.** El cron falló cuatro
@@ -25,17 +25,26 @@ def _anotar(mensaje: str) -> None:
     las siete fuentes había caído costaba abrir el log de cada corrida a
     mano. Eso es lo que hizo que cuatro días de rojo pasaran sin mirarse.
 
-    El formato `::error::` lo impone GitHub Actions, y por eso se respeta acá
-    —el módulo que corre dentro de ella— y no en el workflow, que solo
-    invoca. Fuera de Actions no imprime nada: el mensaje legible ya salió por
-    stderr.
+    ⚠️ **`esperado` baja la anotación a aviso, y esa es la mitad que faltaba.**
+    Una anotación `::error::` sale roja en la UI **aunque el check esté en
+    verde**, así que anotar el bloqueo conocido como error dejaba una corrida
+    verde con una anotación roja: dos señales diciendo cosas distintas sobre
+    lo mismo, y había que leer el texto para saber a cuál creerle. Con el
+    nivel separado, **el color de la anotación ya dice cuál de los dos casos
+    fue** sin leer nada — que es la misma regla que obligó a que el rojo
+    dijera *qué* pasó y no solo que pasó algo.
+
+    El vocabulario `::error::`/`::warning::` lo impone GitHub Actions, y por
+    eso vive acá —el módulo que corre dentro de ella— y no en el llamador,
+    que habla de si el fallo era esperado y no de cómo se pinta. Fuera de
+    Actions no imprime nada: el mensaje legible ya salió por stderr.
     """
     if not os.environ.get("GITHUB_ACTIONS"):
         return
     # Un salto de línea crudo corta la anotación a la mitad, y un `%` suelto
     # se come lo que venga detrás.
     escapado = mensaje.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-    print(f"::error::{escapado}")
+    print(f"::{'warning' if esperado else 'error'}::{escapado}")
 
 
 # Fuentes cuyo bloqueo anti-bots ya se dio por conocido, y que por eso **no
@@ -141,7 +150,7 @@ def main() -> int:
             marca = "bloqueada" if esperado else "FALLÓ"
             fallo = f"[{source}] {marca}: {type(exc).__name__}: {exc}"
             print(fallo, file=sys.stderr)
-            _anotar(fallo)
+            _anotar(fallo, esperado=esperado)
 
     return 1 if had_errors else 0
 
