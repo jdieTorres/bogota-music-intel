@@ -212,7 +212,30 @@ Dos son del proyecto:
   proyecto, parte el trabajo en varios commits cuando son asuntos distintos, y
   **verifica el CI después** — que es la mitad que se olvida.
 
-Se trabaja **directo sobre `main`**, sin ramas ni PRs.
+### Ramas: desde el despliegue, `main` es el sitio público
+
+Hasta el 2026-09-16 se trabajaba **directo sobre `main`**, y tenía sentido:
+nadie veía el resultado más que Juan. **Desde que el sitio está desplegado, cada
+push a `main` publica en producción en menos de un minuto**, sin que nadie lo
+pida. El costo de equivocarse dejó de ser local.
+
+Lo decidió Juan ese mismo día. El criterio no es el tamaño del diff —todo
+parece pequeño mientras se escribe— sino **si hace falta verlo para saber si
+quedó bien**:
+
+- **Va por rama** lo que cambia lo que el visitante ve o los datos que se
+  publican: UI, scrapers, clasificación, migraciones. Vercel levanta un
+  **Preview Deployment por rama**, con URL propia, así que la rama no solo
+  aísla el código: da dónde comprobarlo antes de que lo vea alguien más. Es lo
+  único que faltaba para cumplir la regla de verificar en un navegador de
+  verdad **sin publicar para hacerlo**.
+- **Va directo a `main`** lo que no llega al sitio —documentación, comentarios,
+  tests— y **lo que arregla algo que ya está roto en producción**, que no puede
+  esperar a un merge.
+
+**Las ramas no necesitan PR.** Son de una persona: el preview y el CI ya dicen
+lo que un PR diría, y abrir uno para aprobárselo a uno mismo es ceremonia. El
+PR entra el día que revise alguien más.
 
 ⚠️ **Preguntarle a Juan antes de correr cualquiera de las dos**, y antes de
 correr los CLI que tocan la base. Él decide el momento.
