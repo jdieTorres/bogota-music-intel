@@ -15,6 +15,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { CambioDeClave } from "@/components/admin/CambioDeClave";
 import { FormularioDeEvento } from "@/components/admin/FormularioDeEvento";
 import { ModeracionDeArtistas } from "@/components/admin/ModeracionDeArtistas";
 import { ModeracionDeEventos } from "@/components/admin/ModeracionDeEventos";
@@ -113,7 +114,10 @@ export default function AdminPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        {/* `items-start` y no `items-center`: al desplegarse, el cambio de
+            contraseña es un formulario alto, y centrado arrastraría a los
+            otros dos botones hasta su mitad. */}
+        <div className="flex flex-wrap items-start justify-end gap-2">
           {seccion === "eventos" && !creandoEvento && (
             <button
               onClick={() => {
@@ -125,6 +129,7 @@ export default function AdminPage() {
               + Nuevo evento
             </button>
           )}
+          <CambioDeClave />
           <button onClick={() => void supabase.auth.signOut()} className={BOTON_TENUE}>
             Salir
           </button>
