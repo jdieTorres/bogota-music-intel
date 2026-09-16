@@ -116,12 +116,22 @@ MSG
 
 ## 5. Pushear
 
-Este proyecto trabaja **directo sobre `main`**, sin ramas ni PRs. No abras una
-rama por tu cuenta: no es el flujo acá.
+⚠️ **`main` es el sitio público desde el 2026-09-16**: un push ahí despliega a
+producción en menos de un minuto. Antes de empujar, mira si este trabajo debía
+ir en rama — el criterio completo está en el `CLAUDE.md` raíz, y en corto es
+**si hace falta verlo para saber si quedó bien**: UI, scrapers, clasificación y
+migraciones van por rama, y su Preview Deployment es dónde comprobarlo;
+documentación, comentarios, tests y arreglos de algo ya roto en producción van
+directo.
+
+**No abras una rama por tu cuenta ni muevas a una rama un trabajo que ya está
+hecho sobre `main`**: si crees que correspondía rama y no se abrió, dilo antes
+de empujar y que decida Juan. Las ramas no llevan PR — son de una persona, y el
+preview y el CI ya dicen lo que un PR diría.
 
 ```
 git log --oneline origin/main..HEAD    # qué va a subir, incluidos commits viejos
-git push origin main
+git push origin main                   # o `git push -u origin <rama>` si es rama
 ```
 
 ⚠️ **Mira qué va a subir antes de pushear.** Es normal que arrastres commits de
@@ -135,28 +145,30 @@ Si aparecen commits que no reconoces, dilo antes de empujarlos.
 Pushear sin mirar el resultado es la mitad del trabajo. El proyecto ya tuvo el
 workflow `Tests` en rojo tres días sin que nadie se enterara.
 
+**Con `gh`, instalado y autenticado el 2026-09-16:**
+
 ```
-curl -s "https://api.github.com/repos/jdieTorres/bogota-music-intel/actions/runs?per_page=10"
+gh run list --repo jdieTorres/bogota-music-intel --limit 6
+gh run view <id> --log-failed        # cuando algo salga rojo
 ```
 
-(el repo es público, no hace falta token; `gh` no está instalado en esta
-máquina)
+Da en una línea lo que el `curl` daba en veinte: estado, workflow, rama,
+duración y sha. ⚠️ **Todavía no está en el `PATH` de toda sesión**; si `gh` no
+se encuentra, va por su ruta completa —`"/c/Program Files/GitHub CLI/gh.exe"`—
+o en una terminal abierta después de instalarlo.
 
-⚠️ **Sin token son 60 peticiones por hora, y se acaban.** Pasó el 2026-09-16
-con siete commits en una sesión: el límite saltó justo en el último y hubo que
-verificarlo por otro lado. El gasto no está en la consulta final sino **en el
-sondeo**, así que:
+⚠️ **Usa `gh` y no `curl` a la API pública, y el motivo no es la comodidad.**
+Sin token son **60 peticiones por hora** y se acaban: pasó el 2026-09-16 con
+siete commits en una sesión, y el límite saltó justo al verificar el último.
+Autenticado son 5.000, así que el sondeo deja de ser un recurso que racionar.
+El `curl` sigue sirviendo si `gh` no está a mano, pero con su límite puesto.
 
-- **Espera 60 segundos entre consulta y consulta, no 15.** El build de `Tests`
-  tarda alrededor de 50, así que casi siempre basta una sola pregunta y a lo
-  sumo dos. Sondear cada 15 multiplica por cuatro el costo de cada verificación
-  para no enterarse antes de nada.
-- **Si igual se agota** —`HTTP 403` con "API rate limit exceeded"—, la salida es
-  mirar `https://github.com/jdieTorres/bogota-music-intel/actions` en el
-  navegador, que no consume cuota. Es la salida de emergencia, no el método: la
-  API dice lo mismo sin abrir nada.
-- **Nunca des el CI por bueno porque la API no contestó.** Un 403 no es un
-  verde: es no haber mirado.
+- **Espera a que el run termine antes de cantar el resultado.** El build de
+  `Tests` tarda alrededor de 50 segundos; preguntar más seguido no lo acelera.
+- **Nunca des el CI por bueno porque la consulta falló.** Un 403 o un error de
+  red no son un verde: son no haber mirado. Si no se puede consultar, la salida
+  es `https://github.com/jdieTorres/bogota-music-intel/actions` en el navegador
+  y decirlo.
 - **Espera a que termine** el run del commit que acabas de subir, en vez de
   reportar `in_progress`. Si tarda, di que quedó corriendo — no lo des por
   verde.
