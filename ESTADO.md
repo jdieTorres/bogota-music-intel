@@ -174,19 +174,22 @@ el siguiente paso.
      Confirmado que el mecanismo funciona: la corrida roja del 2026-09-14 sí
      expone las suyas.
 
-     🔥 **Y el método de comprobación que estaba escrito acá no discrimina.**
-     Decía que bastaba con esperar a la corrida siguiente y leer las
-     anotaciones, pero **Ticketlive no tiene filas nuevas desde el 2026-09-11**
-     (`max(scraped_at)`), así que "cero anotaciones y cero filas" no distingue
-     *entró bien y no había nada nuevo* de *estuvo bloqueada y no se anotó*. Las
-     dos hipótesis dan exactamente la misma evidencia — que es el defecto que
-     este proyecto ya tiene nombrado: un fallo que se ve igual que un éxito.
+     ✅ **El método de comprobación sí sirve, y quedó validado contra un caso
+     positivo conocido**: el mismo endpoint devuelve las dos anotaciones de la
+     corrida roja del 2026-09-14. Así que **cero anotaciones significa que
+     Ticketlive entró bien**, y no hay ninguna ambigüedad.
 
-     **Lo que sí lo comprobaría**, y hay que decidir cuál: leer el **log** del
-     paso `Run event scrapers` de una corrida verde y buscar ahí la línea de
-     Ticketlive, que existe aunque no haya anotación; o hacer que el camino del
-     bloqueo deje una marca que no dependa de las anotaciones. **Mientras tanto
-     esto no se puede dar por estrenado**, y llevaba un día dándose por casi.
+     ⚠️ Este archivo llegó a afirmar que la había, apoyándose en que
+     `max(scraped_at)` de Ticketlive es del 09-11. **No prueba lo que se le
+     pidió probar**: `scraped_at` no se reescribe en el upsert (ver § 3), así
+     que ese 09-11 dice cuándo entró su última fila **nueva**, no cuándo entró
+     la fuente. Una fuente puede entrar bien y no traer nada nuevo.
+
+     Lo que falta, entonces, es solo que **ocurra**: que Ticketlive esté
+     bloqueada en una corrida posterior al 2026-09-16. Cuando pase, la
+     anotación saldrá como **aviso amarillo** y no como error (`::warning::`,
+     desde el 2026-09-16), así que el color de la anotación ya dice cuál de los
+     dos casos fue sin leer el texto.
 
   2. **"Traer cero eventos es fallo"**: necesita que una fuente devuelva una
      lista vacía, y nunca ha ocurrido.
@@ -356,7 +359,7 @@ siempre **lo que está en pantalla**.
 | **Con lista de artistas** | **5 de 89** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
 | Bloqueados | **37** `(fuente, id)` — visitbogota 26, idartes 7, movistar 3, ticketlive 1. **El borrado de lo pasado no sumó ninguno** |
 | Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **265 backend + 178 frontend**, verdes en CI (`Tests` sobre `4e9a720`). ⚠️ El backend decía 262 y son 265: recontado con `pytest --collect-only` |
+| Tests | **267 backend + 178 frontend**. ⚠️ El backend decía 262: eran 265 al recontarlo, más los 2 del nivel de anotación del 2026-09-16 |
 
 Cómo leerlas sin equivocarse:
 
@@ -371,11 +374,19 @@ Cómo leerlas sin equivocarse:
   se puede citar de memoria ni de la semana pasada.
 - ⚠️ **Las 43 filas de visitbogota están congeladas, no vivas.** La fuente salió
   del registry el 2026-09-08; sus filas quedan como registro y no se actualizan.
-- ⚠️ **`scraped_at` sí se reescribe en el upsert** — este archivo decía lo
-  contrario hasta el 2026-09-15. Se ve en que `royal_center` lo tiene en
-  `2026-09-15T17:55Z`, que es la corrida del cron de ese día. **Sirve entonces
-  como "última vez que la fuente la vio", y es la forma barata de saber qué
-  fuente dejó de entrar** sin abrir los logs de CI.
+- ⚠️ **`scraped_at` es "cuándo se vio por primera vez" y el upsert NO lo
+  reescribe.** `save_events` sube solo las columnas que arma en `rows`, y
+  `scraped_at` únicamente tiene `default now()`, que en Postgres aplica al
+  insertar y no en el `do update`.
+
+  **Esta línea llegó a decir lo contrario durante unas horas el 2026-09-15, y
+  vale la pena registrar por qué**: se vio que `royal_center` tenía
+  `max(scraped_at)` en la hora exacta de la corrida del cron y se concluyó que
+  el upsert lo reescribía, cuando la explicación es que ese día **insertó una
+  fila nueva**. Una correlación con la hora de la corrida y ninguna lectura del
+  código. De ahí sale que `max(scraped_at)` de una fuente responde "cuándo
+  entró su última fila **nueva**" y **no** "cuándo entró la fuente por última
+  vez" — que era justo la pregunta que se le estaba haciendo.
 - **Las filas crudas bajan además de subir**, y por dos motivos distintos: el
   cron poda las que su fuente dejó de listar **y todavía no han ocurrido**
   (`_prune_missing_events`), y el 2026-09-15 se borraron a mano las 32 de lo ya
