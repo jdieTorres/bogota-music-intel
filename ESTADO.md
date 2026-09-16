@@ -26,8 +26,12 @@ bloqueo** — y ahí sí corresponde, porque su `source_event_id` lleva la fecha
 (`guaco-2026-08-22`) y no puede colisionar con una edición futura del mismo
 artista. Es justo lo contrario de `jorge-drexler` o `feria-eva`.
 
-🔒 **Ese mismo día se cerró la lectura pública de la tabla cruda** — ver § 2,
-es lo último que salió de la revisión previa al despliegue.
+🔒 **Ese mismo día se cerró la lectura pública de la tabla cruda**, que era lo
+único serio que encontró la revisión previa al despliegue: `events` dejaba ver
+70 de 106 filas a cualquiera —los borradores y lo descartado, o sea el criterio
+editorial en bruto—. Cerrado y **verificado en el navegador con la sesión de
+Juan**, así que ya no es un pendiente: está en § 4 como parte de la revisión, y
+el relato en `20260916180000_events_solo_lo_publicado.sql`.
 
 Acá van los pendientes, las cifras y lo que quedó a medias. **`CLAUDE.md` y los
 `context/*/CLAUDE.md` son reglas y criterio; este archivo es la foto de hoy.**
@@ -172,29 +176,6 @@ el siguiente paso.
 
 ## 2. Lo que quedó a medias
 
-- 🔒 **La tabla cruda dejó de ser legible entera, y falta comprobar `/admin`.**
-  Hasta el 2026-09-16 `events` tenía `for select using (true)`: era la única de
-  las ocho tablas sin filtro, y con la publishable key —que va en el bundle del
-  navegador— eso dejaba a la vista **70 de 106 filas**, las de los borradores y
-  las de lo descartado. Eso último es **el criterio editorial de Juan en bruto**:
-  qué shows miró y resolvió no publicar, con nombre y fecha.
-
-  **Venía de la primera migración** (`20260827000000`), de cuando `events` era
-  lo que el frontend mostraba. El 2026-08-31 llegó `canonical_events` y la
-  pantalla pasó a leer el canónico: la tabla cambió de rol y sus permisos no.
-
-  Ahora hay dos políticas, el mismo patrón que las otras siete
-  (`20260916180000_events_solo_lo_publicado.sql`). ✅ Comprobado **con la
-  publishable key, no leyendo la política**: un anónimo pasa de 106 filas a 36,
-  el borrador de Cosculluela y el descartado de Gorillaz devuelven `[]`, y el
-  embed de la cartelera sigue resolviendo `source` y `source_url` de lo
-  publicado.
-
-  ⚠️ **Lo que falta es `/admin`**, y no lo puede verificar una sesión: la
-  política nueva usa `es_admin()`, así que necesita que Juan entre. Hay que
-  abrir la cola y mirar que cada evento siga mostrando lo que dice la fuente
-  —el bloque que compara `source`, `title` y `price_text` contra lo editado—.
-  **Si eso se ve vacío, la política de admin no está funcionando.**
 - ⚠️ **Hay un evento con la fecha en el año 0026.** "Carlos Rivera - Vida México
   Tour 2026" de `visitbogota`, con `starts_at` en `0026-10-02`, entró así el
   2026-09-01. Está descartado, así que no se ve en ningún lado — pero es un
@@ -459,7 +440,15 @@ bloquean nada.
    **La revisión previa se hizo el 2026-09-16** y esto es lo que dio:
 
    - ✅ Build, `tsc`, ESLint, 178 tests de frontend y 267 de backend: verdes.
-   - ✅ RLS activo en las ocho tablas, y la de `events` corregida (§ 2).
+   - ✅ RLS activo en las ocho tablas. La de `events` estaba abierta —era la
+     única sin filtro, desde la primera migración— y se cerró el 2026-09-16
+     (`20260916180000_events_solo_lo_publicado.sql`). **Verificado por los dos
+     lados, que es lo que lo cierra**: con la publishable key un anónimo pasa de
+     106 filas a 36 y los borradores devuelven `[]`; y en el navegador con la
+     sesión de Juan, el bloque «Ver lo que publican las fuentes» de un evento
+     con dos fuentes las sigue trayendo completas. Se eligió a propósito un
+     publicado con dos fuentes y no un borrador de una: si la política de admin
+     se hubiera roto, el contador habría dicho `(0)`.
    - ✅ Las tres RPC destructivas —`borrar_evento`, `descartar_sala`,
      `unificar_duplicado`— están expuestas a `anon` vía REST, **pero las tres
      tienen `es_admin()` como primera línea**. El linter de Supabase las marca
