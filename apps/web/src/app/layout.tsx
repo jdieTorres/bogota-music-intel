@@ -130,24 +130,26 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               móvil. Cede la navegación, que baja entera a su propia línea, y
               la marca se queda como está. En escritorio no cambia nada. */}
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
-            <Link href="/" className="group -my-2 flex items-center gap-2.5 py-2">
-              <BrandMark className="h-7 w-7 shrink-0" />
-              <span className="flex items-baseline gap-2">
-                <span className="font-display text-base font-bold tracking-tight sm:text-lg">
+            <Link href="/" className="group -my-2 flex items-center gap-3 py-2">
+              <BrandMark className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
+              {/* En columna desde el 2026-09-17, a pedido de Juan: el nombre
+                  crece y la etiqueta pasa a ser su subtítulo en vez de un
+                  añadido a su derecha. Dos efectos que valen la pena
+                  nombrar: la marca ocupa ahora dos líneas propias —así que
+                  el ancho deja de ser lo que la limita, y por eso el nombre
+                  puede crecer sin pelear con la navegación— y la etiqueta
+                  **aparece también en móvil**, donde antes estaba escondida
+                  justamente porque al lado del nombre no cabía. */}
+              <span className="flex flex-col">
+                <span className="font-display text-xl font-bold leading-none tracking-tight sm:text-2xl">
                   Cartelera de Bogotá
                 </span>
-                {/* La etiqueta del masthead, ladeada: la pizca de lo cercano
-                    que el resto de la barra no da. El ladeo se quedó al
-                    cambiar la manuscrita por la mono liviana — sobre una
-                    letra de máquina de escribir deja de leerse como algo
-                    escrito a mano y pasa a leerse como un sello puesto
-                    torcido, que es lo mismo que buscaba.
-
-                    Baja de `text-lg` a `text-base` porque Geist Mono tiene
-                    mucha más altura de x que Caveat: a 18px le ganaba en
-                    tamaño óptico al nombre de marca, que es lo que no puede
-                    pasar. */}
-                <span className="hidden origin-left -rotate-3 font-etiqueta text-base text-accent-2 sm:inline">
+                {/* Sin ladeo desde el 2026-09-17, también decisión de Juan.
+                    El −3° venía de cuando la letra era manuscrita y quería
+                    leerse como una nota al margen; debajo del nombre y
+                    alineada con él, la inclinación solo se veía como un
+                    renglón torcido. */}
+                <span className="mt-1.5 font-etiqueta text-xs leading-none text-accent-2 sm:text-sm">
                   escena en vivo
                 </span>
               </span>

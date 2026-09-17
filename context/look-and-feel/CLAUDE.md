@@ -289,6 +289,20 @@ línea. Lo que baja a su propia fila es la navegación; **el nombre de marca se
 queda entero**. Es la misma decisión que ya se había tomado escondiendo
 "Cartelera" en móvil: lo que no puede partirse en dos es la marca.
 
+**Y desde el 2026-09-17 la marca es un bloque de dos líneas** (lo pidió Juan):
+el nombre más grande —20 px en móvil, 24 en escritorio, contra los 16/18 de
+antes— y "escena en vivo" debajo, como subtítulo. Tres consecuencias que
+conviene tener a la vista:
+
+- **La etiqueta dejó de ir ladeada.** El −3° venía de cuando era manuscrita y
+  quería leerse como una nota al margen. Alineada bajo el nombre, la
+  inclinación solo se leía como un renglón torcido.
+- **Y aparece en móvil**, donde antes estaba escondida: no cabía *al lado* del
+  nombre, que era el único motivo para ocultarla.
+- **El ancho dejó de ser lo que limita el tamaño del nombre**, porque la marca
+  ya no comparte línea con nada. Lo que lo limita ahora es la altura de la
+  barra, que es lo que se debe mirar si algún día crece más.
+
 ## Qué queda abierto
 
 - **El nombre y la identidad de marca definitivos.** Sigue en el placeholder
