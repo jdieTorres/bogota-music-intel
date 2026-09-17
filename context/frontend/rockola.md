@@ -77,6 +77,45 @@ La lección: al ceder un nodo a una librería externa **se cede también su
 estilo**, y hay que devolvérselo por la API de la librería o por una regla que
 no dependa de clases.
 
+## Cerrar la bandeja: tocando fuera y con el botón de atrás
+
+Lo pidió Juan el 2026-09-17 mirando el sitio en el teléfono, donde la bandeja
+se come un tercio de la pantalla y el único cierre era encontrar el botón de
+parar.
+
+**Cerrar es `parar`, no esconder.** No hay un estado "cerrada con la cola
+guardada", y no lo hay a propósito: la cola vive en memoria y es de acá y de
+ahora. Una bandeja que se esconde con música dentro es la misma aparición que
+ya se rechazó al quitarle el `sessionStorage`.
+
+Tres cosas que costaron una vuelta cada una:
+
+- **El evento es `click`, y aun así hay que descartar el arrastre.** Con
+  `pointerdown`, deslizar para leer la cartelera apagaba la música: un scroll
+  empieza con un `pointerdown` en cualquier punto. El `click` arregla el
+  teléfono —un deslizamiento no produce click— pero no el ratón: arrastrar
+  para seleccionar texto termina en click como cualquier toque. Por eso se
+  mide el recorrido del puntero entre oprimir y soltar, y más de 10 px no
+  cuenta como toque. **Se comprobó simulando el arrastre, no razonándolo.**
+- **Lo que manda sobre la rockola lleva `data-rockola` y no la cierra.** Son
+  los tracks de la contraportada y el botón de "Suena algo". Sin esa marca,
+  el mismo click que pone un track cerraría la bandeja y borraría la cola —y
+  el click que la abre la cerraría en el mismo gesto—, así que encolar desde
+  fuera sería imposible. El reproductor embebido no necesita marca: un click
+  dentro de un iframe no llega al documento que lo contiene.
+- **El botón de atrás necesita una entrada de historial propia.** En Android
+  es una navegación, así que para que cierre la bandeja en vez de sacar al
+  lector de la página hay que darle algo que deshacer: se empuja una entrada
+  al abrirse y el `popstate` de ese "atrás" la consume, con la URL igual que
+  ya era. ⚠️ **Y hay que retirarla si la bandeja se cierra por otra vía**, o
+  queda un "atrás" que aparenta no hacer nada; se comprueba antes que la
+  entrada de arriba siga siendo la nuestra, porque si el lector navegó con la
+  música puesta, un `back()` desharía su navegación de verdad.
+
+Los cinco caminos —toque fuera, arrastre, botón de atrás, botón de parar, y
+tocar otro track— se verificaron en el navegador, cada uno en una sesión
+limpia.
+
 ## El bug de fechas, que es el mismo de siempre con otra cara
 
 El filtro de "qué toques están por venir" comparaba `starts_at` contra el

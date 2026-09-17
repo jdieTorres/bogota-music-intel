@@ -42,6 +42,96 @@ export function Tornamesa() {
     return () => observador.disconnect();
   }, [actual]);
 
+  // Abierta o no. Booleano y no el track, para que estos efectos no se
+  // rearmen en cada cambio de canción — solo al abrirse y al cerrarse.
+  const abierta = Boolean(actual);
+
+  /**
+   * Se cierra tocando fuera (2026-09-17, pedido de Juan).
+   *
+   * Cerrar es `parar`: la bandeja no se esconde, se apaga. No hay un estado
+   * "cerrada con la cola guardada", y no lo hay a propósito — la cola vive en
+   * memoria y es de acá y de ahora (`Rockola.tsx`).
+   *
+   * ⚠️ **Escucha `click` y no `pointerdown`, y además descarta el arrastre.**
+   * Un gesto de scroll empieza con un `pointerdown` en cualquier punto de la
+   * página, así que con ese evento deslizar para leer la cartelera apagaría la
+   * música. El `click` arregla el caso del teléfono —un deslizamiento no
+   * produce click— pero no el del ratón: arrastrar para seleccionar texto
+   * termina en un `click` como cualquier otro, y eso también apagaba la
+   * música. Por eso se mide cuánto se movió el puntero entre que se oprimió y
+   * que se soltó: más de 10 px es un arrastre y no un toque.
+   *
+   * Dos cosas quedan fuera: la propia bandeja y todo lo marcado con
+   * `data-rockola`, que es lo que manda sobre ella —los tracks de la
+   * contraportada y el botón de "Suena algo"—. Esa segunda exclusión no es un
+   * detalle: sin ella, **el mismo click que pone un track cerraría la bandeja
+   * y borraría la cola**, y encolar desde fuera sería imposible.
+   *
+   * El reproductor embebido no necesita exclusión: un click dentro de un
+   * iframe no llega al documento que lo contiene.
+   */
+  useEffect(() => {
+    if (!abierta) return;
+
+    let desde: { x: number; y: number } | null = null;
+    const alOprimir = (evento: PointerEvent) => {
+      desde = { x: evento.clientX, y: evento.clientY };
+    };
+
+    function alTocar(evento: MouseEvent) {
+      // Un arrastre —scroll con el dedo, selección de texto con el ratón—
+      // termina en click igual que un toque. 10 px es el temblor de un dedo.
+      const recorrido = desde
+        ? Math.hypot(evento.clientX - desde.x, evento.clientY - desde.y)
+        : 0;
+      if (recorrido > 10) return;
+
+      const destino = evento.target;
+      if (!(destino instanceof Node)) return;
+      if (barra.current?.contains(destino)) return;
+      if (destino instanceof Element && destino.closest("[data-rockola]")) return;
+      parar();
+    }
+
+    document.addEventListener("pointerdown", alOprimir, true);
+    document.addEventListener("click", alTocar);
+    return () => {
+      document.removeEventListener("pointerdown", alOprimir, true);
+      document.removeEventListener("click", alTocar);
+    };
+  }, [abierta, parar]);
+
+  /**
+   * Y se cierra con el botón de atrás del teléfono (2026-09-17, pedido de
+   * Juan).
+   *
+   * En Android ese botón es una navegación hacia atrás, así que para que
+   * cierre la bandeja **en vez de sacar al lector de la página** hay que
+   * darle algo que deshacer: una entrada propia en el historial, empujada al
+   * abrirse. El `popstate` que llega al pulsar atrás consume esa entrada —la
+   * URL vuelve a ser la misma que ya era, así que no se ve ninguna
+   * navegación— y ahí se apaga la rockola.
+   *
+   * ⚠️ **La entrada se retira si la bandeja se cierra por otra vía**, o el
+   * lector quedaría con un "atrás" que aparenta no hacer nada. Se comprueba
+   * que la entrada actual siga siendo la nuestra antes de retirarla: si
+   * mientras sonaba la música el lector navegó a otra página, la nuestra ya
+   * no está arriba y un `back()` desharía su navegación de verdad.
+   */
+  useEffect(() => {
+    if (!abierta) return;
+
+    window.history.pushState({ bandejaAbierta: true }, "");
+    const alVolver = () => parar();
+    window.addEventListener("popstate", alVolver);
+
+    return () => {
+      window.removeEventListener("popstate", alVolver);
+      if (window.history.state?.bandejaAbierta) window.history.back();
+    };
+  }, [abierta, parar]);
+
   if (!actual) return null;
 
   const porSonar = cola.slice(indice + 1);

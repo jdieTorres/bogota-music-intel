@@ -27,6 +27,9 @@ export function BotonAlAzar({ tracks }: { tracks: TrackEnCola[] }) {
     <button
       type="button"
       onClick={() => ponerAlAzar(tracks)}
+      // Manda sobre la bandeja, así que tocarlo no la cierra. El porqué de la
+      // marca está en `rockola/Tornamesa.tsx`.
+      data-rockola
       className="rounded-full border border-accent px-4 py-1.5 font-display text-sm font-semibold tracking-tight text-accent transition-[transform,background-color,color] duration-150 hover:bg-accent hover:text-background active:scale-[0.97]"
       style={{ transitionTimingFunction: "var(--ease-salida)" }}
     >

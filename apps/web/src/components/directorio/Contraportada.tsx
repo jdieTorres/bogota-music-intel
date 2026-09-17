@@ -70,7 +70,13 @@ export function Contraportada({
               cada lado mientras el texto conserva su aire. Sin eso el título
               queda pegado al borde del bloque de color justo cuando el bloque
               aparece, que es cuando más se nota. */}
-          <ol className="-mx-3 mt-4">
+          {/* `data-rockola` marca lo que **manda sobre la bandeja**: tocar
+              acá no la cierra, aunque quede fuera de ella. Sin esta marca, el
+              mismo toque que pone un track cerraría la bandeja y borraría la
+              cola —y el click que la abre la cerraría al instante—, porque el
+              cierre por toque fuera escucha en el documento entero
+              (`rockola/Tornamesa.tsx`). */}
+          <ol data-rockola className="-mx-3 mt-4">
             {tracks.map((track, i) => {
               const puesto = track.id === actual?.id;
               return (
