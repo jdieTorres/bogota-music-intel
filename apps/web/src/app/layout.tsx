@@ -170,12 +170,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   estos enlaces medían 20px de alto contra los 44 que pide
                   un objetivo táctil, y el masthead es lo que más se toca
                   desde el teléfono. */}
-              {/* En móvil no se muestra: va al mismo sitio que el logo, y dos
-                  enlaces a la portada en una barra de 390px obligaban al
-                  nombre de marca a partirse en dos líneas. */}
+              {/* **Se muestra también en móvil desde el 2026-09-17**, y hasta
+                  ese día no: iba escondido porque en 390 px compartía línea
+                  con el nombre de marca y lo obligaba a partirse en dos. Ese
+                  motivo se murió cuando la navegación pasó a su propia fila y
+                  la marca a un bloque aparte, pero la clase se quedó — así
+                  que en el teléfono la cartelera era el único destino sin
+                  enlace en la barra, y **quien estaba en el directorio no
+                  tenía cómo volver salvo tocando la marca**, que no dice a
+                  dónde lleva. Lo vio Juan mirando el sitio en su teléfono.
+
+                  Sigue apuntando al mismo sitio que la marca, y eso está
+                  bien: una barra de navegación nombra sus destinos; un logo
+                  no es un nombre. */}
               <Link
                 href="/"
-                className="hidden -my-3 py-3 text-muted transition-colors hover:text-foreground sm:inline-block"
+                className="-my-3 inline-block py-3 text-muted transition-colors hover:text-foreground"
               >
                 Cartelera
               </Link>
