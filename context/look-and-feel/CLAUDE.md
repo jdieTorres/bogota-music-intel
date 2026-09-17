@@ -290,16 +290,17 @@ queda entero**. Es la misma decisión que ya se había tomado escondiendo
 "Cartelera" en móvil: lo que no puede partirse en dos es la marca.
 
 **Y desde el 2026-09-17 la marca es un bloque de dos líneas** (lo pidió Juan):
-el nombre más grande —**22 px en móvil y 26 en escritorio**, contra los 16/18
-de antes—, "escena en vivo" debajo como subtítulo en 13/15, y el ícono en
-40/44 contra los 28 de antes. Los tres crecen juntos: el bloque se subió otro
-10% en una segunda pasada, y **eso se hace en los tres a la vez o el conjunto
-se descuadra**.
+el nombre más grande —**24 px en móvil y 29 en escritorio**, contra los 16/18
+de antes—, "escena en vivo" debajo como subtítulo en 14/17, y el ícono en
+44/48 contra los 28 de antes. Llegó ahí en dos pasadas de 10% sobre el bloque
+recién apilado (20/24), y **las tres piezas crecen a la vez o el conjunto se
+descuadra**: el ícono chico contra un nombre grande fue el primer efecto que
+hubo que corregir acá.
 
-⚠️ Los tamaños del nombre y del subtítulo **están fuera de la escala de
-Tailwind a propósito**: el siguiente escalón habría sido +20%, y lo que se
-pidió fue +10%. Son de los pocos valores arbitrarios del sitio y llevan el
-porqué escrito al lado.
+⚠️ El tamaño del nombre en escritorio y el del subtítulo **están fuera de la
+escala de Tailwind a propósito**: el escalón siguiente era demasiado —de 26 a
+30 px— para un ajuste del 10%. Son de los pocos valores arbitrarios del sitio
+y llevan el porqué escrito al lado.
 
 Tres consecuencias que conviene tener a la vista:
 
@@ -310,8 +311,8 @@ Tres consecuencias que conviene tener a la vista:
   nombre, que era el único motivo para ocultarla.
 - **El ancho dejó de ser lo que limita el tamaño del nombre**, porque la marca
   ya no comparte línea con nada. Lo que lo limita ahora es la altura de la
-  barra —80 px en escritorio y 112 en móvil, medidos—, que es lo que hay que
-  mirar si algún día crece más. En 390 px el nombre ocupa 203 de los 350
+  barra —85 px en escritorio y 115 en móvil, medidos—, que es lo que hay que
+  mirar si algún día crece más. En 390 px el nombre ocupa 222 de los 350
   disponibles, así que el margen que queda es de ancho, no de altura.
 
 ## Qué queda abierto

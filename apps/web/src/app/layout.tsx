@@ -131,7 +131,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               la marca se queda como está. En escritorio no cambia nada. */}
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
             <Link href="/" className="group -my-2 flex items-center gap-3 py-2">
-              <BrandMark className="h-10 w-10 shrink-0 sm:h-11 sm:w-11" />
+              <BrandMark className="h-11 w-11 shrink-0 sm:h-12 sm:w-12" />
               {/* En columna desde el 2026-09-17, a pedido de Juan: el nombre
                   crece y la etiqueta pasa a ser su subtítulo en vez de un
                   añadido a su derecha. Dos efectos que valen la pena
@@ -141,14 +141,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   **aparece también en móvil**, donde antes estaba escondida
                   justamente porque al lado del nombre no cabía. */}
               <span className="flex flex-col">
-                {/* ⚠️ Tamaños fuera de la escala de Tailwind, y a propósito:
-                    son los de la primera versión de este bloque más un 10%
-                    (20→22 y 24→26), que es lo que pidió Juan. El siguiente
-                    escalón de la escala —`text-2xl` y `text-3xl`— habría sido
-                    +20% y +25%. Van redondeados al píxel entero: la décima
-                    exacta sería 22 y 26,4, y esa precisión no la distingue
-                    nadie. */}
-                <span className="font-display text-[1.375rem] font-bold leading-none tracking-tight sm:text-[1.625rem]">
+                {/* El bloque de marca está un 20% por encima de como quedó
+                    al pasar a dos líneas (era 20/24), en dos pasadas de 10%
+                    que pidió Juan. En móvil el tamaño cae justo en
+                    `text-2xl`; en escritorio no hay escalón que sirva —el
+                    siguiente es `text-3xl`, 30 px— así que ese va arbitrario
+                    y redondeado al píxel: 28,8 exactos serían.
+
+                    ⚠️ Los tres elementos del bloque crecen juntos, siempre:
+                    ícono, nombre y subtítulo. Subir uno solo descuadra el
+                    conjunto, y el ícono chico contra un nombre grande fue el
+                    primer efecto que hubo que corregir acá. */}
+                <span className="font-display text-2xl font-bold leading-none tracking-tight sm:text-[1.8125rem]">
                   Cartelera de Bogotá
                 </span>
                 {/* Sin ladeo desde el 2026-09-17, también decisión de Juan.
@@ -156,7 +160,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     leerse como una nota al margen; debajo del nombre y
                     alineada con él, la inclinación solo se veía como un
                     renglón torcido. */}
-                <span className="mt-1.5 font-etiqueta text-[0.8125rem] leading-none text-accent-2 sm:text-[0.9375rem]">
+                <span className="mt-1.5 font-etiqueta text-sm leading-none text-accent-2 sm:text-[1.0625rem]">
                   escena en vivo
                 </span>
               </span>
