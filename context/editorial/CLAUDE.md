@@ -100,6 +100,29 @@ escribe Juan a mano o no existen. Las sugerencias del formulario están en
 `apps/web/src/lib/admin/generos.ts` y son abiertas (`datalist`, no `select`):
 existen para que no convivan "rock", "Rock" y "Rock/Punk/Metal".
 
+## El texto de la fuente no se publica
+
+**La descripción que trae el scraper no se muestra en ningún lado** (decisión
+de Juan, 2026-09-16), ni en la ficha del evento ni en la tarjeta que se arma
+al compartir el enlace.
+
+No es un problema de espacio: ese texto es **material de promoción de la
+sala**, no información del toque. Llega en mayúsculas, con hashtags, con
+condiciones de una boletería que no es la nuestra y a veces con el cartel de
+otra fecha, y **puesto en la ficha se lee como si lo hubiéramos escrito
+nosotros**. Lo que la ficha afirma es lo que verificamos; para el anuncio
+entero está el enlace a la fuente, que lo muestra tal como su autor lo
+publicó.
+
+**El campo se sigue guardando y se sigue leyendo en `/admin`**: es de donde
+salen los nombres del cartel al moderar (`context/moderacion/CLAUDE.md`). Lo
+que cambia es que no se publica — misma regla de siempre, guardar crudo y
+decidir en lectura.
+
+⚠️ **El día que la ficha vuelva a tener un texto, lo escribe una persona.**
+Es la misma frontera que el género y la escena local: un juicio editorial no
+se hereda de lo que publicó la fuente.
+
 ## Excluir es caro y silencioso — y eso cambió con la moderación
 
 Un evento que no aparece en la cartelera no deja rastro para nadie, y por eso

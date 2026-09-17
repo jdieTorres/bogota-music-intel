@@ -51,9 +51,14 @@ export async function generateMetadata(
     ? `${conMayuscula(fechaLarga(evento.starts_at))} · ${venue}`
     : `${venue}, Bogotá`;
 
+  // La descripción es la del sitio, no la del anuncio. El texto que traen
+  // las fuentes es promoción de la sala —mayúsculas, hashtags, a veces el
+  // cartel de otro toque— y desde el 2026-09-16 no se muestra en ningún
+  // lado; dejarlo acá lo publicaría igual, en el sitio donde más se ve: la
+  // tarjeta que arma WhatsApp.
   return metadatosDePagina({
     titulo,
-    descripcion: evento.description ?? dondeYCuando,
+    descripcion: dondeYCuando,
     ruta: `/evento/${evento.id}`,
     imagen: evento.image_url
       ? { url: evento.image_url, alt: `Afiche de ${titulo}` }
@@ -206,15 +211,19 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
             </Dato>
           </dl>
 
-          {/* Antes de la descripción: quién toca es lo que se busca primero,
-              y el texto de la sala suele ser largo. */}
           <CartelDelToque cartel={cartel} tipo={evento.event_type} masInfo={masInfo} />
 
-          {evento.description && (
-            <p className="mt-8 max-w-prose text-pretty leading-relaxed text-muted">
-              {evento.description}
-            </p>
-          )}
+          {/* ⚠️ La descripción que trae la fuente NO se muestra (decisión de
+              Juan, 2026-09-16). Es el material de promoción de la sala y no
+              información del toque: llega en mayúsculas, con hashtags, con
+              condiciones de una boletería que no es la nuestra y a veces con
+              el cartel de otra fecha. La ficha dice lo que verificamos, y
+              para el anuncio entero está "Más info", que lleva a la fuente
+              tal como la publicó.
+
+              El campo se sigue guardando y se sigue leyendo en `/admin`: es
+              de donde salen los nombres del cartel al moderar. Lo que cambia
+              es que no se publica. */}
 
           {/* El anuncio original, para quien quiere el cartel completo, los
               teloneros o la hora de apertura — todo lo que la ficha no tiene
