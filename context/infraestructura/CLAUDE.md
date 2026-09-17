@@ -54,21 +54,25 @@ baja del radar sí estaba aplicada mientras `ESTADO.md` la daba por pendiente.
   prueba que los secrets sirven: `scrape_cli` devuelve 1 si falla cualquier
   fuente.
 - **`Tests`** — los tests de backend y de frontend, `ruff`, `tsc`, `eslint`,
-  `npm run lint` y build. Cuántos son, en `ESTADO.md`.
+  `npm run lint` y build. Cuántos son, en `ESTADO.md`. Corre en **todo push**
+  y en los PR desde el 2026-09-16: hasta ese día escuchaba `push` solo en
+  `main`, y como las ramas no llevan PR, **una rama no disparaba nada**. El
+  porqué completo está junto a la política de ramas, en el `CLAUDE.md` raíz.
 
 ⚠️ **Antes de dar el CI por bueno, mirar los dos.** `Tests` estuvo en rojo tres
 días sin que nadie lo notara, precisamente porque `Scraper cron` estaba verde
-y era el que se venía mirando. Sin token:
-`curl -s "https://api.github.com/repos/jdieTorres/bogota-music-intel/actions/runs?per_page=20"`
-y agrupar por `name`. (`gh` no está instalado en esta máquina.)
+y era el que se venía mirando. Se agrupan por `name`:
+`gh run list --repo jdieTorres/bogota-music-intel --limit 6`.
 
-⚠️ **Las corridas y sus pasos se leen sin token, pero el log de un job no.**
-`/actions/runs/<id>/jobs` dice qué paso falló; `/actions/jobs/<id>/logs`
-responde **403 `Must have admin rights`** aunque el repo sea público. El
-contenido del log se lee **abriendo la corrida en el navegador de Juan**, que
-tiene sesión de GitHub: la dirección del job con el ancla `#step:N:1` abre
-directamente el paso N desplegado. Así se diagnosticó el 2026-09-13 la racha
-de cuatro corridas rojas del cron, sin instalar nada.
+**`gh` está instalado y autenticado desde el 2026-09-16**, así que el sondeo
+dejó de ser un recurso que racionar: 5.000 peticiones por hora contra las 60
+de la API anónima, que se agotaron ese mismo día verificando el séptimo commit.
+Con él, `gh run view <id> --log-failed` trae el log del paso que falló —lo que
+antes había que abrir en el navegador de Juan, porque `/actions/jobs/<id>/logs`
+responde 403 sin credenciales aunque el repo sea público— y
+`gh run watch <id> --exit-status` espera a que la corrida termine en vez de
+sondear a mano. ⚠️ Todavía no está en el `PATH` de toda sesión: si no se
+encuentra, va por su ruta completa, `"/c/Program Files/GitHub CLI/gh.exe"`.
 
 ⚠️ **El cron declara `0 14 * * *` (9:00 en Bogotá) y GitHub retrasa los
 `schedule` bastante** — ha corrido a las 23:35Z. No es un error de
@@ -118,6 +122,44 @@ Vercel corre `npm run build`, así que el `prebuild` que copia el worker de
 MapLibre se dispara solo. Hacen falta las variables
 `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en el
 proyecto de Vercel.
+
+### Si un despliegue terminó, se le pregunta a GitHub — no al sitio
+
+⚠️ **Nunca sondear el sitio público en un bucle para saber si ya salió el
+despliegue.** El 2026-09-16 se hicieron 15 peticiones seguidas sin pausa a
+`bogota-music-intel.vercel.app` esperando ver el cambio, y **la protección
+antibots de Vercel respondió con un «Security Checkpoint»**: a partir de ahí el
+sitio contestó 403 a todo lo automático —`curl` y Chromium headless por igual,
+este último con «Código 21» al no poder resolver el desafío— y **quedó sin
+poder verificarse justo cuando había que verificarlo**. Un navegador de verdad
+lo resuelve solo; una sesión como esta, no.
+
+La vía correcta estaba a mano todo el tiempo, porque **Vercel publica cada
+despliegue como un Deployment de GitHub**:
+
+```
+gh api repos/jdieTorres/bogota-music-intel/deployments \
+  --jq '.[] | "\(.id) \(.sha) \(.environment)"'
+gh api repos/jdieTorres/bogota-music-intel/deployments/<id>/statuses \
+  --jq '.[] | "\(.state) | \(.environment_url)"'
+```
+
+Eso da el estado (`success`) y la URL, sin tocar el sitio. ⚠️ **El `ref` de esos
+deployments es el SHA y no el nombre de la rama**, así que filtrar por rama no
+devuelve nada y parece que el despliegue no existe.
+
+### Las previews piden sesión de Vercel
+
+**La URL de preview de una rama no se puede abrir desde acá**: responde con la
+pantalla de Vercel Authentication, no con el sitio. La preview es para que la
+mire Juan, que tiene la sesión. Lo que sí se puede verificar de una rama sin
+publicar es lo de siempre: `npm run capturas` en local, que corre sobre
+Chromium headless (`context/look-and-feel/capturas.md`).
+
+Y ojo con la URL: el alias estable por rama
+(`…-git-<rama>-<scope>.vercel.app`) **no siempre resuelve** —con un nombre de
+rama largo no existe—, mientras que la `environment_url` del deployment
+siempre es la buena.
 
 ## Convenciones de nombres
 
