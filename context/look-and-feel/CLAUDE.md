@@ -289,7 +289,7 @@ línea. Lo que baja a su propia fila es la navegación; **el nombre de marca se
 queda entero**. Es la misma decisión que ya se había tomado escondiendo
 "Cartelera" en móvil: lo que no puede partirse en dos es la marca.
 
-**Y desde el 2026-09-17 la marca es un bloque de dos líneas** (lo pidió Juan):
+**Y desde el 2026-09-16 la marca es un bloque de dos líneas** (lo pidió Juan):
 el nombre más grande —**24 px en móvil y 29 en escritorio**, contra los 16/18
 de antes—, "escena en vivo" debajo como subtítulo en 14/17, y el ícono en
 44/48 contra los 28 de antes. Llegó ahí en dos pasadas de 10% sobre el bloque

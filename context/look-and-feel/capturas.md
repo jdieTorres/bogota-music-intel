@@ -33,7 +33,7 @@ que despistaron, está en `context/frontend/trampas.md`.
 - **Mide el ancho, además de fotografiarlo, y sale en rojo si algo se sale.**
   Una captura se recorta al viewport, así que **una página que se sale a lo
   ancho se ve idéntica a una sana**: en la foto nada delata los 148 px de
-  más, y en la mano el sitio se arrastra de lado. Pasó el 2026-09-17 —la
+  más, y en la mano el sitio se arrastra de lado. Pasó el 2026-09-16 —la
   portada medía 538 px de contenido en una pantalla de 390— y llegó a
   producción con las 30 capturas en verde. Ahora el script compara
   `scrollWidth` contra `clientWidth` en cada pantalla, dice cuál y cuánto, y

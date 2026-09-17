@@ -64,7 +64,7 @@ let capturadas = 0;
  * Páginas que se salen de la pantalla a lo ancho.
  *
  * **Una captura no puede mostrar esto**: se recorta al viewport, así que una
- * página con 148 px de más se ve idéntica a una sana. Pasó el 2026-09-17 con
+ * página con 148 px de más se ve idéntica a una sana. Pasó el 2026-09-16 con
  * la portada en 390 px —el renglón `truncate` de sala y géneros fijaba el
  * min-content de la columna del grid— y estuvo en producción sin que ninguna
  * de las 30 capturas lo delatara. Por eso se mide, además de fotografiarse.

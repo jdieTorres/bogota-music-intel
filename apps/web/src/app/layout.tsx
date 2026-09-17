@@ -132,7 +132,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
             <Link href="/" className="group -my-2 flex items-center gap-3 py-2">
               <BrandMark className="h-11 w-11 shrink-0 sm:h-12 sm:w-12" />
-              {/* En columna desde el 2026-09-17, a pedido de Juan: el nombre
+              {/* En columna desde el 2026-09-16, a pedido de Juan: el nombre
                   crece y la etiqueta pasa a ser su subtítulo en vez de un
                   añadido a su derecha. Dos efectos que valen la pena
                   nombrar: la marca ocupa ahora dos líneas propias —así que
@@ -155,7 +155,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <span className="font-display text-2xl font-bold leading-none tracking-tight sm:text-[1.8125rem]">
                   Cartelera de Bogotá
                 </span>
-                {/* Sin ladeo desde el 2026-09-17, también decisión de Juan.
+                {/* Sin ladeo desde el 2026-09-16, también decisión de Juan.
                     El −3° venía de cuando la letra era manuscrita y quería
                     leerse como una nota al margen; debajo del nombre y
                     alineada con él, la inclinación solo se veía como un
@@ -170,7 +170,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   estos enlaces medían 20px de alto contra los 44 que pide
                   un objetivo táctil, y el masthead es lo que más se toca
                   desde el teléfono. */}
-              {/* **Se muestra también en móvil desde el 2026-09-17**, y hasta
+              {/* **Se muestra también en móvil desde el 2026-09-16**, y hasta
                   ese día no: iba escondido porque en 390 px compartía línea
                   con el nombre de marca y lo obligaba a partirse en dos. Ese
                   motivo se murió cuando la navegación pasó a su propia fila y

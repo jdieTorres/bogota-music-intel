@@ -79,7 +79,7 @@ no dependa de clases.
 
 ## Cerrar la bandeja: tocando fuera y con el botón de atrás
 
-Lo pidió Juan el 2026-09-17 mirando el sitio en el teléfono, donde la bandeja
+Lo pidió Juan el 2026-09-16 mirando el sitio en el teléfono, donde la bandeja
 se come un tercio de la pantalla y el único cierre era encontrar el botón de
 parar.
 

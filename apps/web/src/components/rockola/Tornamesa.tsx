@@ -47,7 +47,7 @@ export function Tornamesa() {
   const abierta = Boolean(actual);
 
   /**
-   * Se cierra tocando fuera (2026-09-17, pedido de Juan).
+   * Se cierra tocando fuera (2026-09-16, pedido de Juan).
    *
    * Cerrar es `parar`: la bandeja no se esconde, se apaga. No hay un estado
    * "cerrada con la cola guardada", y no lo hay a propósito — la cola vive en
@@ -103,7 +103,7 @@ export function Tornamesa() {
   }, [abierta, parar]);
 
   /**
-   * Y se cierra con el botón de atrás del teléfono (2026-09-17, pedido de
+   * Y se cierra con el botón de atrás del teléfono (2026-09-16, pedido de
    * Juan).
    *
    * En Android ese botón es una navegación hacia atrás, así que para que
