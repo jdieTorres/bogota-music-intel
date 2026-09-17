@@ -1,8 +1,9 @@
 # Look & feel — identidad visual
 
 > **Leer esto antes de tocar `globals.css`, `layout.tsx` o cualquier
-> componente de UI.** Los valores vivos están en `context/look-and-feel/tokens.css`
-> y en `apps/web/src/app/globals.css`.
+> componente de UI.** Los valores vivos están en
+> `apps/web/src/app/globals.css` y **no hay una segunda copia que mantener**:
+> la tabla de abajo es la única, y un test la obliga a coincidir.
 
 La identidad visual acordada con Juan: paleta, tipografía, estructura e
 iconografía. **Lo que está acá es lo vigente**; el detalle y lo histórico
@@ -67,6 +68,18 @@ los diez valores de cada columna son los mismos de antes. Lo que sí se movió
 es dónde viven — el oscuro ahora está en `:root` y el claro en
 `:root[data-theme="claro"]`, porque **el defecto tiene que estar declarado en
 el CSS y no en el script del tema** (`context/frontend/CLAUDE.md`).
+
+⚠️ **Esta tabla es la única copia de la paleta, y un test la sostiene.**
+Hubo una segunda —`context/look-and-feel/tokens.css`, un CSS de referencia
+para consultarla sin abrir la app— y **se borró el 2026-09-16**: había pasado
+nueve días mostrando la paleta de Verde Neón, que el rediseño del 2026-09-07
+reemplazó entera, sin que nadie lo notara. Ese es el modo de fallar de una
+copia a mano: **equivocada se ve igual que correcta**, no rompe nada y solo
+miente cuando alguien la consulta. La tabla se quedó porque acá es donde se
+lee el criterio junto al valor, y `apps/web/src/lib/tokens.test.ts` la compara
+con `globals.css` token por token —incluido qué columna dice ser la del modo
+por defecto— y falla nombrando cuál se movió. **Si algún día vuelve a hacer
+falta un tercer sitio con estos números, la respuesta es que no.**
 
 **Los valores están medidos, no elegidos a ojo.** Toda la paleta pasa WCAG AA
 en los dos modos; `--accent-2` bajó de `#0e7f9c` a `#0c7189` porque el
@@ -318,4 +331,5 @@ Cómo se corre y qué hace el script a propósito, en
   es la restricción que ordenó el diseño de la bandeja.
 - `context/look-and-feel/capturas.md` — cómo se corre `npm run capturas`, qué
   hace el script a propósito y qué no cubre.
-- `context/look-and-feel/tokens.css` — los valores vivos.
+- `apps/web/src/lib/tokens.test.ts` — el chequeo que ata la tabla de arriba a
+  `globals.css`. Leerlo antes de agregar un token o de reordenar las columnas.

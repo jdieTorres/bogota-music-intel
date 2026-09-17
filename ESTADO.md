@@ -145,15 +145,6 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
 - **¿`geocode.py` también usa `json_de`?** Tiene el mismo `.json()` pelado
   contra Nominatim que costó cuatro corridas rojas del lado de los scrapers. Es
   una línea, pero no es el cron y no se tocó.
-- **¿Se borra `context/look-and-feel/tokens.css`?** Tiene los valores de Verde
-  Neón —`--background: #c8f0b8`, el verde menta que el rediseño del 2026-09-07
-  reemplazó—, dice de sí mismo que es la copia de referencia que hay que
-  sincronizar con `globals.css`, y el `CLAUDE.md` del área lo señala como "los
-  valores vivos". Llevaba ocho días diciendo colores que ya no existen cuando
-  se detectó el 2026-09-15. Se puede sincronizar o borrar; la recomendación es
-  borrarlo y dejar la tabla del `CLAUDE.md` como única copia, porque una copia
-  que hay que acordarse de sincronizar se vuelve a desincronizar. `verde-neon.md`
-  ya conserva el registro histórico de esa ronda.
 - **¿Qué estilo de pestaña gana en `/admin`?** Eventos y Salas repiten doce
   líneas idénticas de markup subrayado y Artistas usa otro estilo para lo
   mismo. Unificarlas es una línea después de extraerlas, pero **cuál de los dos
@@ -366,8 +357,9 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   `Sitemap:` del robots.txt, todos verificados con `curl` contra el sitio vivo—.
 
   Ponerla ahora sería una segunda copia del dominio que hay que acordarse de
-  actualizar, que es el problema que ya tiene `tokens.css` con los colores. **Se
-  decide el día que haya dominio propio**, que es cuando hay que revisar esto de
+  actualizar, que es el problema que costó `tokens.css` —borrado el 2026-09-16
+  después de nueve días diciendo colores que ya no existían—. **Se decide el
+  día que haya dominio propio**, que es cuando hay que revisar esto de
   todos modos. ⚠️ **Sin verificar**: si Vercel reapunta
   `VERCEL_PROJECT_PRODUCTION_URL` a un dominio custom. Ese día se mira.
 - **Falta probar el tope de 60 s del lector de afiches**, que es de las cosas
