@@ -68,7 +68,12 @@ export const metadata: Metadata = {
 };
 
 // Fija `data-theme` antes de que el navegador pinte, para que el modo
-// guardado (o "claro" por defecto) salga bien en el primer frame.
+// guardado (o el oscuro por defecto, desde el 2026-09-16) salga bien en el
+// primer frame.
+//
+// ⚠️ Escribe el atributo **siempre**, incluido el caso por defecto, aunque
+// el CSS ya sirva oscuro sin él: el toggle lee ese atributo como fuente de
+// verdad, y un `<html>` sin atributo lo dejaría adivinando.
 // `suppressHydrationWarning` en <html> es necesario porque este atributo lo
 // pone este script, no React.
 //
@@ -94,10 +99,10 @@ const SCRIPT_TEMA = `
     var guardado = window.localStorage.getItem("bmi-theme");
     document.documentElement.setAttribute(
       "data-theme",
-      guardado === "oscuro" ? "oscuro" : "claro",
+      guardado === "claro" ? "claro" : "oscuro",
     );
   } catch (error) {
-    document.documentElement.setAttribute("data-theme", "claro");
+    document.documentElement.setAttribute("data-theme", "oscuro");
   }
 })();
 `;

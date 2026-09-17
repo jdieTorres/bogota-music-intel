@@ -17,11 +17,55 @@
    gasta en lo que importa —el enlace, la pestaña activa, el sello de hoy— y
    por eso vuelve a gritar cuando aparece.
 
-   Claro es el modo por defecto (el que se sirve en el primer render, antes
-   de que corra cualquier script); oscuro se activa con `data-theme="oscuro"`
-   en <html>, que pone `ThemeToggle.tsx` — ver ese componente y el script
-   inline de `layout.tsx` para cómo se decide sin parpadeo. */
+   **Oscuro es el modo por defecto desde el 2026-09-16** (pedido de Juan), y
+   por eso sus valores viven en `:root`: lo que declara `:root` es lo que se
+   sirve en el primer render, antes de que corra un solo script. Claro es el
+   que se activa con `data-theme="claro"` en <html>, que pone
+   `ThemeToggle.tsx` — ver ese componente y el script inline de `layout.tsx`
+   para cómo se decide sin parpadeo.
+
+   ⚠️ **El defecto se declara acá, no en el script.** Si viviera solo en el
+   JS, una visita con el script bloqueado vería el sitio en el modo contrario
+   al que el proyecto dice tener por defecto, y nada lo avisaría. */
 :root {
+  --background: #0b0f0b;
+  --surface: #141a13;
+  --surface-hover: #1b2319;
+  --border: #262f24;
+  --foreground: #eef2ea;
+  --muted: #94a08e;
+  --accent: #4ae63a;
+  --accent-2: #4fd4ef;
+  --accent-3: #ff5fb0; /* magenta: la marca de escena local, y nada más */
+  /* 8.46 sobre el fondo y 7.75 sobre surface. Sube de tono como el resto de
+     los acentos en oscuro: el rojo oscuro de claro daría 4.05 acá. */
+  --danger: #ff8a80;
+
+  /* Tono del mapa: el mapa (`/mapa`) es MapLibre con el estilo `liberty`,
+     que es claro y no cambia con el toggle — esa decisión es del 2026-08-27
+     y sigue en pie. Por eso este token NO se sobreescribe en el otro modo:
+     el aro del marcador se queda siempre en su propio "papel" claro, tenga
+     la página el modo que tenga. */
+  --popup-surface: #f7faf4;
+
+  /* --- Sistema de forma ---------------------------------------------------
+     Un solo sistema en todo el sitio: **casi nada tiene esquinas
+     redondeadas**. El afiche y los bloques van con `rounded-sm` (2px), y
+     `rounded-full` queda reservado para lo que de verdad es una pastilla —
+     pestañas y sellos. La tarjeta con borde redondeado de 12px era lo que
+     hacía que cada fila leyera como un widget suelto en vez de como una
+     entrada de cartelera. */
+
+  /* Papel: el grano de la capa de textura. Es más alto acá porque sobre un
+     fondo casi negro el valor del modo claro no se ve. */
+  --grano-opacidad: 0.06;
+}
+
+/* Claro: el mismo papel, con el suelo en papel de verdad. No es el oscuro
+   con el brillo invertido a lo bruto — el acento se oscurece para seguir
+   contrastando sobre el papel, y el grano baja porque sobre un fondo claro
+   el valor del oscuro se ve como suciedad. */
+:root[data-theme="claro"] {
   --background: #f1f4ec; /* papel con una sombra de verde, no beige */
   --surface: #fafcf7;
   --surface-hover: #eaefe3;
@@ -33,7 +77,7 @@
      se escribe en tamaño de cuerpo, así que no llegaba al 4.5 de WCAG AA.
      Este da 5.05. */
   --accent-2: #0c7189;
-  --accent-3: #c2185b; /* magenta: la marca de escena local, y nada más */
+  --accent-3: #c2185b;
 
   /* Peligro: el error de un formulario, el borde de una zona destructiva y
      el botón que borra. Es token desde el 2026-09-15 y antes eran clases
@@ -47,43 +91,7 @@
      con el verde: 5.88 en claro y 8.46 en oscuro. */
   --danger: #b3261e;
 
-  /* Tono del mapa: el mapa (`/mapa`) es MapLibre con el estilo `liberty`,
-     que es claro y no cambia con el toggle — esa decisión es del 2026-08-27
-     y sigue en pie. Por eso este token NO se sobreescribe en
-     `[data-theme="oscuro"]` más abajo: el aro del marcador se queda siempre
-     en su propio "papel" claro, tenga la página el modo que tenga. */
-  --popup-surface: #f7faf4;
-
-  /* --- Sistema de forma ---------------------------------------------------
-     Un solo sistema en todo el sitio: **casi nada tiene esquinas
-     redondeadas**. El afiche y los bloques van con `rounded-sm` (2px), y
-     `rounded-full` queda reservado para lo que de verdad es una pastilla —
-     pestañas y sellos. La tarjeta con borde redondeado de 12px era lo que
-     hacía que cada fila leyera como un widget suelto en vez de como una
-     entrada de cartelera. */
-
-  /* Papel: el grano de la capa de textura. Sube en oscuro porque sobre un
-     fondo casi negro el mismo valor no se ve. */
   --grano-opacidad: 0.035;
-}
-
-/* Oscuro: el mismo papel llevado a casi negro. No es el claro con el brillo
-   invertido a lo bruto — el acento se aclara para seguir contrastando, y la
-   sombra verde del fondo baja para que el afiche no se tiña. */
-:root[data-theme="oscuro"] {
-  --background: #0b0f0b;
-  --surface: #141a13;
-  --surface-hover: #1b2319;
-  --border: #262f24;
-  --foreground: #eef2ea;
-  --muted: #94a08e;
-  --accent: #4ae63a;
-  --accent-2: #4fd4ef;
-  --accent-3: #ff5fb0;
-  /* 8.46 sobre el fondo y 7.75 sobre surface. Sube de tono como el resto de
-     los acentos en oscuro: el rojo oscuro de claro daría 4.05 acá. */
-  --danger: #ff8a80;
-  --grano-opacidad: 0.06;
 }
 
 @theme inline {
@@ -190,7 +198,7 @@ body {
   /* Los tres colores del pin.
 
      ⚠️ Son variables **propias del marcador** y no tokens del tema: no se
-     redefinen en `[data-theme="oscuro"]` a propósito, porque el mapa no
+     redefinen con el otro modo a propósito, porque el mapa no
      cambia con el toggle y un pin que sí cambiara se vería fuera de lugar
      sobre unas teselas que siguen claras.
 
@@ -278,8 +286,8 @@ body {
    **5.09** y la dirección en #ffd9e6 da **4.54**, los dos por encima del 4.5
    que le corresponde a un texto.
 
-   ⚠️ Como el resto del mapa, estos colores van fijos y no se redefinen en
-   `[data-theme="oscuro"]`: las teselas no cambian con el toggle y un globo
+   ⚠️ Como el resto del mapa, estos colores van fijos y no se redefinen con
+   el otro modo: las teselas no cambian con el toggle y un globo
    que sí cambiara se vería de otro color sobre un mapa que se quedó igual. */
 .marcador-sala__globo {
   position: absolute;

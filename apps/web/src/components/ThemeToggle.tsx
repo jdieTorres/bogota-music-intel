@@ -35,16 +35,17 @@ function suscribir(alCambiar: () => void) {
 }
 
 function modoDelDom(): Modo {
-  return document.documentElement.getAttribute("data-theme") === "oscuro"
-    ? "oscuro"
-    : "claro";
+  return document.documentElement.getAttribute("data-theme") === "claro"
+    ? "claro"
+    : "oscuro";
 }
 
-/** En el servidor no hay DOM que leer. "claro" es exactamente lo que asume
- *  el script inline cuando no hay nada guardado, así que el HTML servido y
- *  el primer render del cliente coinciden y no hay choque de hidratación. */
+/** En el servidor no hay DOM que leer. "oscuro" es exactamente lo que asume
+ *  el script inline cuando no hay nada guardado —y lo que declara `:root` en
+ *  `globals.css`—, así que el HTML servido y el primer render del cliente
+ *  coinciden y no hay choque de hidratación. */
 function modoEnElServidor(): Modo {
-  return "claro";
+  return "oscuro";
 }
 
 export function ThemeToggle() {

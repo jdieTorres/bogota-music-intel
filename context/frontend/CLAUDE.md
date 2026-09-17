@@ -206,8 +206,18 @@ que no carga se ve antes de guardarla, no cuando alguien abre el mapa.
 ## El tema claro/oscuro
 
 `src/components/ThemeToggle.tsx` cambia `data-theme` en `<html>` y lo guarda en
-`localStorage`. Por defecto arranca en claro.
+`localStorage`. **Por defecto arranca en oscuro** (2026-09-16, pedido de
+Juan); antes arrancaba en claro.
 
+- ⚠️ **El modo por defecto lo declara `:root` en `globals.css`, no el
+  script.** Los valores del oscuro viven en `:root` y los del claro en
+  `:root[data-theme="claro"]`, así que el defecto es lo que se pinta antes de
+  que corra un solo byte de JS. Puesto solo en el script, una visita con el
+  JS bloqueado vería el modo contrario al que el proyecto dice tener por
+  defecto — y nada lo avisaría.
+- **El script escribe el atributo igual, incluso en el caso por defecto**:
+  el toggle lo lee como fuente de verdad, y un `<html>` sin atributo lo
+  dejaría adivinando.
 - ⚠️ **Tiene que ser un `<script>` crudo en el `<head>` de `layout.tsx`, no
   `next/script`.** Next no lo emite como etiqueta ejecutable: lo encola en
   `self.__next_s` y lo corre su runtime al arrancar, así que el tema quedaba

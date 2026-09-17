@@ -48,18 +48,25 @@ una sombra verde para no perder el ADN. El acento se gasta en el enlace, la
 pestaña activa, el sello de hoy y el botón de boletería, y por eso vuelve a
 gritar cuando aparece.
 
-| Token | Claro (por defecto) | Oscuro (`[data-theme="oscuro"]`) |
+| Token | Oscuro (por defecto) | Claro (`[data-theme="claro"]`) |
 |---|---|---|
-| `--background` | `#f1f4ec` | `#0b0f0b` |
-| `--surface` | `#fafcf7` | `#141a13` |
-| `--surface-hover` | `#eaefe3` | `#1b2319` |
-| `--border` | `#dbe2d3` | `#262f24` |
-| `--foreground` | `#10160f` | `#eef2ea` |
-| `--muted` | `#59654f` | `#94a08e` |
-| `--accent` (marca) | `#12760f` | `#4ae63a` |
-| `--accent-2` (dato frío) | `#0c7189` | `#4fd4ef` |
-| `--accent-3` (escena local) | `#c2185b` | `#ff5fb0` |
-| `--danger` (error y borrado) | `#b3261e` | `#ff8a80` |
+| `--background` | `#0b0f0b` | `#f1f4ec` |
+| `--surface` | `#141a13` | `#fafcf7` |
+| `--surface-hover` | `#1b2319` | `#eaefe3` |
+| `--border` | `#262f24` | `#dbe2d3` |
+| `--foreground` | `#eef2ea` | `#10160f` |
+| `--muted` | `#94a08e` | `#59654f` |
+| `--accent` (marca) | `#4ae63a` | `#12760f` |
+| `--accent-2` (dato frío) | `#4fd4ef` | `#0c7189` |
+| `--accent-3` (escena local) | `#ff5fb0` | `#c2185b` |
+| `--danger` (error y borrado) | `#ff8a80` | `#b3261e` |
+
+**Oscuro es el modo por defecto desde el 2026-09-16** (lo pidió Juan: es el
+que más le gusta). El cambio es de cuál se sirve primero, no de la paleta:
+los diez valores de cada columna son los mismos de antes. Lo que sí se movió
+es dónde viven — el oscuro ahora está en `:root` y el claro en
+`:root[data-theme="claro"]`, porque **el defecto tiene que estar declarado en
+el CSS y no en el script del tema** (`context/frontend/CLAUDE.md`).
 
 **Los valores están medidos, no elegidos a ojo.** Toda la paleta pasa WCAG AA
 en los dos modos; `--accent-2` bajó de `#0e7f9c` a `#0c7189` porque el
@@ -281,8 +288,8 @@ OpenFreeMap desde el 2026-08-27, elegido por Juan tras mirar cuatro en el
 navegador (`dark`, `fiord`, `liberty`, `bright`): un mapa casi negro leía como
 un hueco en la página.
 
-Los tokens `--popup-*` (el mapa y su popup) **no se sobreescriben en
-`[data-theme="oscuro"]`**, así que se quedan en su propio "papel" claro tenga
+Los tokens `--popup-*` (el mapa y su popup) **no se sobreescriben en el otro
+modo**, así que se quedan en su propio "papel" claro tenga
 la página el modo que tenga. De ahí que el aro del marcador use
 `var(--popup-surface)` y no `var(--background)`: con `--background` se vería
 distinto en cada modo mientras el mapa se ve igual.
