@@ -114,13 +114,37 @@
      perder autoridad, que es exactamente el cruce que se buscaba.
 
      Work Sans se queda en el cuerpo: mantiene fecha/sala/precio legibles sin
-     competir. Caveat sobrevive para dos usos y ni uno más (la etiqueta de
-     marca y la marca de escena local); era la pieza que más rápido se
-     volvía decorativa. */
+     competir. */
   --font-sans: var(--font-work-sans);
   --font-display: var(--font-bricolage);
-  --font-hand: var(--font-caveat);
   --font-mono: var(--font-geist-mono);
+}
+
+/* La letra de la etiqueta: «escena en vivo» del masthead, la marca de escena
+   local y el sello de "hoy". Los tres textos chiquitos que no son ni titular
+   ni cuerpo ni dato.
+
+   **Era Caveat, una manuscrita, y desde el 2026-09-16 es Geist Mono en su
+   peso liviano** — Juan eligió esta después de mirar treinta y seis
+   candidatas. La manuscrita salió del sitio entera: no quedó ni un uso, y
+   con ella se fue la fuente, que era la cuarta familia que bajaba el sitio.
+
+   ⚠️ **Es una utilidad y no un token del tema, y ahí está el punto.** Un
+   `--font-etiqueta` en `@theme` generaría una clase que solo pone la familia,
+   y esta letra **no funciona sin su peso**: Geist Mono en 400 es la misma que
+   ya escribe la hora y el precio, así que la etiqueta dejaría de distinguirse
+   de un dato. Familia y peso tienen que viajar juntos o alguien va a escribir
+   `font-etiqueta` sin el peso y no va a notar nada raro hasta mirarlo al
+   lado del precio.
+
+   ⚠️ **Y el 300 exige una fuente variable.** `Geist_Mono` se pide en
+   `layout.tsx` sin `weight`, que es lo que hace que next/font baje el
+   archivo variable con todo el eje. Fijarle un peso ahí dejaría este 300 sin
+   respaldo, y el navegador lo fingiría estirando el 400 — sin error y sin
+   que se note en una captura. */
+@utility font-etiqueta {
+  font-family: var(--font-geist-mono);
+  font-weight: 300;
 }
 
 body {

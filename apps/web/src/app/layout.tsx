@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bricolage_Grotesque, Caveat, Geist_Mono, Work_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Geist_Mono, Work_Sans } from "next/font/google";
 import "./globals.css";
 
 import { BrandMark } from "@/components/icons";
@@ -23,12 +23,11 @@ const bricolage = Bricolage_Grotesque({
   weight: ["500", "600", "700", "800"],
 });
 
-const caveat = Caveat({
-  variable: "--font-caveat",
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
-
+// ⚠️ Sin `weight`, a propósito: así next/font baja el archivo **variable** con
+// todo el eje de pesos. Geist Mono escribe los datos tabulares en 400 y la
+// etiqueta del masthead en 300 (`font-etiqueta` en `globals.css`), y fijar un
+// peso acá dejaría ese 300 sin archivo que lo sostenga — el navegador lo
+// fingiría estirando el 400, sin error y sin que se note en una captura.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -112,7 +111,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es-CO"
       suppressHydrationWarning
-      className={`${workSans.variable} ${bricolage.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${workSans.variable} ${bricolage.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
@@ -137,9 +136,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <span className="font-display text-base font-bold tracking-tight sm:text-lg">
                   Cartelera de Bogotá
                 </span>
-                {/* El único resto manuscrito del header, y va ladeado: es la
-                    pizca de lo "cercano" que el resto del masthead no da. */}
-                <span className="hidden origin-left -rotate-3 font-hand text-lg text-accent-2 sm:inline">
+                {/* La etiqueta del masthead, ladeada: la pizca de lo cercano
+                    que el resto de la barra no da. El ladeo se quedó al
+                    cambiar la manuscrita por la mono liviana — sobre una
+                    letra de máquina de escribir deja de leerse como algo
+                    escrito a mano y pasa a leerse como un sello puesto
+                    torcido, que es lo mismo que buscaba.
+
+                    Baja de `text-lg` a `text-base` porque Geist Mono tiene
+                    mucha más altura de x que Caveat: a 18px le ganaba en
+                    tamaño óptico al nombre de marca, que es lo que no puede
+                    pasar. */}
+                <span className="hidden origin-left -rotate-3 font-etiqueta text-base text-accent-2 sm:inline">
                   escena en vivo
                 </span>
               </span>

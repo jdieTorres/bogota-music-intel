@@ -41,7 +41,7 @@ function RielDeFecha({ dia, idTitulo }: { dia: string; idTitulo: string }) {
         {hoy && (
           // El sello sale una sola vez en toda la cartelera, así que no
           // alcanza a volverse un tic.
-          <span className="rounded-full bg-accent px-2 py-0.5 font-hand text-base leading-tight text-background md:mt-2 md:inline-block">
+          <span className="rounded-full bg-accent px-2 py-0.5 font-etiqueta text-sm leading-tight text-background md:mt-2 md:inline-block">
             hoy
           </span>
         )}

@@ -7,8 +7,8 @@
  * Del rediseño del 2026-09-07: se le quitó el trazo a mano que subrayaba el
  * titular. Era el elemento más decorativo de la página y el que más peleaba
  * con lo "profesional" que pidió Juan; lo cercano lo dan el afiche, la
- * etiqueta manuscrita del masthead y la marca de escena local, que además
- * significan algo. El titular solo necesita escala.
+ * etiqueta del masthead y la marca de escena local, que además significan
+ * algo. El titular solo necesita escala.
  */
 export function EncabezadoDePagina({
   titulo,

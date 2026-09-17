@@ -103,10 +103,16 @@ export function EventoCard({ evento }: { evento: Evento }) {
           </p>
 
           {esLocal && (
-            // Manuscrito y no un chip más: la marca de escena local tiene que
-            // leerse como algo anotado al margen, no como otra etiqueta de la
-            // fila de datos. Es lo único en todo el sitio que usa el magenta.
-            <p className="font-hand text-base leading-none text-accent-3">
+            // La letra de la etiqueta y no un chip más: la marca de escena
+            // local tiene que leerse como algo anotado al margen, no como otra
+            // etiqueta de la fila de datos. Es lo único en todo el sitio que
+            // usa el magenta.
+            //
+            // `text-sm` y no `text-base` desde que la letra es Geist Mono: la
+            // mono ocupa bastante más a lo ancho que la manuscrita que había
+            // antes, y a 16px la nota al margen competía con el nombre del
+            // toque.
+            <p className="font-etiqueta text-sm leading-none text-accent-3">
               apoye local
             </p>
           )}

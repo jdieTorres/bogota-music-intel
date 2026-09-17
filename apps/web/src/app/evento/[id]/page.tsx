@@ -110,7 +110,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
                 un `null` es "todavía no lo sabemos", no "no es local". Ver el
                 mismo comentario en `EventoCard`. */}
             {evento.is_local === true && (
-              <p className="font-hand text-xl leading-none text-accent-3">
+              <p className="font-etiqueta text-lg leading-none text-accent-3">
                 apoye local
               </p>
             )}

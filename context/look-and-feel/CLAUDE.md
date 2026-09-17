@@ -117,10 +117,28 @@ cosa** — ahí sí serían dos significados peleando.
   Reemplaza a Fredoka. Grotesca contemporánea con irregularidades a
   propósito: tiene carácter sin perder autoridad.
 - **Work Sans** — cuerpo. Se queda.
-- **Caveat** — `font-hand`, y **solo dos usos en todo el sitio**: la etiqueta
-  "escena en vivo" del masthead y la marca de escena local. Era la pieza que
-  más rápido se volvía decorativa.
-- **Geist Mono** — datos tabulares (hora, precio, conteos).
+- **Geist Mono** — datos tabulares (hora, precio, conteos) en 400, **y la
+  etiqueta en 300**: "escena en vivo" del masthead, la marca de escena local y
+  el sello de "hoy".
+  - Los dos trabajos los separa el peso, y nada más. Es apretado a propósito:
+    la alternativa era una cuarta familia, y **el peso alcanza mientras los
+    dos usos no se toquen** — el dato va siempre en columna o al final de una
+    línea, la etiqueta siempre suelta.
+  - ⚠️ **Familia y peso viajan juntos en `font-etiqueta`** (una `@utility` de
+    `globals.css`, no un token del tema). Un token generaría una clase que solo
+    pone la familia, y esta letra sin su 300 es literalmente la del precio.
+  - ⚠️ **El 300 necesita el archivo variable**: `Geist_Mono` se pide sin
+    `weight` en `layout.tsx`. Con un peso fijo el navegador fingiría el 300
+    estirando el 400, sin error y sin que se note en una captura.
+
+**Caveat salió del sitio el 2026-09-16**, y con ella la cuarta familia que se
+bajaba. Era la manuscrita de esos mismos tres textos y a Juan dejó de
+gustarle; eligió el reemplazo mirando 36 candidatas en sus cuatro sitios
+reales, agrupadas por mundo —rotulación de calle, fotocopia, carátula, manos,
+condensadas— y el que le sirvió fue el de la fotocopia. La decisión de fondo
+**no es qué letra: es que la etiqueta dejó de ser manuscrita.** Lo cercano ya
+no lo da un trazo a mano sino una letra de máquina, que es igual de humana y
+no se vuelve decorativa.
 
 ### Las decisiones de estructura
 
@@ -152,9 +170,9 @@ porque a Juan le gustaba — pero con un trabajo distinto. Antes llevaba el
 conteo de la página ("36 conciertos en 10 salas") y ahí no significaba nada;
 ahora lleva **el precio**, que es literalmente lo que va impreso en un talón.
 El borde punteado es la perforación de la boleta: cuando el elemento dice de
-qué habla el dato que lleva adentro, deja de ser decoración. Lo cercano lo dan el afiche, la etiqueta manuscrita del masthead
-y la marca de escena local — que además significan algo. El titular solo
-necesita escala.
+qué habla el dato que lleva adentro, deja de ser decoración. Lo cercano lo dan
+el afiche, la etiqueta del masthead y la marca de escena local — que además
+significan algo. El titular solo necesita escala.
 
 ## Iconografía
 
