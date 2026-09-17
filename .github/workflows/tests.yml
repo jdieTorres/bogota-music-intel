@@ -1,8 +1,18 @@
 name: Tests
 
+# ⚠️ En **toda** rama, no solo en `main`, desde el 2026-09-16.
+#
+# Hasta ese día era `branches: [main]`, y tenía sentido mientras se trabajaba
+# directo sobre `main`. Ese mismo día el criterio cambió —lo que se ve o se
+# publica va por rama, y las ramas no llevan PR porque "el preview y el CI ya
+# dicen lo que un PR diría"— y así **el CI no corría en ninguna rama**: ni por
+# push, porque no era `main`, ni por `pull_request`, porque no hay PR. La
+# primera rama con la regla nueva se subió sin una sola corrida.
+#
+# `pull_request` se queda para el día que revise alguien más. Mientras tanto
+# no duplica nada, porque no hay PRs.
 on:
   push:
-    branches: [main]
   pull_request:
 
 jobs:

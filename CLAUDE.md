@@ -237,6 +237,13 @@ quedó bien**:
 lo que un PR diría, y abrir uno para aprobárselo a uno mismo es ceremonia. El
 PR entra el día que revise alguien más.
 
+⚠️ Eso **dependía de que el CI corriera en la rama, y no corría**: `Tests`
+escuchaba `push` solo en `main`, así que una rama sin PR no disparaba nada y la
+frase de arriba era falsa. Se arregló el 2026-09-16 —el workflow escucha ahora
+todo `push`— después de que la primera rama de la regla nueva se subiera sin
+una sola corrida. **Si algún día se vuelve a filtrar por rama, esta política se
+queda sin la mitad que la sostiene.**
+
 ⚠️ **Preguntarle a Juan antes de correr cualquiera de las dos**, y antes de
 correr los CLI que tocan la base. Él decide el momento.
 
