@@ -131,7 +131,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               la marca se queda como está. En escritorio no cambia nada. */}
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
             <Link href="/" className="group -my-2 flex items-center gap-3 py-2">
-              <BrandMark className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
+              <BrandMark className="h-10 w-10 shrink-0 sm:h-11 sm:w-11" />
               {/* En columna desde el 2026-09-17, a pedido de Juan: el nombre
                   crece y la etiqueta pasa a ser su subtítulo en vez de un
                   añadido a su derecha. Dos efectos que valen la pena
@@ -141,7 +141,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   **aparece también en móvil**, donde antes estaba escondida
                   justamente porque al lado del nombre no cabía. */}
               <span className="flex flex-col">
-                <span className="font-display text-xl font-bold leading-none tracking-tight sm:text-2xl">
+                {/* ⚠️ Tamaños fuera de la escala de Tailwind, y a propósito:
+                    son los de la primera versión de este bloque más un 10%
+                    (20→22 y 24→26), que es lo que pidió Juan. El siguiente
+                    escalón de la escala —`text-2xl` y `text-3xl`— habría sido
+                    +20% y +25%. Van redondeados al píxel entero: la décima
+                    exacta sería 22 y 26,4, y esa precisión no la distingue
+                    nadie. */}
+                <span className="font-display text-[1.375rem] font-bold leading-none tracking-tight sm:text-[1.625rem]">
                   Cartelera de Bogotá
                 </span>
                 {/* Sin ladeo desde el 2026-09-17, también decisión de Juan.
@@ -149,7 +156,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     leerse como una nota al margen; debajo del nombre y
                     alineada con él, la inclinación solo se veía como un
                     renglón torcido. */}
-                <span className="mt-1.5 font-etiqueta text-xs leading-none text-accent-2 sm:text-sm">
+                <span className="mt-1.5 font-etiqueta text-[0.8125rem] leading-none text-accent-2 sm:text-[0.9375rem]">
                   escena en vivo
                 </span>
               </span>

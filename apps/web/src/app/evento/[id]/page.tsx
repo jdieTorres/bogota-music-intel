@@ -111,7 +111,7 @@ export default async function Page(props: PageProps<"/evento/[id]">) {
                 mismo comentario en `EventoCard`. */}
             {evento.is_local === true && (
               <p className="font-etiqueta text-lg leading-none text-accent-3">
-                apoye local
+                escuche local
               </p>
             )}
             {/* Acá el ícono sí lleva nombre para lectores de pantalla: la

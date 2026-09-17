@@ -113,7 +113,7 @@ export function EventoCard({ evento }: { evento: Evento }) {
             // antes, y a 16px la nota al margen competía con el nombre del
             // toque.
             <p className="font-etiqueta text-sm leading-none text-accent-3">
-              apoye local
+              escuche local
             </p>
           )}
 

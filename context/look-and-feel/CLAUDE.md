@@ -290,9 +290,18 @@ queda entero**. Es la misma decisión que ya se había tomado escondiendo
 "Cartelera" en móvil: lo que no puede partirse en dos es la marca.
 
 **Y desde el 2026-09-17 la marca es un bloque de dos líneas** (lo pidió Juan):
-el nombre más grande —20 px en móvil, 24 en escritorio, contra los 16/18 de
-antes— y "escena en vivo" debajo, como subtítulo. Tres consecuencias que
-conviene tener a la vista:
+el nombre más grande —**22 px en móvil y 26 en escritorio**, contra los 16/18
+de antes—, "escena en vivo" debajo como subtítulo en 13/15, y el ícono en
+40/44 contra los 28 de antes. Los tres crecen juntos: el bloque se subió otro
+10% en una segunda pasada, y **eso se hace en los tres a la vez o el conjunto
+se descuadra**.
+
+⚠️ Los tamaños del nombre y del subtítulo **están fuera de la escala de
+Tailwind a propósito**: el siguiente escalón habría sido +20%, y lo que se
+pidió fue +10%. Son de los pocos valores arbitrarios del sitio y llevan el
+porqué escrito al lado.
+
+Tres consecuencias que conviene tener a la vista:
 
 - **La etiqueta dejó de ir ladeada.** El −3° venía de cuando era manuscrita y
   quería leerse como una nota al margen. Alineada bajo el nombre, la
@@ -301,7 +310,9 @@ conviene tener a la vista:
   nombre, que era el único motivo para ocultarla.
 - **El ancho dejó de ser lo que limita el tamaño del nombre**, porque la marca
   ya no comparte línea con nada. Lo que lo limita ahora es la altura de la
-  barra, que es lo que se debe mirar si algún día crece más.
+  barra —80 px en escritorio y 112 en móvil, medidos—, que es lo que hay que
+  mirar si algún día crece más. En 390 px el nombre ocupa 203 de los 350
+  disponibles, así que el margen que queda es de ancho, no de altura.
 
 ## Qué queda abierto
 
