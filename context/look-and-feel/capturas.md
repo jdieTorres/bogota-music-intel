@@ -20,7 +20,7 @@ un bug que no existía. Chromium headless siempre renderiza, así que estas
 capturas no mienten sobre el canvas. El relato completo, con las dos señales
 que despistaron, está en `context/frontend/trampas.md`.
 
-## Tres cosas que el script hace a propósito
+## Cuatro cosas que el script hace a propósito
 
 - **Fija el modo antes de que corra nada de la página**, igual que el script
   inline de `layout.tsx`, para no capturar el parpadeo del otro modo.
@@ -30,6 +30,14 @@ que despistaron, está en `context/frontend/trampas.md`.
 - **De la página completa solo genera la de escritorio.** La cartelera en
   móvil da una tira de más de 16.000px que al abrirla se reduce a algo
   ilegible. Se descubrió generándola.
+- **Mide el ancho, además de fotografiarlo, y sale en rojo si algo se sale.**
+  Una captura se recorta al viewport, así que **una página que se sale a lo
+  ancho se ve idéntica a una sana**: en la foto nada delata los 148 px de
+  más, y en la mano el sitio se arrastra de lado. Pasó el 2026-09-17 —la
+  portada medía 538 px de contenido en una pantalla de 390— y llegó a
+  producción con las 30 capturas en verde. Ahora el script compara
+  `scrollWidth` contra `clientWidth` en cada pantalla, dice cuál y cuánto, y
+  **termina con código 1**: un desborde no es una nota al pie.
 - **Se hace pasar por un Chrome normal.** El User-Agent por defecto de
   Playwright dice `HeadlessChrome`, y hay servidores que con eso devuelven
   **403 con una página HTML donde iba la imagen**. Pasó el 2026-09-08 con la
@@ -46,6 +54,7 @@ que despistaron, está en `context/frontend/trampas.md`.
 ## Lo que no cubren
 
 Son Chromium headless a tamaño simulado: no dicen nada de un teléfono de
-verdad ni de Safari. El paquete entra como dependencia de desarrollo, así que
+verdad ni de Safari. Y lo que el ojo tiene que mirar sigue siendo el ojo: el
+chequeo de ancho encuentra **desbordes**, no cosas feas. El paquete entra como dependencia de desarrollo, así que
 `npm ci` lo instala en CI; **los navegadores no** — esos solo bajan con
 `playwright install`.

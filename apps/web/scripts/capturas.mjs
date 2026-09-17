@@ -60,6 +60,17 @@ await mkdir(DESTINO, { recursive: true });
 
 let capturadas = 0;
 
+/**
+ * Páginas que se salen de la pantalla a lo ancho.
+ *
+ * **Una captura no puede mostrar esto**: se recorta al viewport, así que una
+ * página con 148 px de más se ve idéntica a una sana. Pasó el 2026-09-17 con
+ * la portada en 390 px —el renglón `truncate` de sala y géneros fijaba el
+ * min-content de la columna del grid— y estuvo en producción sin que ninguna
+ * de las 30 capturas lo delatara. Por eso se mide, además de fotografiarse.
+ */
+const desbordes = [];
+
 for (const vista of VISTAS) {
   for (const modo of MODOS) {
     const contexto = await navegador.newContext({
@@ -120,6 +131,20 @@ for (const vista of VISTAS) {
         await pagina.waitForTimeout(3_000);
       }
 
+      // Lo que no se ve en una captura: el ancho real del documento contra
+      // el de la pantalla. Se mide en las dos vistas, aunque el caso típico
+      // es el teléfono.
+      const ancho = await pagina.evaluate(() => ({
+        documento: document.documentElement.scrollWidth,
+        pantalla: document.documentElement.clientWidth,
+      }));
+      if (ancho.documento > ancho.pantalla) {
+        desbordes.push(
+          `${vista.nombre}-${modo}-${nombre}: ${ancho.documento}px de contenido ` +
+            `en ${ancho.pantalla}px de pantalla`,
+        );
+      }
+
       // Lo que se ve al abrir, que es donde se juega el look & feel.
       await pagina.screenshot({
         path: join(DESTINO, `${vista.nombre}-${modo}-${nombre}.png`),
@@ -144,3 +169,16 @@ for (const vista of VISTAS) {
 
 await navegador.close();
 console.log(`capturas: ${capturadas} archivos en apps/web/capturas/`);
+
+// ⚠️ Sale con código 1 a propósito: un desborde no es una nota al pie. El
+// modo de fallar de este defecto es pasar desapercibido —la página se ve bien
+// en la foto y mal en la mano— así que acá tiene que doler.
+if (desbordes.length > 0) {
+  console.error(
+    `\ndesborde horizontal en ${desbordes.length} pantalla(s):`,
+  );
+  for (const linea of desbordes) console.error(`  ${linea}`);
+  process.exitCode = 1;
+} else {
+  console.log("ancho: ninguna pantalla se sale a lo ancho");
+}

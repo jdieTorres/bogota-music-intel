@@ -58,9 +58,22 @@ function DiaDeCartelera({ dia, eventos }: { dia: string; eventos: Evento[] }) {
   const idTitulo = `dia-${dia}`;
 
   return (
+    // ⚠️ `minmax(0,1fr)` y no `1fr`, en los dos breakpoints. Una pista de
+    // grid mide por defecto `auto`, y el mínimo de `auto` —igual que el de
+    // `1fr`— es **el min-content de lo que lleva adentro**, no cero. El
+    // renglón de sala y géneros va con `truncate`, o sea `nowrap`, así que su
+    // min-content es la línea entera sin cortar: "Carrera 24 #72 - 31 ·
+    // Midwest Emo · Math Rock · Screamo" mide 474 px y estiraba la columna a
+    // 474 en una pantalla de 390. **La portada entera tenía scroll
+    // horizontal por eso**, y se veía como si el diseño fuera más ancho que
+    // el teléfono.
+    //
+    // Se confirmó midiendo, de dos maneras que tienen que dar lo mismo:
+    // poniéndole `min-width: 0` a la lista, y quitándole el `nowrap` al
+    // renglón. Las dos devolvieron el scroll a 390.
     <section
       aria-labelledby={idTitulo}
-      className="grid gap-3 border-t border-border pt-6 md:grid-cols-[7rem_1fr] md:gap-8"
+      className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-border pt-6 md:grid-cols-[7rem_minmax(0,1fr)] md:gap-8"
     >
       <RielDeFecha dia={dia} idTitulo={idTitulo} />
       <ul>
@@ -101,7 +114,7 @@ export function Cartelera({
       ))}
 
       {sinFecha.length > 0 && (
-        <section className="grid gap-3 border-t border-border pt-6 md:grid-cols-[7rem_1fr] md:gap-8">
+        <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-border pt-6 md:grid-cols-[7rem_minmax(0,1fr)] md:gap-8">
           <div className="md:sticky md:top-24 md:self-start">
             <p className="font-display text-base font-semibold uppercase leading-tight tracking-wide text-muted">
               Sin fecha
