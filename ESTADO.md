@@ -1,7 +1,8 @@
 # Estado del proyecto
 
-Última actualización: **2026-09-16 al cierre del día**, recontado contra la
-base con el MCP.
+Última actualización: **2026-09-16, 21:30 en Bogotá**, recontado contra la
+base con el MCP. Es la segunda pasada del día: la primera fue por la tarde,
+antes de la sesión de look & feel y de teléfono de la noche.
 
 🚀 **El sitio está desplegado: `https://bogota-music-intel.vercel.app`**, desde
 el 2026-09-16. Era el 🎯 de este archivo desde hacía semanas y **ya no es un
@@ -18,9 +19,28 @@ con impeccable, el mapa completo y la unificación del corte del día de Bogotá
 el 2026-09-16, el despliegue, la revisión de seguridad que lo precedió y el
 cambio de contraseña del admin.
 
+**La noche del 2026-09-16 fue de look & feel y de teléfono, y todo está en
+producción**: el sitio arranca en oscuro, la etiqueta manuscrita dejó de serlo
+—Caveat salió del sitio entera y la reemplaza Geist Mono en 300—, la marca del
+masthead creció un 20% con "escena en vivo" debajo y sin ladeo, las
+descripciones que traen las fuentes dejaron de publicarse, "Cartelera" volvió a
+la barra en móvil y la bandeja de la rockola se cierra tocando fuera o con el
+botón de atrás. El criterio de cada una vive en su área
+(`context/look-and-feel/CLAUDE.md`, `context/editorial/CLAUDE.md`,
+`context/frontend/rockola.md`); acá solo queda lo que caduca.
+
+⚠️ **Y se descubrió que la portada se arrastraba de lado en 390 px** —538 px de
+contenido en una pantalla de 390—, desde antes de esa sesión y ya desplegada.
+Se arregló esa misma noche; lo que importa para mañana es **por qué nadie lo
+vio**: una captura se recorta al viewport, así que la página rota y la sana
+salen idénticas. `npm run capturas` ahora mide el ancho de cada pantalla y sale
+en rojo si alguna se sale.
+
 **Y Juan hizo triage con las herramientas nuevas**: publicó un evento cargado a
 mano con cinco bandas —el caso que originó todo esto—, sumó un artista al
-directorio, vinculó el segundo cartel y aprobó una sala.
+directorio, vinculó el segundo cartel y aprobó una sala. **El tercer cartel lo
+vinculó el 2026-09-16 a las 17:35** —Kidchen en Las Mañanitas Fest—, que es lo
+que hace calculable la primera de las dos señales de recomendación (§ 1).
 
 ⚠️ **Al cierre del día se vació la pestaña «Ya pasaron»**: se borraron 26
 canónicos con fecha anterior al 2026-09-15 y sus 32 filas crudas, porque en
@@ -77,12 +97,15 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   foto y ciudad de origen. Al pasar: **`Kidchen` tiene la ciudad como
   `"Bogotá "`, con un espacio al final**, que es del tipo de cosa que después
   parte un agrupamiento en dos.
-- **Hay dos carteles vinculados, y hacen falta muchos más.** El Kalvo con su
-  toque del 17 de octubre y Kidchen con el suyo. Con dos, **las dos señales de
-  recomendación que dependen de coincidencias siguen sin poder calcularse**
-  ("compartieron cartel" y "también ha tocado en"): necesitan artistas que
-  coincidan en carteles **distintos**, y estos dos están en toques separados.
-  Se arma desde la ficha de cada toque (`context/moderacion/CLAUDE.md`).
+- **Hay tres carteles vinculados, y hacen falta muchos más.** El Kalvo en su
+  toque del 17 de octubre, y Kidchen en dos: el del 19 de septiembre y Las
+  Mañanitas Fest del 31 de octubre. **Cada uno tiene un solo artista
+  vinculado**, y de ahí sale el estado exacto de las dos señales de
+  recomendación que dependen de coincidencias: "también ha tocado en" **ya se
+  puede calcular** para Kidchen, que aparece en dos carteles distintos;
+  "compartieron cartel" **no**, porque eso pide dos artistas en el **mismo**
+  cartel y ninguno lo tiene. Se arma desde la ficha de cada toque
+  (`context/moderacion/CLAUDE.md`).
 - **8 de 21 salas publicadas sin foto.** Se pegan como URL en `/admin` → Salas,
   con vista previa. Desde el 2026-09-15 **todas las que tienen coordenada salen
   como pin** aunque no tengan nada anunciado.
@@ -101,6 +124,16 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   cubrir**, y "la dirección como nombre" puede ser la respuesta correcta.
   Mientras tanto se lista como "sin ubicar", que es lo que manda la regla de no
   poner un pin aproximado.
+- ⚠️ **Hay un duplicado sugerido esperando, y este archivo decía que no había
+  ninguno.** Lo abrió la corrida del cron del 2026-09-16 a las 13:00 en Bogotá:
+  «Plastilina Mosh Aniversario 30» entró como borrador y el sistema lo sugiere
+  contra «Plastilina Mosh | Aniversario 30», que ya existía.
+
+  **Lo que hace falta decidir no es si son el mismo, sino qué significa
+  unificarlos**: el que ya existía está **descartado**, así que unificar funde
+  el borrador nuevo dentro de algo que Juan sacó de la cartelera a propósito —y
+  el efecto sería que el evento no vuelve a aparecer—. Resolverlo o descartarlo
+  es de Juan, en `/admin` (`context/moderacion/CLAUDE.md`).
 - **2 salas por aprobar**: ⚠️ **no son las que decía este archivo.** Son
   **Parque de la 93** y **Teatro Panorama**. Ágora Bogotá y el MAMBO, que es lo
   que estaba escrito acá, **Juan las descartó el 2026-09-09 a las 02:34** y la
@@ -112,8 +145,9 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   sigue sin correr prisa. **Se desvió porque la cola de salas se mueve sola con
   el cron y acá había nombres propios en vez de un conteo**; los nombres van
   con su fecha de verificación o no van.
-- 🔥 **El género: 5 de 33 vigentes lo tienen**, con 6 en uso —Rock (2), y Hip
-  Hop/Rap, Math Rock, Midwest Emo, Screamo y Vallenato con 1 cada uno—. Desde
+- 🔥 **El género: 6 de 34 vigentes lo tienen**, con 6 en uso —Math Rock,
+  Midwest Emo, Rock y Screamo con 2 cada uno; Hip Hop/Rap y Vallenato con 1—.
+  Desde
   el 2026-09-08 **ninguna fuente lo escribe**: `generos` es columna propia
   (`text[]`, varios por evento) y la llena Juan en `/admin`. Ahora además **es
   la navegación del directorio**: los géneros del filtro salen de los eventos
@@ -126,7 +160,7 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   perdió con ellos**. Los tres géneros nuevos —Math Rock, Midwest Emo,
   Screamo— son del toque que Juan cargó a mano, y son la señal de que la
   taxonomía útil para la escena no se parece a la que traían las salas grandes.
-- **La escena local marcada: 3 de 33 vigentes**, más 1 confirmado que *no* y 29
+- **La escena local marcada: 4 de 34 vigentes**, más 1 confirmado que *no* y 29
   sin saber. Mismo caso: desde que se dio de baja MusicBrainz nada la calcula.
   La marca rosa solo sale si Juan la pone. **Los tres estados siguen separados**
   y el ranking solo castiga al confirmado que no.
@@ -272,9 +306,12 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   se corra, es un `update` masivo sobre la única copia de la base y lo autoriza
   él.
 - **El bloque «De la escena tocan» no se ha estrenado.** Sale solo en fiestas y
-  festivales, y **no hay ninguna con artistas vinculados**: los dos carteles que
-  existen son de toques, donde el enlace va dentro del título. Se ve el día que
-  se le arme el cartel a un festival.
+  festivales, y **no hay ninguna con artistas vinculados**: los tres carteles
+  que existen son de toques, donde el enlace va dentro del título. ⚠️ Ojo con
+  el caso que engaña: «Las Mañanitas Fest» tiene cartel vinculado y **su
+  `event_type` es `music`**, así que entra por el camino del toque y no por
+  este. Se ve el día que se le arme el cartel a algo que de verdad esté
+  clasificado como fiesta o festival.
 - ⚠️ **Dos eventos tienen la gira dentro del `title` y la columna vacía**, de
   haber sido revisados con el formulario intermedio del 2026-09-15 —el que
   todavía pedía título aparte—: El Kalvo y Jorge Celedón. Abrirlos y guardar
@@ -282,18 +319,12 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   arregló el mismo día haciendo que la desestructuración vaya **campo por campo**
   y no todo o nada, así que la gira se recupera del título al abrirlos. Queda
   anotado porque el dato sigue así en la base hasta que alguien los guarde.
-  Verificado el 2026-09-15: los dos siguen con `gira` en null, y **el de Jorge
-  Celedón es el 17 de septiembre**, así que si se quiere arreglar antes de que
-  se le pase la fecha quedan dos días.
+  Verificado otra vez el 2026-09-16 a las 21:20: los dos siguen con `gira` en
+  null. ⏱️ **Y al de Jorge Celedón se le acaba el tiempo: su fecha es el 17 de
+  septiembre**, o sea mañana. Después de eso deja de estar en cartelera y da
+  igual.
 - **El relleno de `artistas` sigue sin correr**, y ahora hay **cinco** eventos
   con la columna llena porque Juan los tocó a mano. Ver el paso de abajo.
-- **Hay un cambio de look sin commitear**, en
-  `apps/web/src/components/TituloDeEvento.tsx`: el enlace del artista dentro
-  del título deja el subrayado y pasa a **brillo con halo** en hover
-  (`brightness-110` más `text-shadow` del acento). Es una decisión de estilo a
-  medio tomar —el comentario de encima todavía explica por qué iba subrayado—
-  y **no se ha visto en el navegador**. Lo decide Juan: o se termina y se
-  commitea con el comentario corregido, o se descarta.
 - **El formulario de tracks de `/admin` no se ha usado.** Sin verificar:
   agregar un track pegando la dirección, **editarlo** (título, año, carátula) y
   quitarlo. `npm run capturas` no llega ahí porque `/admin` pide sesión.
@@ -309,12 +340,20 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   `<strong>` y que lo pegado entra pelado — pero **sin apretar Guardar sobre
   los datos de Juan**. Que guardar vuelva a la lista y que publicar lleve a la
   ficha pública son dos caminos que solo se estrenan usándolos.
-- **El módulo del directorio no se ha visto en un teléfono de verdad**, como el
-  resto del sitio. Lo medible sí se cerró el 2026-09-15: la ficha de artista
+- **El sitio ya se vio en el teléfono de Juan, y de ahí salieron dos
+  arreglos**: la barra no mostraba "Cartelera" y la bandeja de la rockola no
+  tenía cómo cerrarse (los dos, del 2026-09-16). Lo que sigue sin probarse en
+  un teléfono de verdad es **Safari**, y los dos gestos que un Chromium
+  headless no reproduce igual: **deslizar para hacer scroll con la bandeja
+  abierta** —protegido midiendo el recorrido del puntero, verificado simulando
+  el arrastre— y **el botón de atrás de Android**, que en la prueba consume la
+  entrada de historial y deja la URL donde estaba.
+
+  Lo medible del directorio sí se cerró el 2026-09-15: la ficha de artista
   **se desplazaba 4 px en horizontal a 390 px** —dos `-mx-3` anidados contra los
-  20 px de `px-5`— y se arregló. Vale como aviso: **eso lo encontró la medición
-  y no lo vio la revisión visual**, porque una captura no muestra que la página
-  se desplace. Un teléfono real y Safari siguen sin probarse.
+  20 px de `px-5`— y se arregló. Vale como aviso, y el 2026-09-16 se repitió a
+  lo grande con la portada: **eso lo encuentra la medición y no lo ve la
+  revisión visual**, porque una captura no muestra que la página se desplace.
 - ⚠️ **La portada promete una imagen de compartir que no tiene.**
   `layout.tsx:67` declara `twitter: { card: "summary_large_image" }` para todo
   el sitio, y la portada no lleva `og:image` —la deuda de la marca, § 4—. Esa
@@ -382,7 +421,7 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   ⚠️ **Y `Redirect URLs` está vacío**, así que el día que exista esa pantalla y
   se quiera probar en local hay que añadir `http://localhost:3000/**`. Hoy no
   rompe nada porque ni `signInWithPassword` ni `updateUser` redirigen.
-- **9 publicados sin revisar** (de 34). Tienen `reviewed_at` en null y eso es
+- **9 publicados sin revisar** (de 35). Tienen `reviewed_at` en null y eso es
   correcto: nadie los revisó. El número baja solo a medida que Juan toca cada
   evento por otro motivo.
 - ⚠️ **Contar lo pasado con `starts_at < now()` da de más**: un show de hoy que
@@ -393,20 +432,35 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
   de Supabase todavía expone las **claves legacy JWT** (`anon` /
   `service_role`). Son un juego de credenciales aparte que la rotación de las
   `sb_*` del 2026-08-28 no tocó.
-- **Cuatro `context/*/CLAUDE.md` pasan de las ~150 líneas que su propia regla
-  de tamaño fija**, y ⚠️ **los cuatro son más grandes de lo que este archivo
-  decía**: look-and-feel **314** (decía 305), moderación **250** (decía 180),
-  frontend **226** (decía 199), ingesta **216** (decía 188). Recontados con
-  `wc -l` el 2026-09-15. Los otros cuatro están holgados: infraestructura 127,
-  editorial 121, producto 52, archivo 51.
+- **Cinco `context/*/CLAUDE.md` pasan de las ~150 líneas que su propia regla
+  de tamaño fija**, y ⚠️ **la sesión del 2026-09-16 empeoró tres de ellos**:
+  look-and-feel **379** (era 314), moderación **250** (igual), frontend **236**
+  (era 226), ingesta **226** (era 216) e infraestructura **169**, que antes
+  estaba holgado con 127. Recontados con `wc -l` el 2026-09-16. Los que quedan
+  holgados: editorial 144, producto 52, archivo 51. El `CLAUDE.md` raíz va en
+  265.
 
   No es un problema de hoy —crecen desde el 2026-09-07— pero es cómo esta
-  documentación se volvió ilegible la primera vez, y **el que más creció es el
-  que nadie estaba mirando**: moderación sumó 70 líneas desde la última
-  medición. Lo que sobra es relato: el diagnóstico del rediseño y lo que se
-  descartó de la primera ronda tienen su `.md` de detalle esperándolos
-  (`verde-neon.md`). **Es una pasada propia, no un arreglo al pasar**, y por eso
+  documentación se volvió ilegible la primera vez. Lo que sobra es relato:
+  en look-and-feel, el diagnóstico del rediseño y lo que se descartó de la
+  primera ronda tienen su `.md` de detalle esperándolos (`verde-neon.md`), y lo
+  que se le sumó el 2026-09-16 —la letra de la etiqueta, el bloque de marca—
+  es del mismo tipo. **Es una pasada propia, no un arreglo al pasar**, y por eso
   sigue acá en vez de hacerse a medias.
+- ⚠️ **El sitio público contesta 403 «Vercel Security Checkpoint» a las
+  peticiones automáticas**, desde la noche del 2026-09-16. Lo provocó una
+  sesión de trabajo de acá: 15 peticiones seguidas sin pausa contra la
+  portada, esperando a ver un despliegue. Un navegador de verdad resuelve el desafío solo; `curl` y
+  Chromium headless no —este último falla con "Código 21"—, así que **desde una
+  sesión como esta el sitio desplegado no se puede verificar mientras dure**.
+  **Sin confirmar**: si un visitante normal llega a ver el interstitial. Si se
+  queda, se quita en Vercel → Firewall. La regla que evita repetirlo —el estado
+  de un despliegue se le pregunta a la API de deployments— está en
+  `context/infraestructura/CLAUDE.md`.
+- **El sello de "hoy" de la cartelera no se ha visto con la letra nueva.** Es
+  uno de los cuatro sitios que usan `font-etiqueta`, y hoy no hay ningún evento
+  del día en cartelera, así que no sale en ninguna de las 30 capturas. Los
+  otros tres sí se vieron.
 - **Opcional:** añadir el secret `BMI_SUPABASE_PUBLISHABLE_KEY` al repo para
   que el CI prerenderice contra la base real en vez de contra placeholders.
 
@@ -416,8 +470,7 @@ La primera que urge no es una cifra: son las tres notas de artista que dicen
 
 ⚠️ **Envejecen con cada corrida del cron y con cada sesión de triage:
 recontarlas con una consulta, no citarlas de memoria.** Recontadas el
-**2026-09-15 al cierre del día** contra la base, con el MCP, **después del
-borrado de lo pasado**.
+**2026-09-16 a las 21:20 en Bogotá** contra la base, con el MCP.
 
 ⚠️ **Los denominadores cambiaron de "publicados" a "vigentes".** Antes los 53
 publicados incluían 20 que ya habían pasado, así que "9 de 53" mezclaba lo que
@@ -429,27 +482,27 @@ siempre **lo que está en pantalla**.
 |---|---|
 | Fuentes activas | **7** — movistar_arena, royal_center, lourdes, latino_power, rockal_live, idartes, ticketlive |
 | Filas crudas | **102** — visitbogota 43 *(congeladas)*, royal 13, movistar 11, ticketlive 10, rockal 8, latino 7, idartes 5, lourdes 5 |
-| Crudas visibles para un anónimo | **36 de 102** — solo las de canónicos publicados, desde el 2026-09-16. Comprobado con la publishable key, no deducido de la política |
+| Crudas visibles para un anónimo | **36 de 102** — solo las de canónicos publicados. La política se comprobó con la publishable key el 2026-09-16; el número se recontó con SQL a las 21:20 y **no se movió con el publicado nuevo**, que no trajo fila cruda propia |
 | Crudas sin clasificar | **0** |
 | Crudas huérfanas | **0** — ninguna quedó sin canónico tras los dos borrados, que es lo que evita que el `moderacion_cli` les abra borrador nuevo |
-| Canónicos | **93** — 34 publicados, 9 borradores, 50 descartados |
+| Canónicos | **94** — 35 publicados, 9 borradores, 50 descartados |
 | **Dónde vive** | **`bogota-music-intel.vercel.app`** desde el 2026-09-16 · Vercel Hobby (⚠️ no comercial) · Root Directory `apps/web` · 3 variables, sin `NEXT_PUBLIC_SITIO_URL` (§ 2) |
-| En pantalla | **29 toques, 0 fiestas, 4 festivales** = 33 vigentes, en **12 salas**. La cartelera y el mapa cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
+| En pantalla | **30 toques, 0 fiestas, 4 festivales** = 34 vigentes, en **12 salas**. La cartelera y el mapa cuentan distinto **a propósito** — desde el 2026-09-15 el mapa muestra **todas** las salas publicadas, con eventos o sin ellos (`context/frontend/CLAUDE.md`) |
 | Publicados ya pasados | **1** — `Casi`, el único que sobrevivió a los dos borrados por ser cargado a mano |
-| Sin revisar | **9 de 34** publicados |
+| Sin revisar | **9 de 35** publicados |
 | Salas | **40 filas** — 21 publicadas, 2 por aprobar, 17 descartadas |
 | Coordenadas | ⚠️ **20 de 21** — la que falta es `Carrera 24 #72 - 31`, y se lista como "sin ubicar" en vez de recibir un pin aproximado, que es lo correcto. Las otras 20 salen en el mapa aunque no tengan nada anunciado |
 | Fotos de sala | **13 de 21** |
-| Afiche | **33 de 33** vigentes — es la imagen de la tarjeta de compartir |
-| Precio | **11 de 33** vigentes |
-| Género | **5 de 33** vigentes, **6 géneros en uso**: Rock (2), y Hip Hop/Rap, Math Rock, Midwest Emo, Screamo y Vallenato con 1 cada uno |
-| Escena local marcada | **3 de 33** vigentes — más 1 confirmado que *no*, y 29 sin saber. Se marca a mano y nada la calcula |
+| Afiche | **34 de 34** vigentes — es la imagen de la tarjeta de compartir |
+| Precio | **12 de 34** vigentes |
+| Género | **6 de 34** vigentes, **6 géneros en uso**: Math Rock, Midwest Emo, Rock y Screamo con 2 cada uno; Hip Hop/Rap y Vallenato con 1 |
+| Escena local marcada | **4 de 34** vigentes — más 1 confirmado que *no*, y 29 sin saber. Se marca a mano y nada la calcula |
 | **Directorio** | **3 artistas publicados**, **6 tracks concentrados en 1** — Kidchen entró el 2026-09-15 |
-| **Carteles vinculados** | **2** — El Kalvo y Kidchen, los dos en toques |
-| **Con lista de artistas** | **5 de 93** — los que Juan tocó el 2026-09-15; el relleno de los viejos sigue sin correr (§ 2) |
+| **Carteles vinculados** | **3** — El Kalvo en uno y Kidchen en dos, los tres en toques. Un artista por cartel (§ 1) |
+| **Con lista de artistas** | **10 de 94** — el relleno de los viejos sigue sin correr (§ 2) |
 | Bloqueados | **41** `(fuente, id)` — visitbogota 26, idartes 7, lourdes 4, movistar 3, ticketlive 1. El borrado del 2026-09-15 no sumó ninguno a propósito; los 4 de lourdes entraron el 2026-09-16 y el motivo está escrito en la fila |
-| Duplicados sugeridos | **0** — Juan resolvió los dos que había el 2026-09-13 |
-| Tests | **267 backend + 198 frontend**, verdes en CI. Los 20 nuevos del frontend son de `lib/admin/clave.ts` y `lib/cache.ts` |
+| Duplicados sugeridos | ⚠️ **1** — este archivo decía 0, y lo era hasta que **la corrida del cron del 2026-09-16 abrió uno nuevo**: «Plastilina Mosh Aniversario 30», borrador, sugerido contra «Plastilina Mosh | Aniversario 30», que está **descartado** (§ 1) |
+| Tests | **267 backend + 203 frontend**, verdes en CI (corrida del 2026-09-16 sobre `ead249a`). Los 5 nuevos del frontend son de `lib/tokens.test.ts`, que ata la tabla de la paleta a `globals.css` |
 
 Cómo leerlas sin equivocarse:
 
@@ -502,8 +555,8 @@ sigue no es técnico.
    sobre el sitio ya en pie; el sitio está en pie. Y mientras tanto tres fichas
    que dicen "test" están en internet, no en una pestaña de localhost.
 
-   El detalle de qué falta —tres artistas, dos sin tracks, 5 de 33 con género,
-   3 de 33 marcados como escena— está en § 1. **Nada de eso lo puede hacer otro
+   El detalle de qué falta —tres artistas, dos sin tracks, 6 de 34 con género,
+   4 de 34 marcados como escena— está en § 1. **Nada de eso lo puede hacer otro
    que Juan**: ninguna base global sabe quién es El Kalvo.
 
 2. **Más fuentes.** `mitaquilla.com.co` quedó confirmada abierta el 2026-09-08 —

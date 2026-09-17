@@ -59,9 +59,11 @@ horas. Busca los hechos:
   vive solo en un comentario, no está documentada.
 - ¿Los pipelines de CI/cron han llegado a ejecutarse de verdad, o solo pasan
   los tests? **Mira los dos workflows**, `Tests` y `Scraper cron`: uno no dice
-  nada del otro. El repo es público, se consulta sin token con
-  `curl -s "https://api.github.com/repos/jdieTorres/bogota-music-intel/actions/runs?per_page=20"`
-  y agrupando por `name`. (`gh` no está instalado en esta máquina.)
+  nada del otro. Con `gh`, instalado y autenticado desde el 2026-09-16:
+  `gh run list --repo jdieTorres/bogota-music-intel --limit 12` y agrupar por
+  `name`, o `--workflow "Scraper cron"` para mirar uno solo. ⚠️ Si no se
+  encuentra en el `PATH`, va por su ruta completa —
+  `"/c/Program Files/GitHub CLI/gh.exe"`.
 - **Recuenta los datos reales** en vez de citar los de la última vez. Las cifras
   de `ESTADO.md` § 3 envejecen con cada corrida del cron y con cada sesión de
   triage de Juan.
