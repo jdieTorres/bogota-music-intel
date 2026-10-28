@@ -188,7 +188,9 @@ function consultaBase() {
  * Lo que hay en cada pestaña, y por qué son tres y no una:
  *
  * - `cola`: lo que **pide una decisión**. Borradores que trajo el cron, más
- *   lo publicado cuya fuente se movió. Es lo único que caduca.
+ *   lo publicado cuya fuente se movió. Es lo único que caduca, y por eso
+ *   lo que ya pasó sale de acá: un borrador de un show que ya ocurrió no
+ *   espera ninguna decisión. No se toca su estado — sigue en `pasados`.
  * - `publicados`: lo que **está en la cartelera ahora**, para corregir o
  *   sacar algo que ya se aprobó.
  * - `pasados`: lo que **ya ocurrió**. Se separa porque no se toca casi
@@ -205,6 +207,7 @@ export async function getEventos(pestaña: Pestaña): Promise<EventoEnCola[]> {
     return consultar((q) =>
       q
         .or("status.eq.borrador,change_detected_at.not.is.null")
+        .or(`starts_at.gte.${hoy},starts_at.is.null`)
         .order("starts_at", { ascending: true, nullsFirst: false }),
     );
   }
