@@ -33,6 +33,7 @@ import {
   type Correccion,
   type EventoEnCola,
   type Pestaña,
+  DIAS_DE_PASADOS,
   borrar,
   descartar,
   descartarSugerencia,
@@ -81,6 +82,11 @@ export function ModeracionDeEventos({
   const [cola, setCola] = useState<EventoEnCola[]>([]);
   const [pestaña, setPestaña] = useState<Pestaña>(pedido ? "publicados" : "cola");
   const [elegido, setElegido] = useState<string | null>(pedido);
+  // El evento pedido por la URL cuando no está en ninguna lista: "Ya pasaron"
+  // solo llega al último mes, y la ficha pública de algo más viejo también
+  // tiene que poder abrirse acá. Va aparte y no metido en la lista para que
+  // el conteo siga diciendo lo que muestra la pestaña.
+  const [suelto, setSuelto] = useState<EventoEnCola | null>(null);
 
   const cargar = useCallback(
     async (cual: Pestaña) => {
@@ -90,9 +96,9 @@ export function ModeracionDeEventos({
         // pasó. Se busca una sola vez —solo desde "publicados"— para no
         // quedar rebotando entre pestañas si el id no existe en ninguna.
         if (pedido && cual === "publicados" && !filas.some((e) => e.id === pedido)) {
-          const pasados = await getEventos("pasados");
-          if (pasados.some((e) => e.id === pedido)) {
-            setCola(pasados);
+          const evento = await getEvento(pedido);
+          if (evento) {
+            setSuelto(evento);
             setPestaña("pasados");
             return;
           }
@@ -116,7 +122,8 @@ export function ModeracionDeEventos({
   // Se busca en la lista en vez de guardar el objeto: así, después de
   // recargar, la ficha abierta muestra lo que quedó en la base y no una
   // copia de antes de guardar.
-  const seleccionado = cola.find((e) => e.id === elegido) ?? null;
+  const seleccionado =
+    cola.find((e) => e.id === elegido) ?? (suelto?.id === elegido ? suelto : null);
 
 
 
@@ -145,6 +152,12 @@ export function ModeracionDeEventos({
       <p className="mt-4 font-mono text-xs uppercase tracking-widest text-muted">
         {cola.length} {cola.length === 1 ? "evento" : "eventos"}
       </p>
+      {pestaña === "pasados" && (
+        <p className="mt-1 text-sm text-muted">
+          Solo lo publicado de los últimos {DIAS_DE_PASADOS} días. Lo anterior se
+          abre desde su ficha en el sitio.
+        </p>
+      )}
 
       {seleccionado ? (
         <div className="mt-6">
@@ -210,7 +223,7 @@ const PESTAÑAS: [Pestaña, string][] = [
 const VACIO: Record<Pestaña, string> = {
   cola: "El cron no trajo nada nuevo y ninguna sala movió lo que ya está publicado.",
   publicados: "No hay nada publicado con fecha de hoy en adelante.",
-  pasados: "Todavía no pasó ningún evento de los que están en la base.",
+  pasados: "No pasó ningún evento publicado en el último mes.",
 };
 
 function Renglon({ evento, alElegir }: { evento: EventoEnCola; alElegir: () => void }) {

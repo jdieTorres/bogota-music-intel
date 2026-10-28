@@ -152,6 +152,9 @@ export function salaEnLaCola(evento: EventoEnCola): string {
 /** Las tres pestañas de la pantalla. */
 export type Pestaña = "cola" | "publicados" | "pasados";
 
+/** Hasta cuántos días atrás llega "Ya pasaron". Ver `getEventos`. */
+export const DIAS_DE_PASADOS = 30;
+
 async function consultar(
   armar: (q: ReturnType<typeof consultaBase>) => ReturnType<typeof consultaBase>,
 ): Promise<EventoEnCola[]> {
@@ -195,6 +198,13 @@ function consultaBase() {
  *   sacar algo que ya se aprobó.
  * - `pasados`: lo que **ya ocurrió**. Se separa porque no se toca casi
  *   nunca y mezclarlo con lo vigente haría que la lista útil se pierda.
+ *   ⚠️ **Solo lo publicado, y solo de los últimos `DIAS_DE_PASADOS`.** Con
+ *   todo adentro llegó a 84 filas y 64 eran borradores y descartados que
+ *   nunca salieron al sitio y ya no esperan nada. Lo publicado es el
+ *   historial de los artistas, y lo que se le corrige casi siempre es
+ *   reciente —el cartel del toque de anoche—. No se borra nada: lo más
+ *   viejo se abre desde su ficha. La pantalla dice el recorte, porque un
+ *   límite que recorta en silencio es peor que no tener límite.
  *
  * Todo va ordenado por fecha del evento; lo pasado al revés, que es como se
  * busca (lo más reciente primero). Un evento sin fecha va al final: no se
@@ -219,8 +229,17 @@ export async function getEventos(pestaña: Pestaña): Promise<EventoEnCola[]> {
         .order("starts_at", { ascending: true, nullsFirst: false }),
     );
   }
+  // Se resta sobre el instante y no sobre el texto: Colombia no tiene horario
+  // de verano, así que 30 días son siempre 30 × 24 h.
+  const desde = new Date(
+    new Date(hoy).getTime() - DIAS_DE_PASADOS * 24 * 60 * 60 * 1000,
+  ).toISOString();
   return consultar((q) =>
-    q.lt("starts_at", hoy).order("starts_at", { ascending: false }),
+    q
+      .eq("status", "publicado")
+      .lt("starts_at", hoy)
+      .gte("starts_at", desde)
+      .order("starts_at", { ascending: false }),
   );
 }
 
